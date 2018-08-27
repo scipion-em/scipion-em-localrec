@@ -24,5 +24,18 @@
 # *
 # **************************************************************************
 
-from protocol_localized import ProtLocalizedRecons
-from protocol_localized_extraction import ProtLocalizedExtraction
+# we declarate global constants to multiple usage
+LOCALREC_HOME = 'LOCALREC_HOME'
+RELION_HOME = 'RELION_HOME'
+TMP_RELION_HOME = 'TMP_RELION_HOME'
+LOCALREC_RELION_HOME = 'LOCALREC_RELION_HOME'
+
+
+
+# Supported versions
+V1_1_1 = '1.1.0'
+V1_2_0 = '1.2.0'
+
+# Relion Supported versions
+V2_1 = '2.1'
+V1_4 = '1.4'
