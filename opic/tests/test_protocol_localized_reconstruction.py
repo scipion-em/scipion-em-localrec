@@ -31,6 +31,7 @@ from pyworkflow.tests import *
 from pyworkflow.utils import importFromPlugin
 
 from opic.protocols import *
+from opic.convert import *
 
 ProtRelionReconstruct = importFromPlugin("relion.protocols",
                                          "ProtRelionReconstruct")

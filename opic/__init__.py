@@ -69,7 +69,7 @@ class Plugin(pyworkflow.em.Plugin):
             installed."""
 
         missingPaths = ["%s: %s" % (var, os.environ[var])
-                        for var in [cls.getHome()]
+                        for var in [LOCALREC_HOME]
                         if not os.path.exists(os.environ[var])]
 
         if missingPaths:
