@@ -40,6 +40,7 @@ _logo = "opic_logo.png"
 
 class Plugin(pyworkflow.em.Plugin):
     _homeVar = LOCALREC_HOME
+    _recRelionHomeVar = LOCALREC_RELION_HOME
     _pathVars = [LOCALREC_HOME]
     _supportedVersions = V1_2_0
 
@@ -65,11 +66,11 @@ class Plugin(pyworkflow.em.Plugin):
 
     @classmethod
     def validateInstallation(cls):
-        """ This function will be used to check if package is properly
+        """ This function will be used to check if RELION package is properly
             installed."""
 
         missingPaths = ["%s: %s" % (var, os.environ[var])
-                        for var in [LOCALREC_HOME]
+                        for var in [cls._homeVar, cls._recRelionHomeVar]
                         if not os.path.exists(os.environ[var])]
 
         if missingPaths:
