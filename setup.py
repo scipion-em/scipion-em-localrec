@@ -70,7 +70,7 @@ setup(
     # This is a one-line description or tagline of what your project does. This
     # corresponds to the "Summary" metadata field:
     # https://packaging.python.org/specifications/core-metadata/#summary
-    description='Opic ready to use in scipion.',  # Required
+    description='Localrec ready to use in scipion.',  # Required
 
     # This is an optional longer description of your project that represents
     # the body of text which users will see when they visit PyPI.
@@ -163,7 +163,7 @@ setup(
     # MANIFEST.in as well.
     # include_package_data=True,
     package_data={  # Optional
-       'opic': ['opic_logo.png'],
+       'localrec': ['opic_logo.png'],
     },
 
     # Although 'package_data' is the preferred approach, in some case you may
