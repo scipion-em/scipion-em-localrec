@@ -82,6 +82,13 @@ class Plugin(pyworkflow.em.Plugin):
     def isVersionActive(cls):
         return cls.getActiveVersion().startswith(V1_2_0)
 
+    @classmethod
+    def defineBinaries(cls, env):
+
+        # Add localrec
+        env.addPackage('localrec', version='1.2.0',
+                       tar='localrec-1.2.0.tgz')
+
 
 pyworkflow.em.Domain.registerPlugin(__name__)
 
