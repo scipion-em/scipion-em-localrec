@@ -34,10 +34,10 @@ from pyworkflow.protocol.params import (PointerParam, BooleanParam, StringParam,
 from pyworkflow.em.protocol import ProtParticles, ProtParticlePicking
 from pyworkflow.em.data import Coordinate, SetOfCoordinates
 
-from opic.convert import (particleToRow, rowToSubcoordinate, setEnviron,
+from localrec.convert import (particleToRow, rowToSubcoordinate, setEnviron,
                           restituteRelionHome, getVersion, getRelionVersion)
 
-from opic.constants import *
+from localrec.constants import *
 
 CMM = 0
 HAND = 1
@@ -260,7 +260,7 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
         suffix = self.__getOutputSuffix()
         outputName = self.OUTPUT_PREFIX + suffix
 
-        from opic.convert import readSetOfCoordinates
+        from localrec.convert import readSetOfCoordinates
         inputset = self._getInputParticles()
         # micrographs are the input set if protocol is not finished
         outputset = self._createSetOfCoordinates(inputset, suffix=suffix)

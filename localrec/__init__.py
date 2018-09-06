@@ -31,8 +31,8 @@ wrapping Localized recontruction of subunits.
 import os
 import pyworkflow.em
 from bibtex import _bibtex # Load bibtex dict with references
-from opic.constants import *
-from opic.convert import *
+from localrec.constants import *
+from localrec.convert import *
 
 
 _logo = "opic_logo.png"

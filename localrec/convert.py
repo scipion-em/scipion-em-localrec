@@ -39,7 +39,7 @@ from collections import OrderedDict
 
 import pyworkflow.em as em
 import pyworkflow.em.metadata as md
-from  opic.constants import (LOCALREC_HOME, LOCALREC_RELION_HOME,
+from  localrec.constants import (LOCALREC_HOME, LOCALREC_RELION_HOME,
                                          RELION_HOME, TMP_RELION_HOME)
 
 from pyworkflow.object import ObjectWrap, String

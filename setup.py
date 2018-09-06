@@ -57,7 +57,7 @@ setup(
     # There are some restrictions on what makes a valid project name
     # specification here:
     # https://packaging.python.org/specifications/core-metadata/#name
-    name='opic-em-sachselab',  # Required
+    name='scipion-em-localrec',  # Required
 
     # Versions should comply with PEP 440:
     # https://www.python.org/dev/peps/pep-0440/
@@ -86,7 +86,7 @@ setup(
     #
     # This field corresponds to the "Home-Page" metadata field:
     # https://packaging.python.org/specifications/core-metadata/#home-page-optional
-    url='https://github.com/I2PC/sachselab-em-appion',  # Optional
+    url='https://github.com/scipion-em/scipion-em-localrec',  # Optional
 
     # This should be your name or the name of the organization which owns the
     # project.
@@ -163,7 +163,7 @@ setup(
     # MANIFEST.in as well.
     # include_package_data=True,
     package_data={  # Optional
-       'appion': ['opic_logo.png'],
+       'opic': ['opic_logo.png'],
     },
 
     # Although 'package_data' is the preferred approach, in some case you may

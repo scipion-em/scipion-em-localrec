@@ -30,8 +30,8 @@ from pyworkflow.em import ProtImportParticles, ProtImportVolumes
 from pyworkflow.tests import *
 from pyworkflow.utils import importFromPlugin
 
-from opic.protocols import *
-from opic.convert import *
+from localrec.protocols import *
+from localrec.convert import *
 
 ProtRelionReconstruct = importFromPlugin("relion.protocols",
                                          "ProtRelionReconstruct")
