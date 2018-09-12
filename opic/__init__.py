@@ -87,7 +87,8 @@ class Plugin(pyworkflow.em.Plugin):
 
         # Add localrec
         env.addPackage('localrec', version='1.2.0',
-                       tar='localrec-1.2.0.tgz')
+                       tar='localrec-1.2.0.tgz',
+                       default=True)
 
 
 pyworkflow.em.Domain.registerPlugin(__name__)
