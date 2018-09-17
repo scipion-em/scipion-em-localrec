@@ -1,7 +1,7 @@
-# coding: latin-1
 # **************************************************************************
 # *
 # * Authors:     Josue Gomez Blanco (josue.gomez-blanco@mcgill.ca)
+# *
 # *
 # * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
 # *
@@ -24,20 +24,9 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-
-_bibtexStr = """
-@Article{Serban2015,
-  Title                    = {Localized reconstruction of subunits from electron cryomicroscopy images.},
-  Author                   = {Ilca, Serban L. and Kotecha, A. Sun, Xiaoyu and Poranen, Minna M. and Stuart, David I. and Huiskonen, Juha T.},
-  Journal                  = {Nat Commun},
-  Year                     = {2015},
-  Month                    = {November},
-  Volume                   = {6},
-  Doi                      = {http://dx.doi.org/10.1038/ncomms9843},
-  Url                      = {http://www.nature.com/ncomms/2015/151104/ncomms9843/full/ncomms9843.html}
-}
+"""
+This module contains converter functions that will serve to:
+1. Write from base classes to Relion specific files
+2. Read from Relion files to base classes
 """
 
-from pyworkflow.utils import parseBibTex
-
-_bibtex = parseBibTex(_bibtexStr)

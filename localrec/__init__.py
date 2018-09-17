@@ -30,34 +30,33 @@ wrapping Localized recontruction of subunits.
 """
 import os
 import pyworkflow.em
+from pyworkflow.utils import Environ
+
 from bibtex import _bibtex # Load bibtex dict with references
-from opic.constants import *
-from opic.convert import *
+from localrec.constants import *
+from localrec.convert import *
 
 
-_logo = "opic_logo.png"
-
+# _logo = "opic_logo.png"
+_references = ['Ilca2015']
 
 class Plugin(pyworkflow.em.Plugin):
     _homeVar = LOCALREC_HOME
-    _recRelionHomeVar = LOCALREC_RELION_HOME
     _pathVars = [LOCALREC_HOME]
-    _supportedVersions = V1_2_0
 
     @classmethod
     def _defineVariables(cls):
-        cls._defineEmVar(cls.getHome(), 'localrec-1.2.0')
+        cls._defineEmVar(LOCALREC_HOME, 'localrec-1.2.0')
 
     @classmethod
     def getEnviron(cls):
-        """ Setup the environment variables needed to launch opic. """
+        """ Setup the environment variables needed to launch localrec. """
         environ = Environ(os.environ)
         print("getEnvirion(): %s"%os.environ.get(cls.getHome()))
         if ('%s' % cls.getHome()) in environ:
             environ.update({
                 'PATH': cls.getHome(),
-                'LD_LIBRARY_PATH': str.join(os.environ[cls.getHome()], 'localreclib')
-                                   + ":" + os.environ[cls.getHome()],
+                'LD_LIBRARY_PATH': os.environ[cls.getHome()],
             }, position=Environ.BEGIN)
         else:
             # TODO: Find a generic way to warn of this situation
@@ -69,14 +68,15 @@ class Plugin(pyworkflow.em.Plugin):
         """ This function will be used to check if RELION package is properly
             installed."""
 
-        missingPaths = ["%s: %s" % (var, os.environ[var])
-                        for var in [cls._homeVar, cls._recRelionHomeVar]
-                        if not os.path.exists(os.environ[var])]
-
-        if missingPaths:
-            return ["Missing variables:"] + missingPaths
-        else:
-            return []  # No errors
+        # missingPaths = ["%s: %s" % (var, os.environ[var])
+        #                 for var in [cls._homeVar]
+        #                 if not os.path.exists(os.environ[var])]
+        #
+        # if missingPaths:
+        #     return ["Missing variables:"] + missingPaths
+        # else:
+        #     print("returning no errors")
+        return []  # No errors
 
     @classmethod
     def isVersionActive(cls):
@@ -85,11 +85,10 @@ class Plugin(pyworkflow.em.Plugin):
     @classmethod
     def defineBinaries(cls, env):
 
-        # Add localrec
-        env.addPackage('localrec', version='1.2.0',
-                       tar='localrec-1.2.0.tgz',
-                       default=True)
+         # Add localrec
+         env.addPackage('localrec', version='1.2.0',
+                        tar='localrec-1.2.0.tgz',
+                        default=True)
 
 
 pyworkflow.em.Domain.registerPlugin(__name__)
-

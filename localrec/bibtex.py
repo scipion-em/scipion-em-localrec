@@ -1,6 +1,7 @@
+# coding: latin-1
 # **************************************************************************
 # *
-# * Authors:    Yunior C. Fonseca Reyna (cfonseca@cnb.csic.es)
+# * Authors:     Josue Gomez Blanco (josue.gomez-blanco@mcgill.ca)
 # *
 # * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
 # *
@@ -24,17 +25,19 @@
 # *
 # **************************************************************************
 
-# we declarate global constants to multiple usage
-LOCALREC_HOME = 'LOCALREC_HOME'
-RELION_HOME = 'RELION_HOME'
-TMP_RELION_HOME = 'TMP_RELION_HOME'
-LOCALREC_RELION_HOME = 'LOCALREC_RELION_HOME'
+_bibtexStr = """
+@Article{Ilca2015,
+  Title                    = {Localized reconstruction of subunits from electron cryomicroscopy images.},
+  Author                   = {Ilca, Serban L. and Kotecha, A. Sun, Xiaoyu and Poranen, Minna M. and Stuart, David I. and Huiskonen, Juha T.},
+  Journal                  = {Nat Commun},
+  Year                     = {2015},
+  Month                    = {November},
+  Volume                   = {6},
+  Doi                      = {http://dx.doi.org/10.1038/ncomms9843},
+  Url                      = {http://www.nature.com/ncomms/2015/151104/ncomms9843/full/ncomms9843.html}
+}
+"""
 
+from pyworkflow.utils import parseBibTex
 
-# Supported versions
-V1_1_1 = '1.1.0'
-V1_2_0 = '1.2.0'
-
-# Relion Supported versions
-V2_1 = '2.1'
-V1_4 = '1.4'
+_bibtex = parseBibTex(_bibtexStr)
