@@ -1,6 +1,7 @@
 # *****************************************************************************
 # *
 # * Authors:     Josue Gomez Blanco (josue.gomez-blanco@mcgill.ca)
+# *              Vahid Abrishami (vahid.abrishami@helsinki.fi)
 # *
 # * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
 # *

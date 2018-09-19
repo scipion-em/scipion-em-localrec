@@ -3,7 +3,7 @@
 # * Authors:  Serban Ilca
 # *           Juha T. Huiskonen (juha@strubi.ox.ac.uk)
 # *           J.M. de la Rosa Trevin
-# *           Vahid Abrishami
+# *           Vahid Abrishami (vahid.abrishami@helsinki.fi)
 # *
 # * Laboratory of Structural Biology,
 # * Helsinki Institute of Life Science HiLIFE
@@ -115,15 +115,10 @@ def getSymMatricesXmipp(symmetryGroup):
         return getSymmetryMatrices(SYM_TETRAHEDRAL, n=SYM_OCTAHEDRAL)
 
 
-def geometryFromMatrix(matrix, inverseTransform):
+def geometryFromMatrix(matrix):
     from pyworkflow.em.transformations import translation_from_matrix, euler_from_matrix
 
-    if inverseTransform:
-        from numpy.linalg import inv
-        matrix = inv(matrix)
-        shifts = -translation_from_matrix(matrix)
-    else:
-        shifts = translation_from_matrix(matrix)
+    shifts = translation_from_matrix(matrix)
     angles = -1.0 * np.ones(3) * euler_from_matrix(matrix, axes='szyz')
     return shifts, angles
 
@@ -322,7 +317,7 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
 
     # Euler angles that take particle to the orientation of the model
     matrix_particle = inv(particle.getTransform().getMatrix())
-    shifts, angles = geometryFromMatrix(matrix_particle, False)
+    shifts, angles = geometryFromMatrix(matrix_particle)
 
     subparticles = []
     subparticles_total += 1

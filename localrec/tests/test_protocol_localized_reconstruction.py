@@ -109,7 +109,7 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
         self.assertEqual(checkSize, prot.outputCoordinates.getSize())
 
         coord = prot.outputCoordinates[10]
-        cShifts, cAngles = geometryFromMatrix(inv((coord._subparticle.getTransform().getMatrix())), False)
+        cShifts, cAngles = geometryFromMatrix(inv((coord._subparticle.getTransform().getMatrix())))
         cAngles = [math.degrees(cAngles[j]) for j in range(len(cAngles))]
         print(cAngles)
 
@@ -153,10 +153,3 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
         self.assertIsNotNone(localExtraction.outputParticles,
                              "There was a problem with localized "
                              "extraction protocol")
-        # following protocol is just for visual inspection.
-        # protRecons = self.newProtocol(ProtRelionReconstruct)
-        # protRecons.inputParticles.set(localExtraction.outputParticles)
-        # self.launchProtocol(protRecons)
-        # self.assertIsNotNone(protRecons.outputVolume,
-        #                      "There was a problem reconstruction the "
-        #                      "subparticles.")
