@@ -61,49 +61,49 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
 
         group = form.addGroup('Symmetry')
         group.addParam('symmetryGroup', StringParam, default='c1',
-                      label="Symmetry",
-                      help='If the molecule is asymmetric, set Symmetry group '
-                           'to C1. Note their are multiple possibilities for '
-                           'icosahedral symmetry: \n'
-                           '* I1: No-Crowther 222 (standard in Heymann, '
-                           'Chagoyen & Belnap, JSB, 151 (2005) 196-207)\n'
-                           '* I2: Crowther 222 \n'
-                           '* I3: 52-setting (as used in SPIDER?) \n'
-                           '* I4: A different 52 setting \n')
+                       label="Symmetry",
+                       help='If the molecule is asymmetric, set Symmetry group '
+                            'to C1. Note their are multiple possibilities for '
+                            'icosahedral symmetry: \n'
+                            '* I1: No-Crowther 222 (standard in Heymann, '
+                            'Chagoyen & Belnap, JSB, 151 (2005) 196-207)\n'
+                            '* I2: Crowther 222 \n'
+                            '* I3: 52-setting (as used in SPIDER?) \n'
+                            '* I4: A different 52 setting \n')
 
         group.addParam('randomize', BooleanParam, default=False,
-                      label='Randomize the order of the symmetry matrices?',
-                      help='Useful for preventing preferred orientations.')
+                       label='Randomize the order of the symmetry matrices?',
+                       help='Useful for preventing preferred orientations.')
         group.addParam('relaxSym', BooleanParam, default=False,
                        expertLevel=LEVEL_ADVANCED,
                        label='Relax symmetry?',
                        help='Create one random subparticle for each particle ')
 
         group = form.addGroup('Vectors')
-        group.addParam('defineVector',  EnumParam, default=CMM,
-                      label='Is vector defined by?',
-                      choices=['cmm file', 'string'],
-                      display=EnumParam.DISPLAY_HLIST)
+        group.addParam('defineVector', EnumParam, default=CMM,
+                       label='Is vector defined by?',
+                       choices=['cmm file', 'string'],
+                       display=EnumParam.DISPLAY_HLIST)
         group.addParam('vector', NumericRangeParam, default='0,0,1',
-                      label='Location vectors', condition="defineVector==1",
-                      help='Vector defining the location of the '
-                           'subparticles. The vector is defined by 3 '
-                           'values x,y,z separated by comma. \n'
-                           'More than one vector can be specified separated by'
-                           'semicolon. For example: \n'
-                           '0,0,1            # Defines only one vector.\n'
-                           '0,0,1; 1,0,0;    # Defines two vectors.'
+                       label='Location vectors', condition="defineVector==1",
+                       help='Vector defining the location of the '
+                            'subparticles. The vector is defined by 3 '
+                            'values x,y,z separated by comma. \n'
+                            'More than one vector can be specified separated by'
+                            'semicolon. For example: \n'
+                            '0,0,1            # Defines only one vector.\n'
+                            '0,0,1; 1,0,0;    # Defines two vectors.'
                        )
         group.addParam('vectorFile', PathParam, default='',
-                      condition="defineVector==0",
-                      label='file obtained by Chimera: ',
-                      help='CMM file defining the location(s) of the '
-                           'sub-particle(s). Use instead of vector. ')
+                       condition="defineVector==0",
+                       label='file obtained by Chimera: ',
+                       help='CMM file defining the location(s) of the '
+                            'sub-particle(s). Use instead of vector. ')
         group.addParam('length', StringParam, default=-1,
-                      label='Alternative length of the vector (A)',
-                      help='Use to adjust the sub-particle center. If it '
-                           'is <= 0, the length of the given vector. '
-                           'Different values must be separated by commas.')
+                       label='Alternative length of the vector (A)',
+                       help='Use to adjust the sub-particle center. If it '
+                            'is <= 0, the length of the given vector. '
+                            'Different values must be separated by commas.')
 
         form.addSection('Sub-particles')
         form.addParam('alignSubparticles', BooleanParam, default=True,
@@ -141,16 +141,16 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
         # return
         inputSet = self._getInputParticles()
         outputSet = self._createSetOfCoordinates(inputSet)
-        params = {"symmetryGroup" : self.symmetryGroup.get(),
-                  "vector" : self.vector.get(),
-                  "vectorFile" : self.vectorFile.get(),
-                  "length" : self.length.get(),
-                  "unique" : self.unique.get(),
-                  "mindist" : self.mindist.get(),
-                  "side" : self.side.get(),
-                  "top" : self.top.get(),
-                  "pxSize" : self.inputParticles.get().getSamplingRate(),
-                  "dim" : self.inputParticles.get().getXDim()
+        params = {"symmetryGroup": self.symmetryGroup.get(),
+                  "vector": self.vector.get(),
+                  "vectorFile": self.vectorFile.get(),
+                  "length": self.length.get(),
+                  "unique": self.unique.get(),
+                  "mindist": self.mindist.get(),
+                  "side": self.side.get(),
+                  "top": self.top.get(),
+                  "pxSize": self.inputParticles.get().getSamplingRate(),
+                  "dim": self.inputParticles.get().getXDim()
                   }
 
         symMatrices = getSymMatricesXmipp(self.symmetryGroup.get())
@@ -163,22 +163,22 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
             vector = params["vector"]
 
         subpartVectorList = load_vectors(cmmFn, vector,
-                                                  params["length"],
-                                                  params["pxSize"])
+                                         params["length"],
+                                         params["pxSize"])
 
         for part in inputSet:
 
             subparticles = create_subparticles(part,
-                                                        symMatrices,
-                                                        subpartVectorList,
-                                                        params["dim"],
-                                                        self.randomize,
-                                                        params["unique"],
-                                                        params["mindist"],
-                                                        params["top"],
-                                                        params["side"],
-                                                        0,
-                                                        self.alignSubparticles)
+                                               symMatrices,
+                                               subpartVectorList,
+                                               params["dim"],
+                                               self.randomize,
+                                               params["unique"],
+                                               params["mindist"],
+                                               params["top"],
+                                               params["side"],
+                                               0,
+                                               self.alignSubparticles)
 
             for subpart in subparticles:
                 coord = subpart.getCoordinate()
@@ -191,7 +191,7 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
 
     # -------------------------- INFO functions --------------------------------
     def _validate(self):
-       pass
+        pass
 
     def _citations(self):
         return ['Ilca2015']

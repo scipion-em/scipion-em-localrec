@@ -24,17 +24,14 @@
 # *
 # **************************************************************************
 
-import sys, unittest
+import sys, unittest, math
 
 from pyworkflow.em import ProtImportParticles, ProtImportVolumes
 from pyworkflow.tests import *
 from pyworkflow.utils import importFromPlugin
 
 from localrec.protocols import *
-from localrec.convert import *
-
-ProtRelionReconstruct = importFromPlugin("relion.protocols",
-                                         "ProtRelionReconstruct")
+from localrec.utils import *
 
 
 # Some utility functions to import micrographs that are used
@@ -112,39 +109,41 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
         self.assertEqual(checkSize, prot.outputCoordinates.getSize())
 
         coord = prot.outputCoordinates[10]
-        row = md.Row()
-        alignmentToRow(coord._subparticle.getTransform(), row)
-        self.assertAlmostEqual(first=row.getValue(md.RLN_ORIENT_ROT),
+        cShifts, cAngles = geometryFromMatrix(inv((coord._subparticle.getTransform().getMatrix())), False)
+        cAngles = [math.degrees(cAngles[j]) for j in range(len(cAngles))]
+        print(cAngles)
+
+        self.assertAlmostEqual(first=cAngles[0],
                                second=angles[0], delta=0.1,
                                msg="Rot angle is %0.1f, but should be %0.1f "
                                    "for subparticle 10."
                                    % (
-                                   row.getValue(md.RLN_ORIENT_ROT), angles[0]))
+                                       cAngles[0], angles[0]))
 
-        self.assertAlmostEqual(first=row.getValue(md.RLN_ORIENT_TILT),
+        self.assertAlmostEqual(first=cAngles[1],
                                second=angles[1], delta=0.1,
                                msg="Tilt angle is %0.1f, but should be %0.1f "
                                    "for subparticle 10."
                                    % (
-                                   row.getValue(md.RLN_ORIENT_TILT), angles[1]))
+                                       cAngles[1], angles[1]))
 
-        self.assertAlmostEqual(first=row.getValue(md.RLN_ORIENT_PSI),
+        self.assertAlmostEqual(first=cAngles[2],
                                second=angles[2], delta=0.1,
                                msg="Psi angle is %0.1f, but should be %0.1f "
                                    "for subparticle 10."
                                    % (
-                                   row.getValue(md.RLN_ORIENT_PSI), angles[2]))
+                                       cAngles[2], angles[2]))
 
         return prot
 
     def testProtLocalizedReconstruction(self):
         print "Run ProtLocalized Reconstruction"
 
-        localSubparticles = self._runSubparticles(120, [-77.3, 65.1, -66.5])
+        localSubparticles = self._runSubparticles(120, [52.3, 174.9, 162.5])
 
-        self._runSubparticles(94, [-4.4, 59.6, -139.8], mindist=10)
-        self._runSubparticles(47, [-176.3, 114.5, 101.0], side=25, defVector=1)
-        self._runSubparticles(20, [-2.7, 131.0, 177.9], top=50)
+        self._runSubparticles(106, [-102.3, 119.5, 41.8], mindist=10)
+        self._runSubparticles(50, [-34.4, 66.5, 55.0], side=25, defVector=1)
+        self._runSubparticles(21, [-144.6, 130.6, 0.8], top=50)
 
         localExtraction = self.newProtocol(ProtLocalizedExtraction, boxSize=26)
         localExtraction.inputParticles.set(self.protImport.outputParticles)
@@ -155,9 +154,9 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
                              "There was a problem with localized "
                              "extraction protocol")
         # following protocol is just for visual inspection.
-        protRecons = self.newProtocol(ProtRelionReconstruct)
-        protRecons.inputParticles.set(localExtraction.outputParticles)
-        self.launchProtocol(protRecons)
-        self.assertIsNotNone(protRecons.outputVolume,
-                             "There was a problem reconstruction the "
-                             "subparticles.")
+        # protRecons = self.newProtocol(ProtRelionReconstruct)
+        # protRecons.inputParticles.set(localExtraction.outputParticles)
+        # self.launchProtocol(protRecons)
+        # self.assertIsNotNone(protRecons.outputVolume,
+        #                      "There was a problem reconstruction the "
+        #                      "subparticles.")
