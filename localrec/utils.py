@@ -258,6 +258,8 @@ def within_unique(p1, p2, unique):
     """ Returns True if two particles are closer to each other
     than the given angular distance. """
 
+    print(p1._angles[2],p1._angles[1])
+    print(p2._angles[2],p2._angles[1])
     v1 = vector_from_two_eulers(p1._angles[2], p1._angles[1])
     v2 = vector_from_two_eulers(p2._angles[2], p2._angles[1])
 
@@ -270,6 +272,7 @@ def within_unique(p1, p2, unique):
         dp = 1.000
 
     angle = math.acos(dp)
+    print(angle, math.radians(unique))
 
     return angle <= math.radians(unique)
 
@@ -279,6 +282,7 @@ def filter_unique(subparticles, subpart, unique):
         by unique (angular distance).
         For this function we assume that subpart is not contained
         inside."""
+    print(unique)
     for sp in subparticles:
         if within_unique(sp, subpart, unique):
             return False
@@ -289,11 +293,13 @@ def filter_unique(subparticles, subpart, unique):
 def filter_mindist(subparticles, subpart, mindist):
     """ Return True if subpart is not close to any other subparticle
     by mindist. """
+
+    index = 0
     for sp in subparticles:
         if within_mindist(sp, subpart, mindist):
-            return False
-
-    return True
+            return False, index
+        index += 1
+    return True, -1
 
 
 def filter_side(subpart, side):
@@ -321,6 +327,8 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
 
     subparticles = []
     subparticles_total += 1
+    top_cnt = 0
+    unique_cnt = 0
 
     symmetry_matrix_ids = range(1, len(symmetry_matrices) + 1)
 
@@ -346,9 +354,7 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
                 m2 = np.matmul(matrix_particle[0:3, 0:3], symmetry_matrix.transpose())
                 angles = -1.0 * np.ones(3) * euler_from_matrix(m2, 'szyz')
 
-            print "program", np.degrees(angles)
             subpart._angles = angles
-
             if side > 0:
                 print("Side Filter")
                 if not filter_side(subpart, side):
@@ -356,11 +362,14 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
             if top > 0:
                 print("Top Filter")
                 if not filter_top(subpart, top):
+                    print(subpart._angles)
+                    top_cnt += 1
                     continue
 
             if unique >= 0:
                 print("Unique Filter", unique)
                 if not filter_unique(subparticles, subpart, unique):
+                    unique_cnt += 1
                     continue
 
             # subparticle origin
@@ -382,7 +391,6 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
             coord.setX(int(part_image_size / 2) - x_i)
             coord.setY(int(part_image_size / 2) - y_i)
             coord.setMicId(particle.getObjId())
-            coord._subparticle = subpart.clone()
             subpart.setCoordinate(coord)
 
             if subpart.hasCTF():
@@ -392,11 +400,11 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
 
             if mindist > 0:
                 print("Mindist Filter", mindist)
-                if not filter_mindist(subparticles, subpart, mindist):
+                flag, _ = filter_mindist(subparticles, subpart, mindist)
+                if not flag:
                     continue;
 
             coord._subparticle = subpart.clone()
-            subpart.setCoordinate(coord)
             subparticles.append(subpart)
-
+    print(unique_cnt, top_cnt)
     return subparticles

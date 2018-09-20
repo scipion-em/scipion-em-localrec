@@ -26,17 +26,19 @@
 # **************************************************************************
 
 import numpy as np
+import math
 
 from pyworkflow import VERSION_1_1
 from pyworkflow.em import ImageHandler
 from pyworkflow.protocol.params import (PointerParam, BooleanParam, StringParam,
                                         EnumParam, NumericRangeParam,
                                         PathParam, FloatParam, LEVEL_ADVANCED)
-from pyworkflow.em.protocol import ProtParticles, IntParam
+from pyworkflow.em.protocol import ProtParticles, ProtParticlePicking
 
 from localrec.utils import *
 
-class ProtLocalizedExtraction(ProtParticles):
+
+class ProtFilterSubParts(ProtParticlePicking, ProtParticles):
     """ Extract computed sub-particles from a SetOfParticles. """
     _label = 'filter_subunits'
     _lastUpdateVersion = VERSION_1_1
@@ -76,14 +78,11 @@ class ProtLocalizedExtraction(ProtParticles):
 
     # -------------------------- INSERT steps functions -----------------------
     def _insertAllSteps(self):
-        partsId = self.inputParticles.get().getObjId()
         self._insertFunctionStep('createOutputStep',
-                                 self._getInputParticles().getObjId(),
-                                 self.inputCoordinates.get().getObjId(),
-                                 self.boxSize.get())
+                                 self.inputCoordinates.get().getObjId())
 
     # -------------------------- STEPS functions ------------------------------
-    def createOutputStep(self, particlesId, coordsId, boxSize):
+    def createOutputStep(self, coordsId):
         """ Create the input file in STAR format as expected by Relion.
         Params:
             particlesId: use this parameters just to force redo of convert if
@@ -91,62 +90,59 @@ class ProtLocalizedExtraction(ProtParticles):
         """
 
         inputCoords = self.inputCoordinates.get()
-        outputSet = self._createSetOfCoordinates()
+        inputMics = inputCoords.getMicrographs()
+        outputSet = self._createSetOfCoordinates(inputMics)
         outputSet.copyInfo(inputCoords)
+        params = {"unique": self.unique.get(),
+                  "mindist": self.mindist.get(),
+                  "side": self.side.get(),
+                  "top": self.top.get()
+                  }
 
         lastPartId = None
+        subParticles = []
 
         for coord in inputCoords.iterItems(orderBy=['_subparticle._micId',
                                                     '_micId', 'id']):
             # The original particle id is stored in the sub-particle as micId
             partId = coord._micId.get()
+            print("Mic num", partId)
 
             # Load the particle if it has changed from the last sub-particle
             if partId != lastPartId:
-                particle = inputParticles[partId]
-
-                if particle is None:
-                    partIdExcluded.append(partId)
-                    self.info("WARNING: Missing particle with id %s from "
-                              "input particles set" % partId)
-                else:
-                    # Now load the particle image to extract later sub-particles
-                    img = ih.read(particle)
-                    x, y, _, _ = img.getDimensions()
-                    data = img.getData()
-
+                subParticles = []
                 lastPartId = partId
 
-            # If particle is not in inputParticles, subparticles will not be
-            # generated. Now, subtract from a subset of original particles is
-            # supported.
-            if not partId in partIdExcluded:
-                xpos = coord.getX()
-                ypos = coord.getY()
-
-                # Check that the sub-particle will not lay out of the particle
-                if (ypos - b2 < 0 or ypos + b2 > y or
-                        xpos - b2 < 0 or xpos + b2 > x):
-                    outliers += 1
+            subParticle = coord._subparticle
+            subpart = subParticle.clone()
+            _, cAngles = geometryFromMatrix(inv(subParticle.getTransform().getMatrix()))
+            subpart._angles = cAngles
+            if params["side"] > 0:
+                print("Side Filter")
+                if not filter_side(subpart, params["side"]):
                     continue
+            if params["top"] > 0:
+                print("Top Filter", params["top"])
+                if not filter_top(subpart, params["top"]):
+                    print(subpart._angles)
+                    continue
+            if params["unique"] >= 0:
+                print("number_of subparticles", len(subParticles))
+                if not filter_unique(subParticles, subpart, params["unique"]):
+                    continue
+            if params["mindist"] > 0:
+                print("Mindist Filter", params["mindist"])
+                flag, index = filter_mindist(subParticles, subpart, params["mindist"])
+                if not flag:
+                    print index
+                    continue;
+            subParticles.append(subpart)
+            outputSet.append(coord)
 
-                # Crop the sub-particle data from the whole particle image
-                center[:, :] = data[ypos - b2:ypos + b2, xpos - b2:xpos + b2]
-                outputImg.setData(center)
-                i += 1
-                outputImg.write((i, outputStack))
-                subpart = coord._subparticle
-                subpart.setLocation(
-                    (i, outputStack))  # Change path to new stack
-                subpart.setObjId(None)  # Force to insert as a new item
-                outputSet.append(subpart)
 
-        if outliers:
-            self.info("WARNING: Discarded %s particles because laid out of the "
-                      "particle (for a box size of %d" % (outliers, boxSize))
+        self._defineOutputs(outputCoordinates=outputSet)
+        self._defineTransformRelation(self.inputCoordinates, self.outputCoordinates)
 
-        self._defineOutputs(outputParticles=outputSet)
-        self._defineSourceRelation(self.inputParticles, outputSet)
 
     # -------------------------- INFO functions -------------------------------
     def _validate(self):
@@ -160,18 +156,20 @@ class ProtLocalizedExtraction(ProtParticles):
 
         return errors
 
+
     def _citations(self):
-        return ['Serban2015']
+        return ['Ilca2015']
+
 
     def _summary(self):
         summary = []
         return summary
 
+
     def _methods(self):
         return []
 
+
     # -------------------------- UTILS functions ------------------------------
     def _getInputParticles(self):
-
-
         return self.inputParticles.get()
