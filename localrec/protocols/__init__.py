@@ -23,3 +23,6 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+
+from protocol_localized import ProtLocalizedRecons
+from protocol_localized_extraction import ProtLocalizedExtraction

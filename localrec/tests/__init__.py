@@ -23,3 +23,6 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+
+from test_protocol_localized_reconstruction import TestLocalizedReconsBase, \
+    TestLocalizedRecons
