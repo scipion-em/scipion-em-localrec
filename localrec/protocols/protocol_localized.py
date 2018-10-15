@@ -1,6 +1,7 @@
 # *****************************************************************************
 # *
 # * Authors:     Josue Gomez Blanco (josue.gomez-blanco@mcgill.ca)
+# *              Vahid Abrishami (vahid.abrishami@helsinki.fi)
 # *
 # * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
 # *
@@ -105,30 +106,11 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
                             'is <= 0, the length of the given vector. '
                             'Different values must be separated by commas.')
 
-        form.addSection('Sub-particles')
-        form.addParam('alignSubparticles', BooleanParam, default=True,
+        group = form.addGroup('Sub-particles')
+        group.addParam('alignSubparticles', BooleanParam, default=True,
                       label='Align the subparticles?',
                       help='Align sub-particles to the standard orientation. ')
-        form.addParam('unique', FloatParam, default=-1,
-                      label='Angle to keep unique sub-particles (deg)',
-                      help='Keep only unique subparticles within angular '
-                           'distance. It is useful to remove overlapping '
-                           'sub-particles on symmetry axis.')
-        form.addParam('mindist', FloatParam, default=-1,
-                      label='Minimum distance between sub-particles (px)',
-                      help='In pixels. Minimum distance between the '
-                           'subparticles in the image. All overlapping ones '
-                           'will be discarded.')
-        form.addParam('side', FloatParam, default=-1,
-                      label='Angle to keep sub-particles from side views (deg)',
-                      help='Keep only particles within specified angular '
-                           'distance from side views. All others will be '
-                           'discarded. ')
-        form.addParam('top', FloatParam, default=-1,
-                      label='Angle to keep sub-particles from top views (deg)',
-                      help='Keep only particles within specified angular '
-                           'distance from top views. All others will be '
-                           'discarded. ')
+
 
         form.addParallelSection(threads=0, mpi=0)
 
@@ -145,10 +127,6 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
                   "vector": self.vector.get(),
                   "vectorFile": self.vectorFile.get(),
                   "length": self.length.get(),
-                  "unique": self.unique.get(),
-                  "mindist": self.mindist.get(),
-                  "side": self.side.get(),
-                  "top": self.top.get(),
                   "pxSize": self.inputParticles.get().getSamplingRate(),
                   "dim": self.inputParticles.get().getXDim()
                   }
@@ -173,10 +151,6 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
                                                subpartVectorList,
                                                params["dim"],
                                                self.randomize,
-                                               params["unique"],
-                                               params["mindist"],
-                                               params["top"],
-                                               params["side"],
                                                0,
                                                self.alignSubparticles)
 
