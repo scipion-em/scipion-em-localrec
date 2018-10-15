@@ -29,27 +29,27 @@ import numpy as np
 import math
 
 from pyworkflow import VERSION_1_1
-from pyworkflow.em import ImageHandler
-from pyworkflow.protocol.params import (PointerParam, BooleanParam, StringParam,
-                                        EnumParam, NumericRangeParam,
-                                        PathParam, FloatParam, LEVEL_ADVANCED)
-from pyworkflow.em.protocol import ProtParticles, ProtParticlePicking
+from pyworkflow.protocol.params import PointerParam, FloatParam
+from pyworkflow.em.protocol import ProtParticles
+from pyworkflow.em.data import SetOfParticles
 
 from localrec.utils import *
 
 
-class ProtFilterSubParts(ProtParticlePicking, ProtParticles):
-    """ Extract computed sub-particles from a SetOfParticles. """
+class ProtFilterSubParts(ProtParticles):
+    """ This protocol mainly filters output particles from two protocols:
+    extend symmetry and localized subparticles. It can filter the particles
+    (sub-particles) according to spatial distance, view, and angular distance.
+    """
     _label = 'filter_subunits'
     _lastUpdateVersion = VERSION_1_1
 
     # -------------------------- DEFINE param functions -----------------------
     def _defineParams(self, form):
         form.addSection(label='Input')
-        form.addParam('inputCoordinates', PointerParam,
-                      pointerClass='SetOfCoordinates',
-                      important=True,
-                      label='Input coordinates')
+        form.addParam('inputSet', PointerParam,
+                      pointerClass='SetOfCoordinates, SetOfParticles',
+                      label='Input type')
         form.addSection('Sub-particles')
         form.addParam('unique', FloatParam, default=-1,
                       label='Angle to keep unique sub-particles (deg)',
@@ -79,7 +79,7 @@ class ProtFilterSubParts(ProtParticlePicking, ProtParticles):
     # -------------------------- INSERT steps functions -----------------------
     def _insertAllSteps(self):
         self._insertFunctionStep('createOutputStep',
-                                 self.inputCoordinates.get().getObjId())
+                                 self.inputSet.get().getObjId())
 
     # -------------------------- STEPS functions ------------------------------
     def createOutputStep(self, coordsId):
@@ -89,27 +89,66 @@ class ProtFilterSubParts(ProtParticlePicking, ProtParticles):
                 the input particles are changed.
         """
 
-        inputCoords = self.inputCoordinates.get()
-        inputMics = inputCoords.getMicrographs()
-        outputSet = self._createSetOfCoordinates(inputMics)
-        outputSet.copyInfo(inputCoords)
+        inputSet = self.inputSet.get()
         params = {"unique": self.unique.get(),
                   "mindist": self.mindist.get(),
                   "side": self.side.get(),
                   "top": self.top.get()
                   }
+        if isinstance(inputSet, SetOfParticles):
+            self._particlesOutputStep(inputSet, params)
+        else:
+            self._coordinateOutputStep(inputSet, params)
+
+    def _particlesOutputStep(self, inputSet, params):
+
+        outputParts = self._createSetOfParticles()
+        outputParts.copyInfo(inputSet)
+
+        lastPartId = None
+        particlesList = []
+
+        for particle in inputSet.iterItems(orderBy=['_index']):
+
+            partId = int(particle._index)
+            if partId != lastPartId:
+                lastPartId = partId
+                particlesList = []
+
+            subpart = particle.clone()
+            _, cAngles = geometryFromMatrix(inv(particle.getTransform().getMatrix()))
+            subpart._angles = cAngles
+
+            if not self._filterParticles(params, particlesList, subpart):
+                continue
+
+            particlesList.append(subpart)
+            outputParts.append(subpart)
+
+        self._defineOutputs(outputParticles=outputParts)
+        self._defineSourceRelation(self.inputSet, outputParts)
+
+    def _coordinateOutputStep(self, inputSet, params):
+
+        inputMics = inputSet.getMicrographs()
+        outputSet = self._createSetOfCoordinates(inputMics)
+        outputSet.copyInfo(inputSet)
 
         lastPartId = None
         subParticles = []
+        coordArr = []
+        subParticleId = 0
 
-        for coord in inputCoords.iterItems(orderBy=['_subparticle._micId',
-                                                    '_micId', 'id']):
+        for coord in inputSet.iterItems(orderBy=['_subparticle._micId',
+                                                 '_micId', 'id']):
             # The original particle id is stored in the sub-particle as micId
             partId = coord._micId.get()
-            print("Mic num", partId)
 
             # Load the particle if it has changed from the last sub-particle
             if partId != lastPartId:
+                self._genOutputCoordinates(subParticles, coordArr, outputSet, params["mindist"])
+                subParticleId = 0
+                coordArr = []
                 subParticles = []
                 lastPartId = partId
 
@@ -117,59 +156,70 @@ class ProtFilterSubParts(ProtParticlePicking, ProtParticles):
             subpart = subParticle.clone()
             _, cAngles = geometryFromMatrix(inv(subParticle.getTransform().getMatrix()))
             subpart._angles = cAngles
-            if params["side"] > 0:
-                print("Side Filter")
-                if not filter_side(subpart, params["side"]):
-                    continue
-            if params["top"] > 0:
-                print("Top Filter", params["top"])
-                if not filter_top(subpart, params["top"]):
-                    print(subpart._angles)
-                    continue
-            if params["unique"] >= 0:
-                print("number_of subparticles", len(subParticles))
-                if not filter_unique(subParticles, subpart, params["unique"]):
-                    continue
-            if params["mindist"] > 0:
-                print("Mindist Filter", params["mindist"])
-                flag, index = filter_mindist(subParticles, subpart, params["mindist"])
-                if not flag:
-                    print index
-                    continue;
+            subParticleId += 1
+            subpart._id = subParticleId
+            if not self._filterParticles(params, subParticles, subpart):
+                continue
             subParticles.append(subpart)
-            outputSet.append(coord)
+            coordArr.append(coord.clone())
 
-
+        self._genOutputCoordinates(subParticles, coordArr, outputSet, params["mindist"])
         self._defineOutputs(outputCoordinates=outputSet)
-        self._defineTransformRelation(self.inputCoordinates, self.outputCoordinates)
-
+        self._defineTransformRelation(self.inputSet, self.outputCoordinates)
 
     # -------------------------- INFO functions -------------------------------
     def _validate(self):
         errors = []
-        inputCoords = self.inputCoordinates.get()
-        firstCoord = inputCoords.getFirstItem()
-
-        if not firstCoord.hasAttribute('_subparticle'):
-            errors.append('The selected input coordinates does not are the '
-                          'output from a localized-subparticles protocol.')
+        inputSet = self.inputType.get()
+        if isinstance(inputSet, SetOfParticles):
+            if not inputSet.hasAlignmentProj():
+                errors.append('The selected input particles do not have '
+                              'alignment information.')
+        else:
+            firstCoord = inputSet.getFirstItem()
+            if not firstCoord.hasAttribute('_subparticle'):
+                errors.append('The selected input coordinates are not the '
+                              'output from a localized-subparticles protocol.')
 
         return errors
 
-
     def _citations(self):
         return ['Ilca2015']
-
 
     def _summary(self):
         summary = []
         return summary
 
-
     def _methods(self):
         return []
-
 
     # -------------------------- UTILS functions ------------------------------
     def _getInputParticles(self):
         return self.inputParticles.get()
+
+    def _genOutputCoordinates(self, subParticles, coordArr, outputSet, minDist):
+
+        for index, coordinate in enumerate(coordArr):
+            if minDist:
+                subpart = subParticles[index]
+                if filter_mindist(subParticles, subpart, minDist):
+                    outputSet.append(coordinate.clone())
+            else:
+                outputSet.append(coordinate.clone())
+
+    def _filterParticles(self, params, subParticles, subPart):
+
+        if params["side"] > 0:
+            # print("Side Filter")
+            if not filter_side(subPart, params["side"]):
+                return False
+        if params["top"] > 0:
+            # print("Top Filter", params["top"])
+            if not filter_top(subPart, params["top"]):
+                print(subPart._angles)
+                return False
+        if params["unique"] >= 0:
+            if not filter_unique(subParticles, subPart, params["unique"]):
+                return False
+
+        return True

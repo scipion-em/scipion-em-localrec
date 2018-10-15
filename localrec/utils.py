@@ -296,10 +296,10 @@ def filter_mindist(subparticles, subpart, mindist):
 
     index = 0
     for sp in subparticles:
-        if within_mindist(sp, subpart, mindist):
-            return False, index
-        index += 1
-    return True, -1
+        if (sp._id != subpart._id) and \
+                within_mindist(sp, subpart, mindist):
+            return False
+    return True
 
 
 def filter_side(subpart, side):
@@ -316,8 +316,8 @@ def filter_subparticles(subparticles, filters):
 
 
 def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
-                        part_image_size, randomize, unique, mindist, top, side,
-                        subparticles_total, align_subparticles):
+                        part_image_size, randomize, subparticles_total,
+                        align_subparticles):
     """ Obtain all subparticles from a given particle and set
     the properties of each such subparticle. """
 
@@ -354,24 +354,6 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
                 m2 = np.matmul(matrix_particle[0:3, 0:3], symmetry_matrix.transpose())
                 angles = -1.0 * np.ones(3) * euler_from_matrix(m2, 'szyz')
 
-            subpart._angles = angles
-            if side > 0:
-                print("Side Filter")
-                if not filter_side(subpart, side):
-                    continue
-            if top > 0:
-                print("Top Filter")
-                if not filter_top(subpart, top):
-                    print(subpart._angles)
-                    top_cnt += 1
-                    continue
-
-            if unique >= 0:
-                print("Unique Filter", unique)
-                if not filter_unique(subparticles, subpart, unique):
-                    unique_cnt += 1
-                    continue
-
             # subparticle origin
             d = subparticle_vector.get_length()
             x = -m[0, 2] * d + shifts[0]
@@ -398,13 +380,7 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
                 ctf.setDefocusU(subpart.getDefocusU() + z)
                 ctf.setDefocusV(subpart.getDefocusV() + z)
 
-            if mindist > 0:
-                print("Mindist Filter", mindist)
-                flag, _ = filter_mindist(subparticles, subpart, mindist)
-                if not flag:
-                    continue;
-
             coord._subparticle = subpart.clone()
             subparticles.append(subpart)
-    print(unique_cnt, top_cnt)
+
     return subparticles
