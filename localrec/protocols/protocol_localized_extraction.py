@@ -66,11 +66,7 @@ class ProtLocalizedExtraction(ProtParticles):
 
     # -------------------------- STEPS functions ------------------------------
     def createOutputStep(self):
-        """ Create the input file in STAR format as expected by Relion.
-        Params:
-            particlesId: use this parameters just to force redo of convert if
-                the input particles are changed.
-        """
+
         ih = ImageHandler()
         outputStack = self._getPath('particles.mrcs')
         outputImg = ih.createImage()
