@@ -61,14 +61,11 @@ class ProtLocalizedExtraction(ProtParticles):
 
     # -------------------------- INSERT steps functions -----------------------
     def _insertAllSteps(self):
-        partsId = self.inputParticles.get().getObjId()
-        self._insertFunctionStep('createOutputStep',
-                                 self._getInputParticles().getObjId(),
-                                 self.inputCoordinates.get().getObjId(),
-                                 self.boxSize.get())
+
+        self._insertFunctionStep('createOutputStep')
 
     # -------------------------- STEPS functions ------------------------------
-    def createOutputStep(self, particlesId, coordsId, boxSize):
+    def createOutputStep(self):
         """ Create the input file in STAR format as expected by Relion.
         Params:
             particlesId: use this parameters just to force redo of convert if
@@ -78,7 +75,7 @@ class ProtLocalizedExtraction(ProtParticles):
         outputStack = self._getPath('particles.mrcs')
         outputImg = ih.createImage()
 
-        inputParticles = self._getInputParticles()
+        inputParticles = self.inputParticles.get()
         inputCoords = self.inputCoordinates.get()
         outputSet = self._createSetOfParticles()
         outputSet.copyInfo(inputParticles)
@@ -167,9 +164,3 @@ class ProtLocalizedExtraction(ProtParticles):
 
     def _methods(self):
         return []
-
-    # -------------------------- UTILS functions ------------------------------
-    def _getInputParticles(self):
-
-
-        return self.inputParticles.get()

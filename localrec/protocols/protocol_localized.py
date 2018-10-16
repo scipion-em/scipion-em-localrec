@@ -28,7 +28,7 @@
 from pyworkflow import VERSION_1_1
 from pyworkflow.protocol.params import (PointerParam, BooleanParam, StringParam,
                                         EnumParam, NumericRangeParam,
-                                        PathParam, FloatParam, LEVEL_ADVANCED)
+                                        PathParam, LEVEL_ADVANCED)
 from pyworkflow.em.protocol import ProtParticles, ProtParticlePicking
 from localrec.utils import (getSymMatricesXmipp, load_vectors, create_subparticles)
 from localrec.constants import CMM, HAND
