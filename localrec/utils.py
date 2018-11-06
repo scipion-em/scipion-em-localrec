@@ -35,11 +35,11 @@ from numpy.linalg import inv
 from itertools import izip
 import xml.etree.ElementTree
 
-from pyworkflow.em.transformations import vector_norm, unit_vector, euler_matrix, \
-    euler_from_matrix
-from pyworkflow.em.constants import SYM_CYCLIC, SYM_DIHEDRAL, \
-    SYM_OCTAHEDRAL, SYM_TETRAHEDRAL, SYM_TETRAHEDRAL_Z3, SYM_I222, \
-    SYM_I222r, SYM_In25, SYM_In25r
+from pyworkflow.em.transformations import (vector_norm, unit_vector,
+                                           euler_matrix, euler_from_matrix)
+from pyworkflow.em.constants import (SYM_CYCLIC, SYM_DIHEDRAL, SYM_OCTAHEDRAL,
+                                     SYM_TETRAHEDRAL, SYM_I222, SYM_I222r,
+                                     SYM_In25, SYM_In25r)
 from pyworkflow.em.symmetry import getSymmetryMatrices
 from pyworkflow.em.data import Coordinate
 import pyworkflow.em as em
@@ -71,6 +71,7 @@ class Vector3:
 
     def compute_matrix(self):
         """ Compute rotation matrix to align Z axis to this vector. """
+
         if abs(self.vector[0]) < 0.00001 and abs(self.vector[1]) < 0.00001:
             rot = math.radians(0.00)
             tilt = math.radians(0.00)
@@ -87,6 +88,8 @@ class Vector3:
 
 
 def getSymMatricesXmipp(symmetryGroup):
+    """ Return symmetry matrices related to a point group"""
+
     symmetryGroupLetter = symmetryGroup[0].upper()
 
     if symmetryGroupLetter == 'I':
@@ -127,6 +130,7 @@ def matrixFromGeometry(shifts, angles, inverseTransform):
     """ Create the transformation matrix from a given
     2D shifts in X and Y...and the 3 euler angles.
     """
+
     from pyworkflow.em.transformations import euler_matrix
     # angles list is in radians, but sign changed
     radAngles = -angles
@@ -134,7 +138,6 @@ def matrixFromGeometry(shifts, angles, inverseTransform):
     M = euler_matrix(radAngles[0], radAngles[1], radAngles[2], 'szyz')
     if inverseTransform:
         from numpy.linalg import inv
-        print(M[:3, 3])
         M[:3, 3] = -shifts[:3]
         M = inv(M)
     else:
@@ -204,7 +207,6 @@ def vectors_from_cmm(input_cmm, angpix):
             y = y - y0
             z = z - z0
             vector.set_vector([x, y, z])
-            vector.print_vector()
             vector_list.append(vector)
         else:
             x0 = x
@@ -251,6 +253,7 @@ def vector_from_two_eulers(rot, tilt):
     x = math.sin(tilt) * math.cos(rot)
     y = math.sin(tilt) * math.sin(rot)
     z = math.cos(tilt)
+
     return [x, y, z]
 
 
@@ -258,11 +261,8 @@ def within_unique(p1, p2, unique):
     """ Returns True if two particles are closer to each other
     than the given angular distance. """
 
-    print(p1._angles[2],p1._angles[1])
-    print(p2._angles[2],p2._angles[1])
     v1 = vector_from_two_eulers(p1._angles[2], p1._angles[1])
     v2 = vector_from_two_eulers(p2._angles[2], p2._angles[1])
-
     dp = np.inner(v1, v2) / (vector_norm(v1)) * (vector_norm(v2))
 
     if dp < -1:
@@ -272,7 +272,7 @@ def within_unique(p1, p2, unique):
         dp = 1.000
 
     angle = math.acos(dp)
-    print(angle, math.radians(unique))
+    # print(np.degrees(angle))
 
     return angle <= math.radians(unique)
 
@@ -282,7 +282,7 @@ def filter_unique(subparticles, subpart, unique):
         by unique (angular distance).
         For this function we assume that subpart is not contained
         inside."""
-    print(unique)
+
     for sp in subparticles:
         if within_unique(sp, subpart, unique):
             return False
@@ -294,11 +294,11 @@ def filter_mindist(subparticles, subpart, mindist):
     """ Return True if subpart is not close to any other subparticle
     by mindist. """
 
-    index = 0
     for sp in subparticles:
-        if (sp._id != subpart._id) and \
-                within_mindist(sp, subpart, mindist):
+        if (sp._id != subpart._id and
+                within_mindist(sp, subpart, mindist)):
             return False
+
     return True
 
 
@@ -327,9 +327,6 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
 
     subparticles = []
     subparticles_total += 1
-    top_cnt = 0
-    unique_cnt = 0
-
     symmetry_matrix_ids = range(1, len(symmetry_matrices) + 1)
 
     if randomize:
@@ -347,9 +344,9 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
             subpart = particle.clone()
             m = np.matmul(matrix_particle[0:3, 0:3], (np.matmul(symmetry_matrix.transpose(),
                                                                 matrix_from_subparticle_vector.transpose())))
-
+            angles_org = -1.0 * np.ones(3) * euler_from_matrix(m, 'szyz')
             if align_subparticles:
-                angles = -1.0 * np.ones(3) * euler_from_matrix(m, 'szyz')
+                  angles = -1.0 * np.ones(3) * euler_from_matrix(m, 'szyz')
             else:
                 m2 = np.matmul(matrix_particle[0:3, 0:3], symmetry_matrix.transpose())
                 angles = -1.0 * np.ones(3) * euler_from_matrix(m2, 'szyz')
@@ -365,21 +362,25 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
             x_d, x_i = math.modf(x)
             y_d, y_i = math.modf(y)
             alignment = em.Transform()
+            alignmentOrg = em.Transform()
             M = matrixFromGeometry(np.array([-x_d, -y_d, 0]), angles, True)
+            MOrg = matrixFromGeometry(np.array([-x_d, -y_d, 0]), angles_org, True)
             alignment.setMatrix(M)
+            alignmentOrg.setMatrix(MOrg)
+            subpart._transorg = alignmentOrg.clone()
             subpart.setTransform(alignment)
             coord = Coordinate()
             coord.setObjId(None)
             coord.setX(int(part_image_size / 2) - x_i)
             coord.setY(int(part_image_size / 2) - y_i)
             coord.setMicId(particle.getObjId())
-            subpart.setCoordinate(coord)
 
             if subpart.hasCTF():
                 ctf = subpart.getCTF()
                 ctf.setDefocusU(subpart.getDefocusU() + z)
                 ctf.setDefocusV(subpart.getDefocusV() + z)
 
+            subpart.setCoordinate(coord)
             coord._subparticle = subpart.clone()
             subparticles.append(subpart)
 

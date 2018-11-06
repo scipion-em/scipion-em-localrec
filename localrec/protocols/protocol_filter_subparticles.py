@@ -74,20 +74,13 @@ class ProtFilterSubParts(ProtParticles):
 
         form.addParallelSection(threads=0, mpi=0)
 
-        form.addParallelSection(threads=0, mpi=0)
-
     # -------------------------- INSERT steps functions -----------------------
     def _insertAllSteps(self):
-        self._insertFunctionStep('createOutputStep',
-                                 self.inputSet.get().getObjId())
+
+        self._insertFunctionStep('createOutputStep')
 
     # -------------------------- STEPS functions ------------------------------
-    def createOutputStep(self, coordsId):
-        """ Create the input file in STAR format as expected by Relion.
-        Params:
-            particlesId: use this parameters just to force redo of convert if
-                the input particles are changed.
-        """
+    def createOutputStep(self):
 
         inputSet = self.inputSet.get()
         params = {"unique": self.unique.get(),
@@ -154,7 +147,7 @@ class ProtFilterSubParts(ProtParticles):
 
             subParticle = coord._subparticle
             subpart = subParticle.clone()
-            _, cAngles = geometryFromMatrix(inv(subParticle.getTransform().getMatrix()))
+            _, cAngles = geometryFromMatrix(inv(subParticle._transorg.getMatrix()))
             subpart._angles = cAngles
             subParticleId += 1
             subpart._id = subParticleId
@@ -170,7 +163,7 @@ class ProtFilterSubParts(ProtParticles):
     # -------------------------- INFO functions -------------------------------
     def _validate(self):
         errors = []
-        inputSet = self.inputType.get()
+        inputSet = self.inputSet.get()
         if isinstance(inputSet, SetOfParticles):
             if not inputSet.hasAlignmentProj():
                 errors.append('The selected input particles do not have '
@@ -194,9 +187,6 @@ class ProtFilterSubParts(ProtParticles):
         return []
 
     # -------------------------- UTILS functions ------------------------------
-    def _getInputParticles(self):
-        return self.inputParticles.get()
-
     def _genOutputCoordinates(self, subParticles, coordArr, outputSet, minDist):
 
         for index, coordinate in enumerate(coordArr):
@@ -216,9 +206,9 @@ class ProtFilterSubParts(ProtParticles):
         if params["top"] > 0:
             # print("Top Filter", params["top"])
             if not filter_top(subPart, params["top"]):
-                print(subPart._angles)
                 return False
         if params["unique"] >= 0:
+            # print(np.degrees(subPart._angles))
             if not filter_unique(subParticles, subPart, params["unique"]):
                 return False
 
