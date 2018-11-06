@@ -272,6 +272,7 @@ def within_unique(p1, p2, unique):
         dp = 1.000
 
     angle = math.acos(dp)
+    # print(np.degrees(angle))
 
     return angle <= math.radians(unique)
 
@@ -343,9 +344,9 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
             subpart = particle.clone()
             m = np.matmul(matrix_particle[0:3, 0:3], (np.matmul(symmetry_matrix.transpose(),
                                                                 matrix_from_subparticle_vector.transpose())))
-
+            angles_org = -1.0 * np.ones(3) * euler_from_matrix(m, 'szyz')
             if align_subparticles:
-                angles = -1.0 * np.ones(3) * euler_from_matrix(m, 'szyz')
+                  angles = -1.0 * np.ones(3) * euler_from_matrix(m, 'szyz')
             else:
                 m2 = np.matmul(matrix_particle[0:3, 0:3], symmetry_matrix.transpose())
                 angles = -1.0 * np.ones(3) * euler_from_matrix(m2, 'szyz')
@@ -361,21 +362,25 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
             x_d, x_i = math.modf(x)
             y_d, y_i = math.modf(y)
             alignment = em.Transform()
+            alignmentOrg = em.Transform()
             M = matrixFromGeometry(np.array([-x_d, -y_d, 0]), angles, True)
+            MOrg = matrixFromGeometry(np.array([-x_d, -y_d, 0]), angles_org, True)
             alignment.setMatrix(M)
+            alignmentOrg.setMatrix(MOrg)
+            subpart._transorg = alignmentOrg.clone()
             subpart.setTransform(alignment)
             coord = Coordinate()
             coord.setObjId(None)
             coord.setX(int(part_image_size / 2) - x_i)
             coord.setY(int(part_image_size / 2) - y_i)
             coord.setMicId(particle.getObjId())
-            subpart.setCoordinate(coord)
 
             if subpart.hasCTF():
                 ctf = subpart.getCTF()
                 ctf.setDefocusU(subpart.getDefocusU() + z)
                 ctf.setDefocusV(subpart.getDefocusV() + z)
 
+            subpart.setCoordinate(coord)
             coord._subparticle = subpart.clone()
             subparticles.append(subpart)
 

@@ -147,7 +147,7 @@ class ProtFilterSubParts(ProtParticles):
 
             subParticle = coord._subparticle
             subpart = subParticle.clone()
-            _, cAngles = geometryFromMatrix(inv(subParticle.getTransform().getMatrix()))
+            _, cAngles = geometryFromMatrix(inv(subParticle._transorg.getMatrix()))
             subpart._angles = cAngles
             subParticleId += 1
             subpart._id = subParticleId
@@ -206,9 +206,9 @@ class ProtFilterSubParts(ProtParticles):
         if params["top"] > 0:
             # print("Top Filter", params["top"])
             if not filter_top(subPart, params["top"]):
-                print(subPart._angles)
                 return False
         if params["unique"] >= 0:
+            # print(np.degrees(subPart._angles))
             if not filter_unique(subParticles, subPart, params["unique"]):
                 return False
 

@@ -1,6 +1,7 @@
 # **************************************************************************
 # *
 # * Authors:   Josue Gomez Blanco (josue.gomez-blanco@mcgill.ca)
+# *            Vahid Abrishami (vahid.abrishami@helsinki.fi)
 # *
 # * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
 # *
@@ -93,7 +94,7 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
                                 objLabel=label,
                                 symmetryGroup="I3",
                                 defineVector=defVector,
-                                unique=5, **kwargs)
+                                **kwargs)
         prot.inputParticles.set(self.protImport.outputParticles)
 
         if defVector == 1:
@@ -111,7 +112,6 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
         coord = prot.outputCoordinates[10]
         cShifts, cAngles = geometryFromMatrix(inv((coord._subparticle.getTransform().getMatrix())))
         cAngles = [math.degrees(cAngles[j]) for j in range(len(cAngles))]
-        print(cAngles)
 
         self.assertAlmostEqual(first=cAngles[0],
                                second=angles[0], delta=0.1,
@@ -136,19 +136,71 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
 
         return prot
 
+    def _runFilterSubParticles(self, checkSize, angles, subParticles, **kwargs):
+        label = 'filter subpartices ('
+        for t in kwargs.iteritems():
+            label += '%s=%s' % t
+        label += ')'
+
+        prot = self.newProtocol(ProtFilterSubParts,
+                                objLabel=label,
+                                unique=5, **kwargs)
+        prot.inputSet.set(subParticles.outputCoordinates)
+
+        self.launchProtocol(prot)
+        self.assertIsNotNone(prot.outputCoordinates,
+                             "There was a problem with localized "
+                             "subparticles protocol")
+        self.assertEqual(checkSize, prot.outputCoordinates.getSize())
+        coord = prot.outputCoordinates.getFirstItem()
+
+        cShifts, cAngles = geometryFromMatrix(inv((coord._subparticle.getTransform().getMatrix())))
+        cAngles = [math.degrees(cAngles[j]) for j in range(len(cAngles))]
+
+        self.assertAlmostEqual(first=cAngles[0],
+                               second=angles[0], delta=0.1,
+                               msg="Rot angle is %0.1f, but should be %0.1f "
+                                   "for the first subparticle."
+                                   % (
+                                       cAngles[0], angles[0]))
+
+        self.assertAlmostEqual(first=cAngles[1],
+                               second=angles[1], delta=0.1,
+                               msg="Tilt angle is %0.1f, but should be %0.1f "
+                                   "for the first subparticle."
+                                   % (
+                                       cAngles[1], angles[1]))
+
+        self.assertAlmostEqual(first=cAngles[2],
+                               second=angles[2], delta=0.1,
+                               msg="Psi angle is %0.1f, but should be %0.1f "
+                                   "for subparticle 10."
+                                   % (
+                                       cAngles[2], angles[2]))
+
+        return prot
+
     def testProtLocalizedReconstruction(self):
         print "Run ProtLocalized Reconstruction"
 
-        localSubparticles = self._runSubparticles(120, [52.3, 174.9, 162.5])
+        # Test for filter sub-particles which are aligned in the z
+        localSubparticles_aligned = self._runSubparticles(600, [-172.0, 5.5, -4.1], alignSubparticles=True)
+        localSubparticles = self._runSubparticles(600, [-1.2, 111.6, -177.4], alignSubparticles=False)
 
-        self._runSubparticles(106, [-102.3, 119.5, 41.8], mindist=10)
-        self._runSubparticles(50, [-34.4, 66.5, 55.0], side=25, defVector=1)
-        self._runSubparticles(21, [-144.6, 130.6, 0.8], top=50)
+        # Test for filter sub-particles which are aligned in the z
+        self._runFilterSubParticles(90, [150.5, 64.6, 72.7], localSubparticles_aligned, mindist=10)
+        self._runFilterSubParticles(50, [107.5, 112.2, -177.8], localSubparticles_aligned, side=25)
+        self._runFilterSubParticles(21, [52.4, 175.0, 162.5], localSubparticles_aligned, top=50)
 
+        # Test for filter sub-particles which are not aligned
+        self._runFilterSubParticles(90, [31.6, 60.155541, -138.80597], localSubparticles, mindist=10)
+        self._runFilterSubParticles(50, [103.2, 66.1, -66.9], localSubparticles, side=25)
+        self._runFilterSubParticles(21, [175.2, 66.1, -66.9], localSubparticles, top=50)
+
+        # Test extract particles
         localExtraction = self.newProtocol(ProtLocalizedExtraction, boxSize=26)
         localExtraction.inputParticles.set(self.protImport.outputParticles)
-        localExtraction.inputCoordinates.set(
-            localSubparticles.outputCoordinates)
+        localExtraction.inputCoordinates.set(localSubparticles.outputCoordinates)
         self.launchProtocol(localExtraction)
         self.assertIsNotNone(localExtraction.outputParticles,
                              "There was a problem with localized "
