@@ -24,6 +24,6 @@
 # *
 # **************************************************************************
 
-from protocol_localized import ProtLocalizedRecons
-from protocol_localized_extraction import ProtLocalizedExtraction
-from protocol_filter_subparticles import ProtFilterSubParts
+from localrec.protocols.protocol_localized import ProtLocalizedRecons
+from localrec.protocols.protocol_localized_extraction import ProtLocalizedExtraction
+from localrec.protocols.protocol_filter_subparticles import ProtFilterSubParts

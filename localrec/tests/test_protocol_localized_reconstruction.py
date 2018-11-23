@@ -25,13 +25,8 @@
 # *
 # **************************************************************************
 
-import sys, unittest, math
-
-from pyworkflow.em import ProtImportParticles, ProtImportVolumes
+from pyworkflow.em.protocol import ProtImportParticles, ProtImportVolumes
 from pyworkflow.tests import *
-from pyworkflow.utils import importFromPlugin
-
-from localrec.protocols import *
 from localrec.utils import *
 
 
@@ -181,7 +176,7 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
         return prot
 
     def testProtLocalizedReconstruction(self):
-        print "Run ProtLocalized Reconstruction"
+        print("Run ProtLocalized Reconstruction")
 
         # Test for filter sub-particles which are aligned in the z
         localSubparticles_aligned = self._runSubparticles(600, [-172.0, 5.5, -4.1], alignSubparticles=True)

@@ -24,5 +24,5 @@
 # *
 # **************************************************************************
 
-from test_protocol_localized_reconstruction import TestLocalizedReconsBase, \
-    TestLocalizedRecons
+from localrec.tests.test_protocol_localized_reconstruction import (TestLocalizedReconsBase,
+    TestLocalizedRecons)
