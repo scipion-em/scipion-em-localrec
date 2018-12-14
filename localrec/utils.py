@@ -35,12 +35,12 @@ from numpy.linalg import inv
 from itertools import izip
 import xml.etree.ElementTree
 
-from pyworkflow.em.transformations import (vector_norm, unit_vector,
+from pyworkflow.em.convert.transformations import (vector_norm, unit_vector,
                                            euler_matrix, euler_from_matrix)
 from pyworkflow.em.constants import (SYM_CYCLIC, SYM_DIHEDRAL, SYM_OCTAHEDRAL,
                                      SYM_TETRAHEDRAL, SYM_I222, SYM_I222r,
                                      SYM_In25, SYM_In25r)
-from pyworkflow.em.symmetry import getSymmetryMatrices
+from pyworkflow.em.convert.symmetry import getSymmetryMatrices
 from pyworkflow.em.data import Coordinate
 import pyworkflow.em as em
 
@@ -119,7 +119,7 @@ def getSymMatricesXmipp(symmetryGroup):
 
 
 def geometryFromMatrix(matrix):
-    from pyworkflow.em.transformations import translation_from_matrix, euler_from_matrix
+    from pyworkflow.em.convert.transformations import translation_from_matrix, euler_from_matrix
 
     shifts = translation_from_matrix(matrix)
     angles = -1.0 * np.ones(3) * euler_from_matrix(matrix, axes='szyz')
@@ -131,7 +131,7 @@ def matrixFromGeometry(shifts, angles, inverseTransform):
     2D shifts in X and Y...and the 3 euler angles.
     """
 
-    from pyworkflow.em.transformations import euler_matrix
+    from pyworkflow.em.convert.transformations import euler_matrix
     # angles list is in radians, but sign changed
     radAngles = -angles
 
@@ -175,16 +175,16 @@ def load_vectors(cmm_file, vectors_str, distances_str, angpix):
         for vector in subparticle_vector_list:
             vector.compute_length()
 
-    print "Using vectors:"
+    print("Using vectors:")
 
     for subparticle_vector in subparticle_vector_list:
-        print "Vector: ",
+        print("Vector: ")
         subparticle_vector.compute_unit_vector()
         subparticle_vector.compute_matrix()
         subparticle_vector.print_vector()
-        print ""
-        print "Length: %.2f pixels" % subparticle_vector.get_length()
-    print ""
+        print("")
+        print("Length: %.2f pixels" % subparticle_vector.get_length())
+    print("")
 
     return subparticle_vector_list
 

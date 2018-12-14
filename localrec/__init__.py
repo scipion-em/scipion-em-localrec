@@ -60,7 +60,7 @@ class Plugin(pyworkflow.em.Plugin):
             }, position=Environ.BEGIN)
         else:
             # TODO: Find a generic way to warn of this situation
-            print "%s variable not set on environment." % cls.getHome()
+            print("%s variable not set on environment." % cls.getHome())
         return environ
 
     @classmethod
