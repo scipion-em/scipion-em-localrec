@@ -28,6 +28,7 @@
 from pyworkflow.em.protocol import ProtImportParticles, ProtImportVolumes
 from pyworkflow.tests import *
 from localrec.utils import *
+from localrec.protocols import *
 
 
 # Some utility functions to import micrographs that are used
