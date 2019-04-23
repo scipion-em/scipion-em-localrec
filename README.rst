@@ -2,7 +2,7 @@
 Localrec scipion plugin
 =======================
 
-Electron cryomicroscopy can yield near-atomic resolution structures of highly ordered macromolecular complexes. Often however some subunits bind in a flexible manner, have different symmetry from the rest of the complex, or are present in sub-stoichiometric amounts, limiting the attainable resolution. Here we report a general method for the localized three-dimensional reconstruction of such subunits.
+Electron cryomicroscopy can yield near-atomic resolution structures of highly ordered macromolecular complexes. Often however some subunits bind in a flexible manner, have different symmetry from the rest of the complex, or are present in sub-stoichiometric amounts, limiting the attainable resolution. Here we report a general method for the localized three-dimensional reconstruction of such subunits. (see http://www.opic.ox.ac.uk/wiki/index.php/Localized_reconstruction for details) 
 
 This sub-package contains data and protocol classes to use Localrec within the Scipion framework
 
