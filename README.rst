@@ -7,11 +7,13 @@ Electron cryomicroscopy can yield near-atomic resolution structures of highly or
 This sub-package contains data and protocol classes to use Localrec within the Scipion framework
 
 
-=====
-Setup
-=====
+===================
+Install this plugin
+===================
 
-- **Install this plugin:**
+You will need to use `2.0.0 <https://github.com/I2PC/scipion/releases/tag/v2.0>`_ version of Scipion to run these protocols. To install the plugin, you have two options:
+
+- **Stable version**  
 
 .. code-block::
 
@@ -21,8 +23,45 @@ OR
 
   - through the plugin manager GUI by launching Scipion and following **Configuration** >> **Plugins**
 
-Alternatively, in devel mode:
+- **Developer's version** 
+
+1. Download repository: 
 
 .. code-block::
 
-    scipion installp -p local/path/to/scipion-em-localrec --devel
+            git clone https://github.com/scipion-em/scipion-em-localrec.git
+
+2. Install:
+
+.. code-block::
+
+           scipion installp -p path_to_scipion-em-localrec --devel
+
+- **Tests**
+
+* scipion test localrec.tests.test_protocol_localized_reconstruction
+
+========
+Protocols
+========
+
+* localized subparticles: Calculate the orientations of the subunits of interest and their positions in the original particle images.
+* filter_subunits: Filter the subunits (sub-particles) based on spatial distance, angular distance, etc.
+* localized extraction: Extract computed sub-particles from a SetOfParticles.
+
+
+===============
+Buildbot status
+===============
+TODO: add to buildbot
+Status devel version: 
+
+.. image:: http://arquimedes.cnb.csic.es:9980/badges/ccp4_devel.svg
+
+Status production version: 
+
+.. image:: http://arquimedes.cnb.csic.es:9980/badges/ccp4_prod.svg
+
+
+
+
