@@ -39,7 +39,7 @@ OR
 
 - **Tests**
 
-* scipion test localrec.tests.test_protocol_localized_reconstruction
+1. scipion test localrec.tests.test_protocol_localized_reconstruction
 
 ========
 Protocols
