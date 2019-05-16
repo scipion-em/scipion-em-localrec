@@ -30,6 +30,7 @@ from pyworkflow.protocol.params import (PointerParam, BooleanParam, StringParam,
                                         EnumParam, NumericRangeParam,
                                         PathParam, LEVEL_ADVANCED)
 from pyworkflow.em.protocol import ProtParticles, ProtParticlePicking
+import pyworkflow.em.metadata as md
 from localrec.utils import (getSymMatricesXmipp, load_vectors, create_subparticles)
 from localrec.constants import CMM, HAND
 
@@ -71,7 +72,6 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
                             '* I2: Crowther 222 \n'
                             '* I3: 52-setting (as used in SPIDER?) \n'
                             '* I4: A different 52 setting \n')
-
         group.addParam('randomize', BooleanParam, default=False,
                        label='Randomize the order of the symmetry matrices?',
                        help='Useful for preventing preferred orientations.')
@@ -121,7 +121,7 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
     # -------------------------- STEPS functions -----------------------------
     def createOutputStep(self):
         # return
-        inputSet = self._getInputParticles()
+        inputSet = self.inputParticles.get()
         outputSet = self._createSetOfCoordinates(inputSet)
         params = {"symmetryGroup": self.symmetryGroup.get(),
                   "vector": self.vector.get(),
@@ -143,16 +143,24 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
         subpartVectorList = load_vectors(cmmFn, vector,
                                          params["length"],
                                          params["pxSize"])
+        vectorsMd = md.MetaData()
+        # Save the vectors in a metadata
+        for vector in subpartVectorList:
+            objId = vectorsMd.addObject()
+            print(vector)
+            vectorsMd.setValue(md.MDL_SHIFT_X, vector.vector[0], objId)
+            vectorsMd.setValue(md.MDL_SHIFT_Y, vector.vector[1], objId)
+            vectorsMd.setValue(md.MDL_SHIFT_Z, vector.vector[2], objId)
+        vectorsMd.write(self._getOutpuVecMetadata())
 
         for part in inputSet:
 
-            subparticles = create_subparticles(part,
-                                               symMatrices,
+            subparticles = create_subparticles(part, symMatrices,
                                                subpartVectorList,
                                                params["dim"],
-                                               self.randomize,
-                                               0,
-                                               self.alignSubparticles)
+                                               self.randomize, 0,
+                                               self.alignSubparticles,
+                                               params["pxSize"])
 
             for subpart in subparticles:
                 coord = subpart.getCoordinate()
@@ -178,8 +186,6 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
         return []
 
     # -------------------------- UTILS functions ------------------------------
-    def _getInputParticles(self):
-        return self.getInputParticlesPointer().get()
+    def _getOutpuVecMetadata(self):
+        return self._getExtraPath('output_vectors.xmd')
 
-    def getInputParticlesPointer(self):
-        return self.inputParticles

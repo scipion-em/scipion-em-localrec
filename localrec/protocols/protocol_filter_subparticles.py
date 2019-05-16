@@ -41,7 +41,7 @@ class ProtFilterSubParts(ProtParticles):
     extend symmetry and localized subparticles. It can filter the particles
     (sub-particles) according to spatial distance, view, and angular distance.
     """
-    _label = 'filter_subunits'
+    _label = 'filter subparticles'
     _lastUpdateVersion = VERSION_1_1
 
     # -------------------------- DEFINE param functions -----------------------
