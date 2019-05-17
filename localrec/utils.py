@@ -156,7 +156,6 @@ def load_vectors(cmm_file, vectors_str, distances_str, angpix):
     else:
         subparticle_vector_list = vectors_from_string(vectors_str)
 
-    print(float(distances_str))
     if float(distances_str)>0.0:
 
         # Change distances from A to pixel units

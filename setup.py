@@ -90,11 +90,11 @@ setup(
 
     # This should be your name or the name of the organization which owns the
     # project.
-    author='I2PC',  # Optional
+    author='grp-lsb',  # Optional
 
     # This should be a valid email address corresponding to the author listed
     # above.
-    author_email='scipion@cnb.csic.es',  # Optional
+    author_email='grp-lsb-software@helsinki.fi',  # Optional
 
     # Classifiers help users find your project by categorizing it.
     #
@@ -122,7 +122,7 @@ setup(
     # project page. What does your project relate to?
     #
     # Note that this is a string of words separated by whitespace, not a list.
-    keywords='scipion cryoem imageprocessing scipion-2.0',  # Optional
+    keywords='localizedreconstruction cryoem imageprocessing scipion-2.0',  # Optional
 
     # You can just specify package directories manually here if your project is
     # simple. Or you can use find_packages().
