@@ -61,6 +61,11 @@ class ProtFilterSubParts(ProtParticles):
                       help='In pixels. Minimum distance between the '
                            'subparticles in the image. All overlapping ones '
                            'will be discarded.')
+        form.addParam('distOrigin', FloatParam, default=-1,
+                      label='Minimum distance to origin (px)',
+                      help='In pixels. Minimum distance between the '
+                           'subparticles in the image. All overlapping ones '
+                           'will be discarded.')
         form.addParam('side', FloatParam, default=-1,
                       label='Angle to keep sub-particles from side views (deg)',
                       help='Keep only particles within specified angular '
