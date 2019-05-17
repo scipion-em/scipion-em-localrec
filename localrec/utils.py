@@ -89,7 +89,8 @@ class Vector3:
 
 def getSymMatricesXmipp(symmetryGroup):
     """ Return symmetry matrices related to a point group"""
-
+    print "getSymMatricesXmipp: NOT NEEDED ANY LONGER"
+    exit(1)
     symmetryGroupLetter = symmetryGroup[0].upper()
 
     if symmetryGroupLetter == 'I':

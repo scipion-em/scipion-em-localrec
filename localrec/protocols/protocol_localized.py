@@ -2,6 +2,7 @@
 # *
 # * Authors:     Josue Gomez Blanco (josue.gomez-blanco@mcgill.ca)
 # *              Vahid Abrishami (vahid.abrishami@helsinki.fi)
+# *              roberto Marabini roberto.marabini@uam.es
 # *
 # * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
 # *
@@ -27,11 +28,18 @@
 
 from pyworkflow import VERSION_1_1
 from pyworkflow.protocol.params import (PointerParam, BooleanParam, StringParam,
+                                        IntParam,
                                         EnumParam, NumericRangeParam,
                                         PathParam, LEVEL_ADVANCED)
 from pyworkflow.em.protocol import ProtParticles, ProtParticlePicking
 from localrec.utils import (getSymMatricesXmipp, load_vectors, create_subparticles)
 from localrec.constants import CMM, HAND
+
+from pyworkflow.em.constants import (SYM_I222, SYM_I222r, SYM_In25, SYM_In25r,
+                                     SYM_CYCLIC, SYM_DIHEDRAL, SYM_TETRAHEDRAL,
+                                     SYM_OCTAHEDRAL, SCIPION_SYM_NAME)
+from xmipp3.constants import XMIPP_SYM_NAME
+from pyworkflow.em.convert.symmetry import getSymmetryMatrices
 
 
 class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
@@ -61,16 +69,46 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
                       help='Select the input images from the project.')
 
         group = form.addGroup('Symmetry')
-        group.addParam('symmetryGroup', StringParam, default='c1',
-                       label="Symmetry",
-                       help='If the molecule is asymmetric, set Symmetry group '
-                            'to C1. Note their are multiple possibilities for '
-                            'icosahedral symmetry: \n'
-                            '* I1: No-Crowther 222 (standard in Heymann, '
-                            'Chagoyen & Belnap, JSB, 151 (2005) 196-207)\n'
-                            '* I2: Crowther 222 \n'
-                            '* I3: 52-setting (as used in SPIDER?) \n'
-                            '* I4: A different 52 setting \n')
+        # group.addParam('symmetryGroup', StringParam, default='c1',
+        #                label="Symmetry",
+        #                help='If the molecule is asymmetric, set Symmetry group '
+        #                     'to C1. Note their are multiple possibilities for '
+        #                     'icosahedral symmetry: \n'
+        #                     '* I1: No-Crowther 222 (standard in Heymann, '
+        #                     'Chagoyen & Belnap, JSB, 151 (2005) 196-207)\n'
+        #                     '* I2: Crowther 222 \n'
+        #                     '* I3: 52-setting (as used in SPIDER?) \n'
+        #                     '* I4: A different 52 setting \n')
+        # keep an the old paramter name for compatibility
+        group.addHidden('symmetryGroup', StringParam, default='c1')
+        group.addParam('symmetryGroup2', EnumParam,
+                      choices=[XMIPP_SYM_NAME[SYM_CYCLIC] +
+                               " (" + SCIPION_SYM_NAME[SYM_CYCLIC] + ")",
+                               XMIPP_SYM_NAME[SYM_DIHEDRAL] +
+                               " (" + SCIPION_SYM_NAME[SYM_DIHEDRAL] + ")",
+                               XMIPP_SYM_NAME[SYM_TETRAHEDRAL] +
+                               " (" + SCIPION_SYM_NAME[SYM_TETRAHEDRAL] + ")",
+                               XMIPP_SYM_NAME[SYM_OCTAHEDRAL] +
+                               " (" + SCIPION_SYM_NAME[SYM_OCTAHEDRAL] + ")",
+                               XMIPP_SYM_NAME[SYM_I222] +
+                               " (" + SCIPION_SYM_NAME[SYM_I222] + ")",
+                               XMIPP_SYM_NAME[SYM_I222r] +
+                               " (" + SCIPION_SYM_NAME[SYM_I222r] + ")",
+                               XMIPP_SYM_NAME[SYM_In25] +
+                               " (" + SCIPION_SYM_NAME[SYM_In25] + ")",
+                               XMIPP_SYM_NAME[SYM_In25r] +
+                               " (" + SCIPION_SYM_NAME[SYM_In25r] + ")"],
+                      default=SYM_I222r,
+                      label="Symmetry",
+                      help="See https://github.com/I2PC/xmipp-portal/wiki/Symmetry"
+                           "Symmetry for a description of the symmetry groups "
+                           "format in Xmipp.\n"
+                           "If no symmetry is present, use _c1_."
+                      )
+        group.addParam('symmetryOrder', IntParam, default=1,
+                      condition='symmetryGroup2<=%d' % SYM_DIHEDRAL,
+                      label='Symmetry Order',
+                      help='Order of cyclic/dihedral symmetry.')
 
         group.addParam('randomize', BooleanParam, default=False,
                        label='Randomize the order of the symmetry matrices?',
@@ -123,7 +161,8 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
         # return
         inputSet = self._getInputParticles()
         outputSet = self._createSetOfCoordinates(inputSet)
-        params = {"symmetryGroup": self.symmetryGroup.get(),
+        params = {"symmetryGroup": self.symmetryGroup2.get(),
+                  "symmetryOrder": self.symmetryOrder.get(),
                   "vector": self.vector.get(),
                   "vectorFile": self.vectorFile.get(),
                   "length": self.length.get(),
@@ -131,7 +170,9 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
                   "dim": self.inputParticles.get().getXDim()
                   }
 
-        symMatrices = getSymMatricesXmipp(self.symmetryGroup.get())
+        symMatrices = getSymmetryMatrices(sym = self.symmetryGroup2.get(),
+                                          n = self.symmetryOrder.get())
+        #symMatrices = getSymMatricesXmipp(self.symmetryGroup.get())
 
         if self.defineVector == CMM:
             cmmFn = params["vectorFile"]
