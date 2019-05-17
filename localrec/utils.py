@@ -302,6 +302,8 @@ def filter_mindist(subparticles, subpart, mindist):
 
     return True
 
+def filter_distorigin(subparticles, subpart, distorigin):
+    pass
 
 def filter_side(subpart, side):
     return (abs(abs(subpart._angles[1]) - math.radians(90))) < math.radians(side)

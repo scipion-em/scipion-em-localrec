@@ -61,11 +61,11 @@ class ProtFilterSubParts(ProtParticles):
                       help='In pixels. Minimum distance between the '
                            'subparticles in the image. All overlapping ones '
                            'will be discarded.')
-        form.addParam('distOrigin', FloatParam, default=-1,
+        form.addParam('distorigin', FloatParam, default=-1,
                       label='Minimum distance to origin (px)',
-                      help='In pixels. Minimum distance between the '
-                           'subparticles in the image. All overlapping ones '
-                           'will be discarded.')
+                      help='In pixels. Minimum distance from subparticle to origin'
+                           ' If positive it will drop the subparticles closer'
+                           ' to the origin')
         form.addParam('side', FloatParam, default=-1,
                       label='Angle to keep sub-particles from side views (deg)',
                       help='Keep only particles within specified angular '
@@ -90,6 +90,7 @@ class ProtFilterSubParts(ProtParticles):
         inputSet = self.inputSet.get()
         params = {"unique": self.unique.get(),
                   "mindist": self.mindist.get(),
+                  "distorigin": self.distorigin.get(),
                   "side": self.side.get(),
                   "top": self.top.get()
                   }
@@ -161,7 +162,9 @@ class ProtFilterSubParts(ProtParticles):
             subParticles.append(subpart)
             coordArr.append(coord.clone())
 
-        self._genOutputCoordinates(subParticles, coordArr, outputSet, params["mindist"])
+        self._genOutputCoordinates(subParticles, coordArr, outputSet,
+                                   params["mindist"],
+                                   params["distorigin"])
         self._defineOutputs(outputCoordinates=outputSet)
         self._defineTransformRelation(self.inputSet, self.outputCoordinates)
 
@@ -192,14 +195,16 @@ class ProtFilterSubParts(ProtParticles):
         return []
 
     # -------------------------- UTILS functions ------------------------------
-    def _genOutputCoordinates(self, subParticles, coordArr, outputSet, minDist):
+    def _genOutputCoordinates(self, subParticles, coordArr,
+                              outputSet, minDist, distorigin):
 
         for index, coordinate in enumerate(coordArr):
             if minDist:
                 subpart = subParticles[index]
-                if filter_mindist(subParticles, subpart, minDist):
-                    outputSet.append(coordinate.clone())
-            else:
+                if not filter_mindist(subParticles, subpart, minDist):
+                    continue
+                if not filter_distorigin(subParticles, subpart, distorigin):
+                    continue
                 outputSet.append(coordinate.clone())
 
     def _filterParticles(self, params, subParticles, subPart):
