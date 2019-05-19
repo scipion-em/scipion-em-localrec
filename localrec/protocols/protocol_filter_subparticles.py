@@ -32,6 +32,7 @@ from pyworkflow import VERSION_1_1
 from pyworkflow.protocol.params import PointerParam, FloatParam
 from pyworkflow.em.protocol import ProtParticles
 from pyworkflow.em.data import SetOfParticles
+from pyworkflow.em.convert import ImageHandler
 
 from localrec.utils import *
 
@@ -145,7 +146,8 @@ class ProtFilterSubParts(ProtParticles):
 
             # Load the particle if it has changed from the last sub-particle
             if partId != lastPartId:
-                self._genOutputCoordinates(subParticles, coordArr, outputSet, params["mindist"])
+                self._genOutputCoordinates(subParticles, coordArr, outputSet,
+                                           params["mindist"], params["distorigin"])
                 subParticleId = 0
                 coordArr = []
                 subParticles = []
@@ -197,10 +199,21 @@ class ProtFilterSubParts(ProtParticles):
     # -------------------------- UTILS functions ------------------------------
     def _genOutputCoordinates(self, subParticles, coordArr,
                               outputSet, minDist, distorigin):
-
+        ih = ImageHandler()
         for index, coordinate in enumerate(coordArr):
             if minDist:
                 subpart = subParticles[index]
+                micId = subpart._micId.get()
+                print "index", index, micId
+                project = self.getProject()
+                micName = project.getObject(int(micId))
+                print "micName", micName, type(micName)
+                print micName.getPath()
+                img = ih.read(micName)
+                x, y, _, _ = img.getDimensions()
+
+                print "obj", micId, x, y, img, type(img)
+
                 if not filter_mindist(subParticles, subpart, minDist):
                     continue
                 if not filter_distorigin(subParticles, subpart, distorigin):

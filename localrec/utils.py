@@ -293,7 +293,9 @@ def filter_unique(subparticles, subpart, unique):
 
 def filter_mindist(subparticles, subpart, mindist):
     """ Return True if subpart is not close to any other subparticle
-    by mindist. """
+    by mindist. That is returns True is particle must ne kept """
+    if mindist < 0.:
+        return True
 
     for sp in subparticles:
         if (sp._id != subpart._id and
@@ -303,6 +305,24 @@ def filter_mindist(subparticles, subpart, mindist):
     return True
 
 def filter_distorigin(subparticles, subpart, distorigin):
+    "return True is particle must be kept"
+    # particle coordinates
+    coordinate = subpart.getCoordinate()
+    x = coordinate.getX()
+    y = coordinate.getY()
+    # particle center, first get mic_id then using dims get center
+
+
+    print "wwww", subpart._micId.get()
+    print subpart
+    return True
+#    distance_sqr = (x1 - x2) ** 2 + (y1 - y2) ** 2
+#    mindist_sqr = mindist ** 2
+#
+#    return distance_sqr < mindist_sqr
+
+
+    return True
     pass
 
 def filter_side(subpart, side):
@@ -377,6 +397,8 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
             coord.setX(int(part_image_size / 2) - x_i)
             coord.setY(int(part_image_size / 2) - y_i)
             coord.setMicId(particle.getObjId())
+            print "micname, index", particle.getLocation()
+            coord.setMicName(particle.getLocation())
 
             if subpart.hasCTF():
                 ctf = subpart.getCTF()
