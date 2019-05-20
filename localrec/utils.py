@@ -39,7 +39,7 @@ from pyworkflow.em.convert.transformations import (vector_norm, unit_vector,
                                            euler_matrix, euler_from_matrix)
 from pyworkflow.em.constants import (SYM_CYCLIC, SYM_DIHEDRAL, SYM_OCTAHEDRAL,
                                      SYM_TETRAHEDRAL, SYM_I222, SYM_I222r,
-                                     SYM_In25, SYM_In25r)
+                                     SYM_In25, SYM_In25r, NO_INDEX)
 from pyworkflow.em.convert.symmetry import getSymmetryMatrices
 from pyworkflow.em.data import Coordinate
 import pyworkflow.em as em
@@ -232,10 +232,9 @@ def vectors_from_string(input_str):
     return vectors
 
 
-def within_mindist(p1, p2, mindist):
+def within_mindist(p1, p2, mindist, keepRedundant):
     """ Returns True if two particles are closer to each other
     than the given distance in the projection. """
-
     coordinate_p1 = p1.getCoordinate()
     coordinate_p2 = p2.getCoordinate()
     x1 = coordinate_p1.getX()
@@ -244,8 +243,14 @@ def within_mindist(p1, p2, mindist):
     y2 = coordinate_p2.getY()
     distance_sqr = (x1 - x2) ** 2 + (y1 - y2) ** 2
     mindist_sqr = mindist ** 2
-
-    return distance_sqr < mindist_sqr
+#    return distance_sqr < mindist_sqr
+    if distance_sqr < mindist_sqr:
+        if distance_sqr < 1. and keepRedundant:
+            return False
+        else:
+            return True
+    else:
+        return False
 
 
 def vector_from_two_eulers(rot, tilt):
@@ -291,39 +296,32 @@ def filter_unique(subparticles, subpart, unique):
     return True
 
 
-def filter_mindist(subparticles, subpart, mindist):
+def filter_mindist(subparticles, subpart, mindist, keepRedundant):
     """ Return True if subpart is not close to any other subparticle
     by mindist. That is returns True is particle must ne kept """
     if mindist < 0.:
         return True
-
     for sp in subparticles:
         if (sp._id != subpart._id and
-                within_mindist(sp, subpart, mindist)):
+                within_mindist(sp, subpart, mindist, keepRedundant)):
             return False
 
     return True
 
 def filter_distorigin(subparticles, subpart, distorigin):
     "return True is particle must be kept"
-    # particle coordinates
+    # original particle dimensions
+    xDim, yDim, _ = subpart.getDim()
     coordinate = subpart.getCoordinate()
+
+    # subparticle coordinates respect to the particle and origin in at
+    # corner (not center)
     x = coordinate.getX()
     y = coordinate.getY()
-    # particle center, first get mic_id then using dims get center
 
-
-    print "wwww", subpart._micId.get()
-    print subpart
-    return True
-#    distance_sqr = (x1 - x2) ** 2 + (y1 - y2) ** 2
-#    mindist_sqr = mindist ** 2
-#
-#    return distance_sqr < mindist_sqr
-
-
-    return True
-    pass
+    # distance to center
+    distance_sqr = (x - xDim/2) ** 2 + (y - yDim/2) ** 2
+    return distance_sqr > (distorigin ** 2)
 
 def filter_side(subpart, side):
     return (abs(abs(subpart._angles[1]) - math.radians(90))) < math.radians(side)
@@ -392,19 +390,31 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
             alignmentOrg.setMatrix(MOrg)
             subpart._transorg = alignmentOrg.clone()
             subpart.setTransform(alignment)
+
+            # NOTE by ROB: each coord object has an ID, x and y coordinates
+            # plus micId (that is the id of the particle image from which the
+            # subparticles will be extracted. Note that micId is redundant since
+            # in coord._subparticle = subpart.clone() the micId is assigned to
+            # the _subparticle.micId
+
             coord = Coordinate()
             coord.setObjId(None)
             coord.setX(int(part_image_size / 2) - x_i)
             coord.setY(int(part_image_size / 2) - y_i)
-            coord.setMicId(particle.getObjId())
-            print "micname, index", particle.getLocation()
-            coord.setMicName(particle.getLocation())
+            coord.setMicId(particle.getObjId())  # TODO: remove ?
+                                                 # this is redundant
 
+            # NOTE by ROB: this step is algo confusing since
+            # subpart is going to contain some information
+            # related to the original particle (i.e. filename, index, etc)
+            # and some related with the new subparticle (i.e ctf, coord)
             if subpart.hasCTF():
                 ctf = subpart.getCTF()
                 ctf.setDefocusU(subpart.getDefocusU() + z)
                 ctf.setDefocusV(subpart.getDefocusV() + z)
 
+            # NOTE by ROB So, now coord (x, y)  is in two places
+            # coord.x, coord.y and subparticle.coord :-(
             subpart.setCoordinate(coord)
             coord._subparticle = subpart.clone()
             subparticles.append(subpart)

@@ -29,7 +29,7 @@ import numpy as np
 import math
 
 from pyworkflow import VERSION_1_1
-from pyworkflow.protocol.params import PointerParam, FloatParam
+from pyworkflow.protocol.params import PointerParam, FloatParam, BooleanParam
 from pyworkflow.em.protocol import ProtParticles
 from pyworkflow.em.data import SetOfParticles
 from pyworkflow.em.convert import ImageHandler
@@ -62,6 +62,12 @@ class ProtFilterSubParts(ProtParticles):
                       help='In pixels. Minimum distance between the '
                            'subparticles in the image. All overlapping ones '
                            'will be discarded.')
+        form.addParam('keepRedundant', BooleanParam, default=False,
+                      condition='mindist>0',
+                      label='keep overlapping particles in simmetry axis',
+                      help="In order to break symmetry constraint sometime you want to"
+                           " all the repetitions of your particle related by symmetry"
+                      )
         form.addParam('distorigin', FloatParam, default=-1,
                       label='Minimum distance to origin (px)',
                       help='In pixels. Minimum distance from subparticle to origin'
@@ -91,6 +97,7 @@ class ProtFilterSubParts(ProtParticles):
         inputSet = self.inputSet.get()
         params = {"unique": self.unique.get(),
                   "mindist": self.mindist.get(),
+                  "keepRedundant": self.keepRedundant.get(),
                   "distorigin": self.distorigin.get(),
                   "side": self.side.get(),
                   "top": self.top.get()
@@ -147,7 +154,8 @@ class ProtFilterSubParts(ProtParticles):
             # Load the particle if it has changed from the last sub-particle
             if partId != lastPartId:
                 self._genOutputCoordinates(subParticles, coordArr, outputSet,
-                                           params["mindist"], params["distorigin"])
+                                           params["mindist"], params["keepRedundant"],
+                                           params["distorigin"])
                 subParticleId = 0
                 coordArr = []
                 subParticles = []
@@ -165,7 +173,7 @@ class ProtFilterSubParts(ProtParticles):
             coordArr.append(coord.clone())
 
         self._genOutputCoordinates(subParticles, coordArr, outputSet,
-                                   params["mindist"],
+                                   params["mindist"], params["keepRedundant"],
                                    params["distorigin"])
         self._defineOutputs(outputCoordinates=outputSet)
         self._defineTransformRelation(self.inputSet, self.outputCoordinates)
@@ -198,23 +206,12 @@ class ProtFilterSubParts(ProtParticles):
 
     # -------------------------- UTILS functions ------------------------------
     def _genOutputCoordinates(self, subParticles, coordArr,
-                              outputSet, minDist, distorigin):
-        ih = ImageHandler()
+                              outputSet, minDist, keepRedundant,
+                              distorigin):
         for index, coordinate in enumerate(coordArr):
             if minDist:
                 subpart = subParticles[index]
-                micId = subpart._micId.get()
-                print "index", index, micId
-                project = self.getProject()
-                micName = project.getObject(int(micId))
-                print "micName", micName, type(micName)
-                print micName.getPath()
-                img = ih.read(micName)
-                x, y, _, _ = img.getDimensions()
-
-                print "obj", micId, x, y, img, type(img)
-
-                if not filter_mindist(subParticles, subpart, minDist):
+                if not filter_mindist(subParticles, subpart, minDist, keepRedundant):
                     continue
                 if not filter_distorigin(subParticles, subpart, distorigin):
                     continue
