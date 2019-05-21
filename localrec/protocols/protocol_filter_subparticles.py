@@ -205,16 +205,30 @@ class ProtFilterSubParts(ProtParticles):
         return []
 
     # -------------------------- UTILS functions ------------------------------
+    def _genOutputCoordinateskk(self, subParticles, coordArr, outputSet, minDist,
+                              kk, kkk):
+
+        for index, coordinate in enumerate(coordArr):
+            if minDist > 0:
+                subpart = subParticles[index]
+                if filter_mindist(subParticles, subpart, minDist):
+                    outputSet.append(coordinate.clone())
+            else:
+                outputSet.append(coordinate.clone())
+
+
     def _genOutputCoordinates(self, subParticles, coordArr,
                               outputSet, minDist, keepRedundant,
                               distorigin):
         for index, coordinate in enumerate(coordArr):
-            if minDist:
+            if minDist > 0:
                 subpart = subParticles[index]
                 if not filter_mindist(subParticles, subpart, minDist, keepRedundant):
                     continue
                 if not filter_distorigin(subParticles, subpart, distorigin):
                     continue
+                outputSet.append(coordinate.clone())
+            else:
                 outputSet.append(coordinate.clone())
 
     def _filterParticles(self, params, subParticles, subPart):
