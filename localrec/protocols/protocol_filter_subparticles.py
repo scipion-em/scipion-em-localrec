@@ -65,8 +65,9 @@ class ProtFilterSubParts(ProtParticles):
         form.addParam('keepRedundant', BooleanParam, default=False,
                       condition='mindist>0',
                       label='keep overlapping particles in simmetry axis',
-                      help="In order to break symmetry constraint sometime you want to"
-                           " all the repetitions of your particle related by symmetry"
+                      help="In order to break symmetry constraints, sometimes you want"
+                           " all the repetitions of your particle related by symmetry."
+                           " but not particles that overlap"
                       )
         form.addParam('distorigin', FloatParam, default=-1,
                       label='Minimum distance to origin (px)',
@@ -205,17 +206,6 @@ class ProtFilterSubParts(ProtParticles):
         return []
 
     # -------------------------- UTILS functions ------------------------------
-    def _genOutputCoordinateskk(self, subParticles, coordArr, outputSet, minDist,
-                              kk, kkk):
-
-        for index, coordinate in enumerate(coordArr):
-            if minDist > 0:
-                subpart = subParticles[index]
-                if filter_mindist(subParticles, subpart, minDist):
-                    outputSet.append(coordinate.clone())
-            else:
-                outputSet.append(coordinate.clone())
-
 
     def _genOutputCoordinates(self, subParticles, coordArr,
                               outputSet, minDist, keepRedundant,

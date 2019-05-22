@@ -32,7 +32,7 @@ from pyworkflow.protocol.params import (PointerParam, BooleanParam, StringParam,
                                         EnumParam, NumericRangeParam,
                                         PathParam, LEVEL_ADVANCED)
 from pyworkflow.em.protocol import ProtParticles, ProtParticlePicking
-from localrec.utils import (getSymMatricesXmipp, load_vectors, create_subparticles)
+from localrec.utils import (load_vectors, create_subparticles)
 from localrec.constants import CMM, HAND
 
 from pyworkflow.em.constants import (SYM_I222, SYM_I222r, SYM_In25, SYM_In25r,
@@ -69,17 +69,6 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
                       help='Select the input images from the project.')
 
         group = form.addGroup('Symmetry')
-        # group.addParam('symmetryGroup', StringParam, default='c1',
-        #                label="Symmetry",
-        #                help='If the molecule is asymmetric, set Symmetry group '
-        #                     'to C1. Note their are multiple possibilities for '
-        #                     'icosahedral symmetry: \n'
-        #                     '* I1: No-Crowther 222 (standard in Heymann, '
-        #                     'Chagoyen & Belnap, JSB, 151 (2005) 196-207)\n'
-        #                     '* I2: Crowther 222 \n'
-        #                     '* I3: 52-setting (as used in SPIDER?) \n'
-        #                     '* I4: A different 52 setting \n')
-        # keep an the old paramter name for compatibility
         group.addHidden('symmetryGroup', StringParam, default='c1')
         group.addParam('symmetryGroup2', EnumParam,
                       choices=[XMIPP_SYM_NAME[SYM_CYCLIC] +
