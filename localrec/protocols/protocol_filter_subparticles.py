@@ -221,7 +221,7 @@ class ProtFilterSubParts(ProtParticles):
                               outputSet, minDist, keepRedundant,
                               distorigin):
         for index, coordinate in enumerate(coordArr):
-            if minDist > 0:
+            if minDist > 0 or distorigin > 0:
                 subpart = subParticles[index]
                 if not filter_mindist(subParticles, subpart, minDist, keepRedundant):
                     continue
