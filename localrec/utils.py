@@ -116,7 +116,7 @@ def getSymMatricesXmipp(symmetryGroup):
         return getSymmetryMatrices(SYM_TETRAHEDRAL, n=symmetryGroupNum)
 
     if symmetryGroupLetter == 'O':
-        return getSymmetryMatrices(SYM_TETRAHEDRAL, n=SYM_OCTAHEDRAL)
+        return getSymmetryMatrices(SYM_OCTAHEDRAL)
 
 
 def geometryFromMatrix(matrix):
