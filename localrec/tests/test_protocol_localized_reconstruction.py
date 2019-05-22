@@ -276,12 +276,9 @@ class TestLocalizedRecons2(TestLocalizedReconsBase):
     @classmethod
     def createProj(cls, volMapName, projStack='proj.stk'):
         #projection directions
-        projDirections = [
+        cls.projDirections = [
             [],
-            [0, 0, 0],
-            [72.8262802662, 35.467688713, 115.701733501], # keep this angles under 180
-                                                          # or the function that conver from matrix to angles
-                                                          # will report a different pair
+            [72.8262802662, 35.467688713, 115.701733501],
             [298.153046614, 53.460868127, 100.044536396],
             [55.9545190927, 2.63201459146, 236.784245424],
             [359.783825617, 347.692361404, 4.866600415],
@@ -289,8 +286,10 @@ class TestLocalizedRecons2(TestLocalizedReconsBase):
             [325.505603341, 85.297516634, 288.615732761],
             [137.11561079, 3.14867893078, 17.8840386505],
             [5.09868873239, 11.9211673352, 202.7125587],
-            [210.62035136, 157.802079063, 129.961496962]
+            [210.62035136, 157.802079063, 129.961496962],
+            [0, 0, 0]
         ]
+        cls.numProj = len(cls.projDirections) -1
         ## If proj file exists, delete projections
         if os.path.isfile(projStack):
             os.remove(projStack)
@@ -312,7 +311,7 @@ loop_
 
         command = "xmipp_phantom_project"
         for index in range(1,11):
-            phi, theta, psi = projDirections[index]
+            phi, theta, psi = cls.projDirections[index]
             f.write("{id} 1 {phi} {theta} {psi} 0. 0. {micrograph} {micrographId}\n".format(id="%04d@proj.stk" % index,
                                                                                             phi=phi, theta=theta,
                                                                                             psi=psi,
@@ -355,7 +354,7 @@ loop_
                 'Import of images: %s, failed. outputParticles is None.' % pattern)
         return protImport
 
-    def _runSubparticles(self, checkSize, angles, defVector=1, **kwargs):
+    def _runSubparticles(self, checkSize, angles, defVector=1, checkMat=True, **kwargs):
         label = 'localized subpartices ('
         for t in kwargs.iteritems():
             label += '%s=%s' % t
@@ -381,39 +380,111 @@ loop_
                              "subparticles protocol")
         self.assertEqual(checkSize, prot.outputCoordinates.getSize())
 
-        coord = prot.outputCoordinates[61]
-        print "coord", coord
-        cShifts, cAngles = geometryFromMatrix(inv((coord._subparticle.getTransform().getMatrix())))
-        cAngles = [math.degrees(cAngles[j]) for j in range(len(cAngles))]
-        print "cAngles", cAngles
+        origilMatrix = matrixFromGeometry(np.array([0,0,0]), np.array(np.deg2rad(angles)), True)[:3, :3]
+        coord = prot.outputCoordinates.getFirstItem()
+        newMatrix = coord._subparticle.getTransform().getMatrix()[:3, :3]
 
-        self.assertAlmostEqual(first=cAngles[0],
-                               second=angles[0], delta=0.1,
-                               msg="Rot angle is %0.1f, but should be %0.1f "
-                                   "for subparticle 10."
-                                   % (
-                                       cAngles[0], angles[0]))
-
-        self.assertAlmostEqual(first=cAngles[1],
-                               second=angles[1], delta=0.1,
-                               msg="Tilt angle is %0.1f, but should be %0.1f "
-                                   "for subparticle 10."
-                                   % (
-                                       cAngles[1], angles[1]))
-
-        self.assertAlmostEqual(first=cAngles[2],
-                               second=angles[2], delta=0.1,
-                               msg="Psi angle is %0.1f, but should be %0.1f "
-                                   "for subparticle 10."
-                                   % (
-                                       cAngles[2], angles[2]))
-
+        try:
+            if checkMat:
+                np.testing.assert_array_almost_equal(origilMatrix, newMatrix, decimal=3,
+                                                     err_msg="Matrices are different", verbose=True)
+            res = True
+        except AssertionError as err:
+            res = False
+            print (err)
+        self.assertTrue(res)
         return prot
 
-    def testProtA(self):
-        # import projection
-        # angles = [210.62035136, 157.802079063, 129.961496962]
-        angles = [72.8262802662, 35.467688713, 115.701733501]
-        self._runSubparticles(600, angles , defVector=1, alignSubparticles=False)
+    def _runFilterSubParticles(self, checkSize, angles, subParticles, checkMat=True, **kwargs):
+        label = 'filter subpartices ('
+        for t in kwargs.iteritems():
+            label += '%s=%s' % t
+        label += ')'
 
+        prot = self.newProtocol(ProtFilterSubParts,
+                                objLabel=label,
+                                **kwargs)
+        prot.inputSet.set(subParticles.outputCoordinates)
 
+        self.launchProtocol(prot)
+        self.assertIsNotNone(prot.outputCoordinates,
+                             "There was a problem with localized "
+                             "subparticles protocol")
+        self.assertEqual(checkSize, prot.outputCoordinates.getSize())
+
+        origilMatrix = matrixFromGeometry(np.array([0,0,0]), np.array(np.deg2rad(angles)), True)[:3, :3]
+        coord = prot.outputCoordinates.getFirstItem()
+        newMatrix = coord._subparticle.getTransform().getMatrix()[:3, :3]
+        if coord.getObjId()==1:
+            try:
+                if checkMat:
+                    np.testing.assert_array_almost_equal(origilMatrix, newMatrix, decimal=3,
+                                                         err_msg="Matrices are different", verbose=True)
+                res = True
+            except AssertionError as err:
+                res = False
+                print (err)
+            self.assertTrue(res)
+        else:
+            print "No checking matrix"
+        return prot
+
+    def _runExtract(self, localSubparticles, size=0):
+        # Test extract particles
+        localExtraction = self.newProtocol(ProtLocalizedExtraction, boxSize=30)
+        localExtraction.inputParticles.set(self.protImport.outputParticles)
+        localExtraction.inputCoordinates.set(localSubparticles.outputCoordinates)
+        self.launchProtocol(localExtraction)
+        self.assertIsNotNone(localExtraction.outputParticles,
+                             "There was a problem with localized "
+                             "extraction protocol")
+        self.assertEqual(localExtraction.outputParticles.getSize(), size)
+        return localExtraction
+
+    def testLocalizedRecons(self):
+        # Test localized
+        counter = 1
+        RUNABOVE = 0
+        # (1) No filters
+        # aligSubparticles=False
+
+        if counter > RUNABOVE:
+            angles = self.projDirections[1]
+            localSubparticles = self._runSubparticles(self.numProj * 60, angles ,
+                                                      defVector=1, checkMat=True, alignSubparticles=False)
+            localExtraction = self._runExtract(localSubparticles, size=self.numProj * 60)
+        counter += 1
+
+        # (2) No filters
+        # aligSubparticles=True
+        if counter > RUNABOVE:
+            angles = self.projDirections[1]
+            localSubparticles = self._runSubparticles(self.numProj * 60, angles ,
+                                                      defVector=1,  checkMat=False, alignSubparticles=True)
+            localExtraction = self._runExtract(localSubparticles, size=self.numProj * 60)
+        counter += 1
+
+        # (3) Filter = distance to center
+        # aligSubparticles=False
+        # distorigin = 45
+        if counter > RUNABOVE:
+            angles = self.projDirections[1]
+            localSubparticles = self._runSubparticles(self.numProj * 60, angles ,
+                                                      defVector=1,  checkMat=True,
+                                                      alignSubparticles=False)
+            localFilter = self._runFilterSubParticles(360, angles, localSubparticles,
+                                        distorigin=45)
+            localExtraction = self._runExtract(localFilter, size=360)
+        counter += 1
+
+        # (4) Filter = distance to center
+        # aligSubparticles=False, mindist = 10
+        # distorigin = 50 keepRedundant = False
+        if counter > RUNABOVE:
+            angles = self.projDirections[1]
+            localSubparticles = self._runSubparticles(self.numProj * 60, angles ,
+                                                      defVector=1,  checkMat=False, alignSubparticles=False)
+            localFilter = self._runFilterSubParticles(330, angles, localSubparticles,
+                                        distorigin=45, mindist=10, keepRedundant=True)
+            localExtraction = self._runExtract(localFilter, size=330)
+        counter += 1
