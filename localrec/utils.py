@@ -86,37 +86,6 @@ class Vector3:
         print("[%.3f,%.3f,%.3f]" % (self.vector[0], self.vector[1], self.vector[2]))
 
 
-def getSymMatricesXmipp(symmetryGroup):
-    """ Return symmetry matrices related to a point group"""
-
-    symmetryGroupLetter = symmetryGroup[0].upper()
-
-    if symmetryGroupLetter == 'I':
-        symmetryGroupNum = int(symmetryGroup[1])
-        if symmetryGroupNum == 1:
-            return getSymmetryMatrices(SYM_I222)
-        if symmetryGroupNum == 2:
-            return getSymmetryMatrices(SYM_I222r)
-        if symmetryGroupNum == 3:
-            return getSymmetryMatrices(SYM_In25)
-        if symmetryGroupNum == 4:
-            return getSymmetryMatrices(SYM_In25r)
-
-    if symmetryGroupLetter == 'C':
-        symmetryGroupNum = int(symmetryGroup[1])
-        return getSymmetryMatrices(SYM_CYCLIC, n=symmetryGroupNum)
-
-    if symmetryGroupLetter == 'D':
-        symmetryGroupNum = int(symmetryGroup[1])
-        return getSymmetryMatrices(SYM_DIHEDRAL, n=symmetryGroupNum)
-
-    if symmetryGroupLetter == 'T':
-        return getSymmetryMatrices(SYM_TETRAHEDRAL, n=symmetryGroupNum)
-
-    if symmetryGroupLetter == 'O':
-        return getSymmetryMatrices(SYM_TETRAHEDRAL, n=SYM_OCTAHEDRAL)
-
-
 def geometryFromMatrix(matrix):
     from pyworkflow.em.convert.transformations import translation_from_matrix, euler_from_matrix
 

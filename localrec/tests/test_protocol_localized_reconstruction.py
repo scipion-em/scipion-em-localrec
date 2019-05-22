@@ -88,7 +88,7 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
 
         prot = self.newProtocol(ProtLocalizedRecons,
                                 objLabel=label,
-                                symmetryGroup="I3",
+                                symGrp=6,
                                 defineVector=defVector,
                                 **kwargs)
         prot.inputParticles.set(self.protImport.outputParticles)
