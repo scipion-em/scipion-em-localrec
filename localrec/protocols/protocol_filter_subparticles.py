@@ -190,7 +190,7 @@ class ProtFilterSubParts(ProtParticles):
     def _genOutputCoordinates(self, subParticles, coordArr, outputSet, minDist):
 
         for index, coordinate in enumerate(coordArr):
-            if minDist:
+            if minDist>0:
                 subpart = subParticles[index]
                 if filter_mindist(subParticles, subpart, minDist):
                     outputSet.append(coordinate.clone())

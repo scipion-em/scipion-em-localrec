@@ -76,12 +76,11 @@ class Vector3:
             rot = math.radians(0.00)
             tilt = math.radians(0.00)
         else:
-            print()
             rot = math.atan2(self.vector[1], self.vector[0])
             tilt = math.acos(self.vector[2])
 
         psi = 0
-        self.matrix = euler_matrix(rot, tilt, psi, 'szyz')
+        self.matrix = euler_matrix(-rot, -tilt, -psi, 'szyz')
 
     def print_vector(self):
         print("[%.3f,%.3f,%.3f]" % (self.vector[0], self.vector[1], self.vector[2]))
@@ -274,7 +273,6 @@ def within_unique(p1, p2, unique):
         dp = 1.000
 
     angle = math.acos(dp)
-    # print(np.degrees(angle))
 
     return angle <= math.radians(unique)
 

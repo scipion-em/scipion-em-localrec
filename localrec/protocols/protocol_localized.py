@@ -107,7 +107,7 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
                             'Different values must be separated by commas.')
 
         group = form.addGroup('Sub-particles')
-        group.addParam('alignSubparticles', BooleanParam, default=True,
+        group.addParam('alignSubparticles', BooleanParam, default=False,
                       label='Align the subparticles?',
                       help='Align sub-particles to the standard orientation. ')
 
