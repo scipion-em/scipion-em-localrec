@@ -38,7 +38,7 @@ from localrec.constants import CMM, HAND
 from pyworkflow.em.constants import (SYM_I222, SYM_I222r, SYM_In25, SYM_In25r,
                                      SYM_CYCLIC, SYM_DIHEDRAL, SYM_TETRAHEDRAL,
                                      SYM_OCTAHEDRAL, SCIPION_SYM_NAME)
-from xmipp3.constants import XMIPP_SYM_NAME
+from localrec.constants import LOCALREC_SYM_NAME
 from pyworkflow.em.convert.symmetry import getSymmetryMatrices
 
 
@@ -71,21 +71,21 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
         group = form.addGroup('Symmetry')
         group.addHidden('symmetryGroup', StringParam, default='c1')
         group.addParam('symmetryGroup2', EnumParam,
-                      choices=[XMIPP_SYM_NAME[SYM_CYCLIC] +
+                      choices=[LOCALREC_SYM_NAME[SYM_CYCLIC] +
                                " (" + SCIPION_SYM_NAME[SYM_CYCLIC] + ")",
-                               XMIPP_SYM_NAME[SYM_DIHEDRAL] +
+                               LOCALREC_SYM_NAME[SYM_DIHEDRAL] +
                                " (" + SCIPION_SYM_NAME[SYM_DIHEDRAL] + ")",
-                               XMIPP_SYM_NAME[SYM_TETRAHEDRAL] +
+                               LOCALREC_SYM_NAME[SYM_TETRAHEDRAL] +
                                " (" + SCIPION_SYM_NAME[SYM_TETRAHEDRAL] + ")",
-                               XMIPP_SYM_NAME[SYM_OCTAHEDRAL] +
+                               LOCALREC_SYM_NAME[SYM_OCTAHEDRAL] +
                                " (" + SCIPION_SYM_NAME[SYM_OCTAHEDRAL] + ")",
-                               XMIPP_SYM_NAME[SYM_I222] +
+                               LOCALREC_SYM_NAME[SYM_I222] +
                                " (" + SCIPION_SYM_NAME[SYM_I222] + ")",
-                               XMIPP_SYM_NAME[SYM_I222r] +
+                               LOCALREC_SYM_NAME[SYM_I222r] +
                                " (" + SCIPION_SYM_NAME[SYM_I222r] + ")",
-                               XMIPP_SYM_NAME[SYM_In25] +
+                               LOCALREC_SYM_NAME[SYM_In25] +
                                " (" + SCIPION_SYM_NAME[SYM_In25] + ")",
-                               XMIPP_SYM_NAME[SYM_In25r] +
+                               LOCALREC_SYM_NAME[SYM_In25r] +
                                " (" + SCIPION_SYM_NAME[SYM_In25r] + ")"],
                       default=SYM_I222r,
                       label="Symmetry",
