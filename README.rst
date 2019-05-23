@@ -41,6 +41,8 @@ OR
 
 1. scipion test localrec.tests.test_protocol_localized_reconstruction
 
+2. scipion test localrec.tests.test_protocol_localized_reconstruction2
+
 ========
 Protocols
 ========
