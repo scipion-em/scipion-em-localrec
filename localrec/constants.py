@@ -33,3 +33,7 @@ V1_2_0 = '1.2.0'
 # Import vector is from Chimera or string
 CMM = 0
 HAND = 1
+
+# Intepolation method for stitch sub-particles
+LINEAR = 0
+BSPLINE = 1

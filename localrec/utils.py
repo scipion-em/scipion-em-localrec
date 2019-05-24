@@ -37,10 +37,6 @@ import xml.etree.ElementTree
 
 from pyworkflow.em.convert.transformations import (vector_norm, unit_vector,
                                            euler_matrix, euler_from_matrix)
-from pyworkflow.em.constants import (SYM_CYCLIC, SYM_DIHEDRAL, SYM_OCTAHEDRAL,
-                                     SYM_TETRAHEDRAL, SYM_I222, SYM_I222r,
-                                     SYM_In25, SYM_In25r)
-from pyworkflow.em.convert.symmetry import getSymmetryMatrices
 from pyworkflow.em.data import Coordinate
 import pyworkflow.em as em
 
@@ -80,42 +76,10 @@ class Vector3:
             tilt = math.acos(self.vector[2])
 
         psi = 0
-        self.matrix = euler_matrix(-rot, -tilt, -psi)
+        self.matrix = euler_matrix(-rot, -tilt, -psi, 'szyz')
 
     def print_vector(self):
-        print(self.vector[2])
         print("[%.3f,%.3f,%.3f]" % (self.vector[0], self.vector[1], self.vector[2]))
-
-
-def getSymMatricesXmipp(symmetryGroup):
-    """ Return symmetry matrices related to a point group"""
-
-    symmetryGroupLetter = symmetryGroup[0].upper()
-
-    if symmetryGroupLetter == 'I':
-        symmetryGroupNum = int(symmetryGroup[1])
-        if symmetryGroupNum == 1:
-            return getSymmetryMatrices(SYM_I222)
-        if symmetryGroupNum == 2:
-            return getSymmetryMatrices(SYM_I222r)
-        if symmetryGroupNum == 3:
-            return getSymmetryMatrices(SYM_In25)
-        if symmetryGroupNum == 4:
-            return getSymmetryMatrices(SYM_In25r)
-
-    if symmetryGroupLetter == 'C':
-        symmetryGroupNum = int(symmetryGroup[1])
-        return getSymmetryMatrices(SYM_CYCLIC, n=symmetryGroupNum)
-
-    if symmetryGroupLetter == 'D':
-        symmetryGroupNum = int(symmetryGroup[1])
-        return getSymmetryMatrices(SYM_DIHEDRAL, n=symmetryGroupNum)
-
-    if symmetryGroupLetter == 'T':
-        return getSymmetryMatrices(SYM_TETRAHEDRAL, n=symmetryGroupNum)
-
-    if symmetryGroupLetter == 'O':
-        return getSymmetryMatrices(SYM_TETRAHEDRAL, n=SYM_OCTAHEDRAL)
 
 
 def geometryFromMatrix(matrix):
@@ -156,7 +120,8 @@ def load_vectors(cmm_file, vectors_str, distances_str, angpix):
     else:
         subparticle_vector_list = vectors_from_string(vectors_str)
 
-    if distances_str:
+    if float(distances_str)>0.0:
+
         # Change distances from A to pixel units
         subparticle_distances = [float(x) / angpix for x in
                                  distances_str.split(',')]
@@ -195,6 +160,7 @@ def vectors_from_cmm(input_cmm, angpix):
     # coordinates in the CMM file need to be in Angstrom
     vector_list = []
     e = xml.etree.ElementTree.parse(input_cmm).getroot()
+
 
     for marker in e.findall('marker'):
         x = float(marker.get('x')) / angpix
@@ -272,7 +238,6 @@ def within_unique(p1, p2, unique):
         dp = 1.000
 
     angle = math.acos(dp)
-    # print(np.degrees(angle))
 
     return angle <= math.radians(unique)
 
@@ -317,7 +282,7 @@ def filter_subparticles(subparticles, filters):
 
 def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
                         part_image_size, randomize, subparticles_total,
-                        align_subparticles):
+                        align_subparticles, angpix):
     """ Obtain all subparticles from a given particle and set
     the properties of each such subparticle. """
 
@@ -376,9 +341,11 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
             coord.setMicId(particle.getObjId())
 
             if subpart.hasCTF():
+                # Pixel to Angstrom
+                z_ang = z * angpix
                 ctf = subpart.getCTF()
-                ctf.setDefocusU(subpart.getDefocusU() + z)
-                ctf.setDefocusV(subpart.getDefocusV() + z)
+                ctf.setDefocusU(subpart.getDefocusU() + z_ang)
+                ctf.setDefocusV(subpart.getDefocusV() + z_ang)
 
             subpart.setCoordinate(coord)
             coord._subparticle = subpart.clone()

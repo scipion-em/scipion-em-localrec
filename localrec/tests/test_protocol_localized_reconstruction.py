@@ -88,7 +88,7 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
 
         prot = self.newProtocol(ProtLocalizedRecons,
                                 objLabel=label,
-                                symmetryGroup="I3",
+                                symGrp=6,
                                 defineVector=defVector,
                                 **kwargs)
         prot.inputParticles.set(self.protImport.outputParticles)
@@ -180,13 +180,13 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
         print("Run ProtLocalized Reconstruction")
 
         # Test for filter sub-particles which are aligned in the z
-        localSubparticles_aligned = self._runSubparticles(600, [-172.0, 5.5, -4.1], alignSubparticles=True)
+        localSubparticles_aligned = self._runSubparticles(600, [-177.8, 5.5, 0.5], alignSubparticles=True)
         localSubparticles = self._runSubparticles(600, [-1.2, 111.6, -177.4], alignSubparticles=False)
 
         # Test for filter sub-particles which are aligned in the z
-        self._runFilterSubParticles(90, [150.5, 64.6, 72.7], localSubparticles_aligned, mindist=10)
-        self._runFilterSubParticles(50, [107.5, 112.2, -177.8], localSubparticles_aligned, side=25)
-        self._runFilterSubParticles(21, [52.4, 175.0, 162.5], localSubparticles_aligned, top=50)
+        self._runFilterSubParticles(90, [149.0, 64.9, 73.2], localSubparticles_aligned, mindist=10)
+        self._runFilterSubParticles(50, [106.2, 112.6, -177.6], localSubparticles_aligned, side=25)
+        self._runFilterSubParticles(21, [47.6, 175.3, 159.1], localSubparticles_aligned, top=50)
 
         # Test for filter sub-particles which are not aligned
         self._runFilterSubParticles(90, [31.6, 60.155541, -138.80597], localSubparticles, mindist=10)
