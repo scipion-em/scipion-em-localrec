@@ -37,10 +37,6 @@ import xml.etree.ElementTree
 
 from pyworkflow.em.convert.transformations import (vector_norm, unit_vector,
                                            euler_matrix, euler_from_matrix)
-from pyworkflow.em.constants import (SYM_CYCLIC, SYM_DIHEDRAL, SYM_OCTAHEDRAL,
-                                     SYM_TETRAHEDRAL, SYM_I222, SYM_I222r,
-                                     SYM_In25, SYM_In25r)
-from pyworkflow.em.convert.symmetry import getSymmetryMatrices
 from pyworkflow.em.data import Coordinate
 import pyworkflow.em as em
 
