@@ -4,6 +4,7 @@
 # *           Juha T. Huiskonen (juha@strubi.ox.ac.uk)
 # *           J.M. de la Rosa Trevin
 # *           Vahid Abrishami (vahid.abrishami@helsinki.fi)
+# *           Roberto Marabini 
 # *
 # * Laboratory of Structural Biology,
 # * Helsinki Institute of Life Science HiLIFE
@@ -43,7 +44,6 @@ from pyworkflow.em.constants import (SYM_CYCLIC, SYM_DIHEDRAL, SYM_OCTAHEDRAL,
 from pyworkflow.em.convert.symmetry import getSymmetryMatrices
 from pyworkflow.em.data import Coordinate
 import pyworkflow.em as em
-
 
 class Vector3:
     def __init__(self):
@@ -175,8 +175,6 @@ def load_vectors(cmm_file, vectors_str, distances_str, angpix):
     else:
         for vector in subparticle_vector_list:
             vector.compute_length()
-
-    print("Using vectors:")
 
     for subparticle_vector in subparticle_vector_list:
         print("Vector: ")
@@ -410,8 +408,9 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
             # and some related with the new subparticle (i.e ctf, coord)
             if subpart.hasCTF():
                 ctf = subpart.getCTF()
-                ctf.setDefocusU(subpart.getDefocusU() + z)
-                ctf.setDefocusV(subpart.getDefocusV() + z)
+                #ctf.setDefocusU(subpart.getDefocusU() + z)
+                ctf.setDefocusU(subpart.getCTF().getDefocusU() + z)
+                ctf.setDefocusV(subpart.getCTF().getDefocusV() + z)
 
             # NOTE by ROB So, now coord (x, y)  is in two places
             # coord.x, coord.y and subparticle.coord :-(
