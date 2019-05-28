@@ -4,6 +4,7 @@
 # *           Juha T. Huiskonen (juha@strubi.ox.ac.uk)
 # *           J.M. de la Rosa Trevin
 # *           Vahid Abrishami (vahid.abrishami@helsinki.fi)
+# *           Roberto Marabini
 # *
 # * Laboratory of Structural Biology,
 # * Helsinki Institute of Life Science HiLIFE
@@ -377,8 +378,8 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
 
             if subpart.hasCTF():
                 ctf = subpart.getCTF()
-                ctf.setDefocusU(subpart.getDefocusU() + z)
-                ctf.setDefocusV(subpart.getDefocusV() + z)
+                ctf.setDefocusU(subpart.getCTF().getDefocusU() + z)
+                ctf.setDefocusV(subpart.getCTF().getDefocusV() + z)
 
             subpart.setCoordinate(coord)
             coord._subparticle = subpart.clone()
