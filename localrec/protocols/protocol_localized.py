@@ -2,7 +2,7 @@
 # *
 # * Authors:     Josue Gomez Blanco (josue.gomez-blanco@mcgill.ca)
 # *              Vahid Abrishami (vahid.abrishami@helsinki.fi)
-# *              roberto Marabini roberto.marabini@uam.es
+# *              Roberto Marabini roberto.marabini@uam.es
 # *
 # * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
 # *
@@ -41,6 +41,7 @@ from pyworkflow.em.constants import (SYM_I222, SYM_I222r, SYM_In25, SYM_In25r,
 from localrec.constants import LOCALREC_SYM_NAME
 from pyworkflow.em.convert.symmetry import getSymmetryMatrices
 
+import sys
 
 class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
     """ This class contains a re-implementation to a method for the
@@ -174,8 +175,14 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
                                          params["length"],
                                          params["pxSize"])
 
+        counter = 0  # print something so the user sees that
+                     # the protocol is working
+        print "Processing particle (total size=%d): " % inputSet.getSize()
         for part in inputSet:
-
+            if (counter % 100) == 0:
+                 print "%d..."% counter
+                 sys.stdout.flush()
+            counter += 1
             subparticles = create_subparticles(part,
                                                symMatrices,
                                                subpartVectorList,
