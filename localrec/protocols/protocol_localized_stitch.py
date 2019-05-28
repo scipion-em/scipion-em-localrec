@@ -24,12 +24,6 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-import symbol
-import numpy
-from numpy.linalg import inv
-
-
-from pyworkflow import VERSION_1_1
 from pyworkflow.protocol.params import (EnumParam, IntParam, StringParam, BooleanParam,
                                         NumericRangeParam, PathParam, Positive, MultiPointerParam)
 from pyworkflow.em.convert.transformations import euler_from_matrix
@@ -53,7 +47,6 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         """
 
     _label = 'stitch subparticles'
-    _lastUpdateVersion = VERSION_1_1
 
     LINEAR = 0
     BSPLINE = 1
@@ -71,7 +64,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
                       help='Select the input sub-volume for half 1')
         form.addParam('inputSubVolumesHalf2', MultiPointerParam,
                       pointerClass='Volume',
-                      label="Input sub_volumes", important=True,
+                      label="Input sub_volumes for half 2", important=True,
                       help='Select the input sub-volume for half 2')
         form.addParam('symMasks', MultiPointerParam, pointerClass='VolumeMask',
                       label='Masks', allowsNull=True,
@@ -89,7 +82,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
                       help='If you aligned the sub-partilces with z-axis '
                            'to apply symmetry')
         form.addParam('usePreRun', BooleanParam,
-                      label="Use previous localrec run(s)", default=True)
+                      label="Use previous localrec run(s)", default=False)
         form.addParam('preRuns', MultiPointerParam, pointerClass='ProtLocalizedRecons',
                       label='Localrec previous runs', allowsNull=True,
                       condition="usePreRun",
@@ -339,8 +332,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
 
         shiftX, shiftY, shiftZ, rotMatrix = self.readVector(vectorFn, index)
         rot, tilt, psi = np.rad2deg(euler_from_matrix(rotMatrix.transpose(), 'szyz'))
-        print(shiftX, shiftY, shiftZ)
-        print(rot, tilt, psi)
+
         # Window the sub-volume to the output volume size
         volWin = self._getWinFn('volume', index+1, halfString)
         volMasked =  self._getMaskedVolFn(index+1, halfString)
@@ -398,6 +390,9 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
     def _validate(self):
         validateMsgs = []
 
+        if len(self.inputSubVolumesHalf1) != len(self.inputSubVolumesHalf1):
+            validateMsgs.append("The number of sub-volumes for"
+                                "half1 and half2 must be equal")
         if len(self.inputSubVolumesHalf1)>1:
             pxSize = self.inputSubVolumesHalf1[0].get().getSamplingRate()
             for i, vol in enumerate(self.inputSubVolumesHalf1):

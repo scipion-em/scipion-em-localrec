@@ -135,12 +135,12 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
     def _runFilterSubParticles(self, checkSize, angles, subParticles, **kwargs):
         label = 'filter subpartices ('
         for t in kwargs.iteritems():
-            label += '%s=%s' % t
+            label += '%s=%s, ' % t
         label += ')'
 
         prot = self.newProtocol(ProtFilterSubParts,
                                 objLabel=label,
-                                unique=5, **kwargs)
+                                **kwargs)
         prot.inputSet.set(subParticles.outputCoordinates)
 
         self.launchProtocol(prot)
@@ -152,7 +152,7 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
 
         cShifts, cAngles = geometryFromMatrix(inv((coord._subparticle.getTransform().getMatrix())))
         cAngles = [math.degrees(cAngles[j]) for j in range(len(cAngles))]
-
+        print(cAngles)
         self.assertAlmostEqual(first=cAngles[0],
                                second=angles[0], delta=0.1,
                                msg="Rot angle is %0.1f, but should be %0.1f "
@@ -176,27 +176,47 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
 
         return prot
 
+    def _runStitchParticles(self, subParticles, **kwargs):
+        label = 'stitch sub-particles ('
+        for t in kwargs.iteritems():
+            label += '%s=%s' % t
+        label += ')'
+        prot = self.newProtocol(ProtLocalizedStich,
+                                objLabel=label,
+                                **kwargs)
+        prot.inputSet.set(subParticles.outputCoordinates)
+
+
     def testProtLocalizedReconstruction(self):
         print("Run ProtLocalized Reconstruction")
 
         # Test for filter sub-particles which are aligned in the z
-        localSubparticles_aligned = self._runSubparticles(600, [-177.8, 5.5, 0.5], alignSubparticles=True)
+        localSubparticlesAligned = self._runSubparticles(600, [-177.8, 5.5, 0.5], alignSubparticles=True)
         localSubparticles = self._runSubparticles(600, [-1.2, 111.6, -177.4], alignSubparticles=False)
 
         # Test for filter sub-particles which are aligned in the z
-        self._runFilterSubParticles(90, [149.0, 64.9, 73.2], localSubparticles_aligned, mindist=10)
-        self._runFilterSubParticles(50, [106.2, 112.6, -177.6], localSubparticles_aligned, side=25)
-        self._runFilterSubParticles(21, [47.6, 175.3, 159.1], localSubparticles_aligned, top=50)
+        localUniqueAligend = self._runFilterSubParticles(120, [149.0, 64.9, 73.2], localSubparticlesAligned, unique=5)
+        self._runFilterSubParticles(90, [149.0, 64.9, 73.2], localSubparticlesAligned, unique=5, mindist=10)
+        self._runFilterSubParticles(50, [106.2, 112.6, -177.6], localSubparticlesAligned, unique=5, side=25)
+        self._runFilterSubParticles(21, [47.6, 175.3, 159.1], localSubparticlesAligned, unique=5, top=50)
 
         # Test for filter sub-particles which are not aligned
-        self._runFilterSubParticles(90, [31.6, 60.155541, -138.80597], localSubparticles, mindist=10)
-        self._runFilterSubParticles(50, [103.2, 66.1, -66.9], localSubparticles, side=25)
-        self._runFilterSubParticles(21, [175.2, 66.1, -66.9], localSubparticles, top=50)
+        localUnique = self._runFilterSubParticles(120, [31.6, 60.155541, -138.80597], localSubparticles, unique=5)
+        self._runFilterSubParticles(90, [31.6, 60.155541, -138.80597], localSubparticles, unique=5, mindist=10)
+        self._runFilterSubParticles(50, [103.2, 66.1, -66.9], localSubparticles, unique=5, side=25)
+        self._runFilterSubParticles(21, [175.2, 66.1, -66.9], localSubparticles, unique=5, top=50)
 
         # Test extract particles
+        localExtractionAligned = self.newProtocol(ProtLocalizedExtraction, boxSize=26)
+        localExtractionAligned.inputParticles.set(self.protImport.outputParticles)
+        localExtractionAligned.inputCoordinates.set(localUniqueAligend.outputCoordinates)
+        self.launchProtocol(localExtractionAligned)
+        self.assertIsNotNone(localExtractionAligned.outputParticles,
+                             "There was a problem with localized "
+                             "extraction protocol")
         localExtraction = self.newProtocol(ProtLocalizedExtraction, boxSize=26)
         localExtraction.inputParticles.set(self.protImport.outputParticles)
-        localExtraction.inputCoordinates.set(localSubparticles.outputCoordinates)
+        localExtraction.inputCoordinates.set(localUnique.outputCoordinates)
         self.launchProtocol(localExtraction)
         self.assertIsNotNone(localExtraction.outputParticles,
                              "There was a problem with localized "
