@@ -152,7 +152,6 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
 
         cShifts, cAngles = geometryFromMatrix(inv((coord._subparticle.getTransform().getMatrix())))
         cAngles = [math.degrees(cAngles[j]) for j in range(len(cAngles))]
-        print(cAngles)
         self.assertAlmostEqual(first=cAngles[0],
                                second=angles[0], delta=0.1,
                                msg="Rot angle is %0.1f, but should be %0.1f "
