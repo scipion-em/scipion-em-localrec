@@ -53,7 +53,6 @@ Protocols
 ===============
 Buildbot status
 ===============
-TODO: add to buildbot
 Status devel version: 
 
 .. image:: http://arquimedes.cnb.csic.es:9980/badges/ccp4_devel.svg
