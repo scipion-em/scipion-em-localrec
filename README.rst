@@ -48,7 +48,7 @@ Protocols
 * localized subparticles: Calculate the orientations of the subunits of interest and their positions in the original particle images.
 * filter_subunits: Filter the subunits (sub-particles) based on spatial distance, angular distance, etc.
 * localized extraction: Extract computed sub-particles from a SetOfParticles.
-
+* stitch particles: Regenerate a particle (volume) from its sub-particles (sub-volumes). 
 
 ===============
 Buildbot status
