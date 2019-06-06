@@ -86,7 +86,7 @@ class Vector3:
 def geometryFromMatrix(matrix):
     from pyworkflow.em.convert.transformations import translation_from_matrix, euler_from_matrix
 
-    shifts = translation_from_matrix(matrix)
+    shifts = -1.0 * translation_from_matrix(matrix)
     angles = -1.0 * np.ones(3) * euler_from_matrix(matrix, axes='szyz')
     return shifts, angles
 
