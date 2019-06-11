@@ -46,7 +46,8 @@ class Plugin(pyworkflow.em.Plugin):
 
     @classmethod
     def _defineVariables(cls):
-        cls._defineEmVar(LOCALREC_HOME, 'localrec-1.2.0')
+        pass
+        #cls._defineEmVar(LOCALREC_HOME, 'localrec-1.2.0')
 
     @classmethod
     def getEnviron(cls):
@@ -65,15 +66,15 @@ class Plugin(pyworkflow.em.Plugin):
 
     @classmethod
     def isVersionActive(cls):
-        return cls.getActiveVersion().startswith(V1_2_0)
+        return cls.getActiveVersion().startswith(V2_0)
 
     @classmethod
     def defineBinaries(cls, env):
-
+        pass
          # Add localrec
-         env.addPackage('localrec', version='1.2.0',
-                        tar='localrec-1.2.0.tgz',
-                        default=True)
+         #env.addPackage('localrec', version='1.2.0',
+         #               tar='localrec-1.2.0.tgz',
+         #               default=True)
 
 
 pyworkflow.em.Domain.registerPlugin(__name__)
