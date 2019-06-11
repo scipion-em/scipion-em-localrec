@@ -138,9 +138,7 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
         # return
         inputSet = self.inputParticles.get()
         outputSet = self._createSetOfCoordinates(inputSet)
-        params = {"symmetryGroup": self.symGrp.get(),
-                  "symmetryOrder": self.symmetryOrder.get(),
-                  "vector": self.vector.get(),
+        params = {"vector": self.vector.get(),
                   "vectorFile": self.vectorFile.get(),
                   "length": self.length.get(),
                   "pxSize": self.inputParticles.get().getSamplingRate(),
@@ -163,7 +161,6 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
         # Save the vectors in a metadata
         for vector in subpartVectorList:
             objId = vectorsMd.addObject()
-            print(vector)
             vectorsMd.setValue(md.MDL_SHIFT_X, vector.vector[0], objId)
             vectorsMd.setValue(md.MDL_SHIFT_Y, vector.vector[1], objId)
             vectorsMd.setValue(md.MDL_SHIFT_Z, vector.vector[2], objId)

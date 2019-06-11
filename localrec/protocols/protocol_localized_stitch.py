@@ -34,8 +34,9 @@ import pyworkflow.em.metadata as md
 
 import xmippLib
 
-from localrec.constants import CMM, LINEAR
+from localrec.constants import CMM, LINEAR, symDict
 from localrec.utils import load_vectors
+
 
 class ProtLocalizedStich(ProtPreprocessVolumes):
     """
@@ -135,19 +136,24 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         depsSymVolHalf2 = []
         depsSymMask = []
 
+        if self.usePreRun:
+            localRecProt = self.preRuns[0].get()
+            localRecSymGrp = localRecProt.symGrp.get()
+            localRecSymOrd = localRecProt.symmetryOrder.get()
+            if localRecSymGrp == 0 or localRecSymGrp == 1:
+                localRecSym = "%s%d" % (symDict[localRecSymGrp], localRecSymOrd)
+            else:
+                localRecSym = symDict[localRecSymGrp]
+        else:
+            localRecSym = self.symmetryGroup.get()
+
         for i, (vol, vol2) in enumerate(zip(self.inputSubVolumesHalf1, self.inputSubVolumesHalf2)):
             # Check if we have a mask for this volume
             maskFn = None
-            vectorFn = None
-            localRecSym = self.symmetryGroup.get()
             volFn = vol.get().getFileName()
             volFn2 = vol2.get().getFileName()
             if len(self.symMasks) >= i+1:
                 maskFn = self.symMasks[i].get().getFileName()
-            if len(self.preRuns) >= i+1 and self.usePreRun:
-                localRecProt = self.preRuns[i].get()
-                vectorFn = localRecProt._getOutpuVecMetadata()
-                localRecSym = localRecProt.symmetryGroup.get()
 
             maskVolumeHalf1Id = self._insertFunctionStep('maskVolume', volFn, maskFn,
                                                          i, 'half1',
@@ -155,13 +161,13 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
             maskVolumeHalf2Id = self._insertFunctionStep('maskVolume', volFn2, maskFn,
                                                          i, 'half2',
                                                          prerequisites=[inputStepId])
-            maskPreprationId = self._insertFunctionStep('prepareMask', vectorFn, i,
+            maskPreprationId = self._insertFunctionStep('prepareMask', i,
                                                         prerequisites=[maskVolumeHalf1Id ,maskVolumeHalf2Id])
             volPreparationHalf1Id = self._insertFunctionStep('prepareVol',
-                                                             vectorFn, i, 'half1',
+                                                             i, 'half1',
                                                              prerequisites=[maskVolumeHalf1Id])
             volPreparationHalf2Id = self._insertFunctionStep('prepareVol',
-                                                         vectorFn, i, 'half2',
+                                                         i, 'half2',
                                                          prerequisites=[maskVolumeHalf2Id])
             symMaskStepId = self._insertFunctionStep('symmetrizeMask', i, localRecSym,
                                                      prerequisites=[maskPreprationId])
@@ -193,24 +199,23 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         interpMethod = self.interpMethod
         self.interpString = 'linear' if interpMethod.get() == LINEAR else 'spline'
         self.interpNum = 1 if interpMethod.get() == LINEAR else 3
+        self.subVolCenterVec = []
 
         """ Compute the center of the sub-particle (the same as the vector
          for localized coordinate extraction)"""
-        if self.defineVector == CMM:
-            cmmFn = self.vectorFile.get()
-            vector = " "
+        if self.usePreRun:
+            for i, run in enumerate(self.preRuns):
+                self.subVolCenterVec += self.createVector(self.preRuns[i].get())
         else:
-            cmmFn = ""
-            vector = self.vector.get()
-        self.subVolCenterVec = load_vectors(cmmFn, vector, self.length.get(), self.pxSize)
+            self.subVolCenterVec = self.createVector()
 
     def stitchParticles(self, halfString):
 
         # define the required file name to make a proper mask
-        binarizedMaskFn = self._getExtraPath('binarized_mask_%s.vol' % halfString)
-        erodedMaskFn = self._getExtraPath('eroded_mask_%s.vol' % halfString)
-        softMaskFn = self._getExtraPath('soft_edge_mask_%s.vol' % halfString)
-        volWithouMask = self._getExtraPath('vol_without_mask._%s.vol' % halfString)
+        binarizedMaskFn = self._getTmpPath('binarized_mask_%s.vol' % halfString)
+        erodedMaskFn = self._getTmpPath('eroded_mask_%s.vol' % halfString)
+        softMaskFn = self._getTmpPath('soft_edge_mask_%s.vol' % halfString)
+        volWithouMask = self._getTmpPath('vol_without_mask._%s.vol' % halfString)
 
         ih = ImageHandler()
         sumImg = ih.createImage()
@@ -242,7 +247,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         sumMaskData[sumMaskData<1.0] = 1.0
         sumMask.setData(sumMaskData)
         sumImg.inplaceDivide(sumMask)
-        # This is to generate a mask for post processing
+        # This is to generate a smooth mask
         sumMaskDataTmp[sumMaskDataTmp<1.0] = 0.0
         sumMaskDataTmp[sumMaskDataTmp>=1.0] = 1.0
         finalMask.setData(sumMaskDataTmp)
@@ -259,25 +264,6 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         program = 'xmipp_image_operate'
         args = '-i %s --mult %s -o %s' % (volWithouMask, softMaskFn, self._getOutputVol(halfString))
         self.runJob(program,args)
-
-    def readVector(self, vectorFn, index):
-
-        if vectorFn is None:
-            indexVec = index
-            if indexVec >= len(self.subVolCenterVec):
-                indexVec = len(self.subVolCenterVec) - 1
-            length = self.subVolCenterVec[indexVec].get_length()
-            shiftX = self.subVolCenterVec[indexVec].vector[0] * length
-            shiftY = self.subVolCenterVec[indexVec].vector[1] * length
-            shiftZ = self.subVolCenterVec[indexVec].vector[2] * length
-            rotMatrix = self.subVolCenterVec[indexVec].get_matrix()
-        else:
-            vectorsMd = md.MetaData(vectorFn)
-            shiftX = vectorsMd.getValue(md.MDL_SHIFT_X, vectorsMd.firstObject())
-            shiftY = vectorsMd.getValue(md.MDL_SHIFT_Y, vectorsMd.firstObject())
-            shiftZ = vectorsMd.getValue(md.MDL_SHIFT_Z, vectorsMd.firstObject())
-
-        return shiftX, shiftY, shiftZ, rotMatrix
 
     def maskVolume(self, volFn, maskFn, index, halfString):
         ih = ImageHandler()
@@ -301,9 +287,9 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         self.runJob(program,args)
 
 
-    def prepareMask(self, vectorFn, index):
+    def prepareMask(self, index):
 
-        shiftX, shiftY, shiftZ, rotMatrix = self.readVector(vectorFn, index)
+        shiftX, shiftY, shiftZ, rotMatrix = self.readVector(index)
         rot, tilt, psi = np.rad2deg(euler_from_matrix(rotMatrix.transpose(), 'szyz'))
 
         # Window the mask to the output volume
@@ -328,9 +314,9 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
                   maskShifted, self.interpString))
         self.runJob(program,args)
 
-    def prepareVol(self, vectorFn, index, halfString):
+    def prepareVol(self, index, halfString):
 
-        shiftX, shiftY, shiftZ, rotMatrix = self.readVector(vectorFn, index)
+        shiftX, shiftY, shiftZ, rotMatrix = self.readVector(index)
         rot, tilt, psi = np.rad2deg(euler_from_matrix(rotMatrix.transpose(), 'szyz'))
 
         # Window the sub-volume to the output volume size
@@ -374,6 +360,30 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         program = 'xmipp_transform_symmetrize'
         args = '-i %s --sym %s -o %s --dont_wrap --sum --spline %d' % (volShifted, localRecSym, volSym, self.interpNum)
         self.runJob(program,args)
+
+
+    def readVector(self, index):
+
+        length = self.subVolCenterVec[index].get_length()
+        shiftX = self.subVolCenterVec[index].vector[0] * length
+        shiftY = self.subVolCenterVec[index].vector[1] * length
+        shiftZ = self.subVolCenterVec[index].vector[2] * length
+        rotMatrix = self.subVolCenterVec[index].get_matrix()
+        return shiftX, shiftY, shiftZ, rotMatrix
+
+    def createVector(self, protocolSitich=None):
+
+        vector = ""
+        cmmFn = ""
+        print(protocolSitich)
+        if protocolSitich == None:
+            protocolSitich = self
+        if  protocolSitich.defineVector== CMM:
+            cmmFn = protocolSitich.vectorFile.get()
+        else:
+            vector = protocolSitich.vector.get()
+        return load_vectors(cmmFn, vector, protocolSitich.length.get(), self.pxSize)
+
 
     def createOutputStep(self):
         vol = self.inputSubVolumesHalf1[0]
@@ -419,28 +429,28 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
 
     #--------------------------- UTILS functions -------------------------------
     def _getMaskFn(self, index):
-        return self._getExtraPath('output_mask_%d.vol' % index)
+        return self._getTmpPath('output_mask_%d.vol' % index)
 
     def _getOutputVol(self, halfString):
         return self._getExtraPath('output_volume_%s.vol' % halfString)
 
     def _getMaskedVolFn(self, index, halfString):
-        return self._getExtraPath('output_volume_masked_%d_%s.vol' % (index, halfString))
+        return self._getTmpPath('output_volume_masked_%d_%s.vol' % (index, halfString))
 
     def _getWinFn(self, typeStr, index, halfString=''):
         if halfString == '':
-            return self._getExtraPath('output_%s_windowed_%d.vol' % (typeStr, index))
+            return self._getTmpPath('output_%s_windowed_%d.vol' % (typeStr, index))
         else:
-            return self._getExtraPath('output_%s_windowed_%d_%s.vol' % (typeStr, index, halfString))
+            return self._getTmpPath('output_%s_windowed_%d_%s.vol' % (typeStr, index, halfString))
 
     def _getShiftedFn(self, typeStr, index, halfString=''):
         if halfString == '':
-            return self._getExtraPath('output_%s_shifted_%d.vol' % (typeStr, index))
+            return self._getTmpPath('output_%s_shifted_%d.vol' % (typeStr, index))
         else:
-            return self._getExtraPath('output_%s_shifted_%d_%s.vol' % (typeStr, index, halfString))
+            return self._getTmpPath('output_%s_shifted_%d_%s.vol' % (typeStr, index, halfString))
 
     def _getSymFn(self, typeStr, index, halfString=''):
         if halfString == '':
-            return self._getExtraPath('output_%s_symmetrized_%d.vol' % (typeStr, index))
+            return self._getTmpPath('output_%s_symmetrized_%d.vol' % (typeStr, index))
         else:
-            return self._getExtraPath('output_%s_symmetrized_%d_%s.vol' % (typeStr, index, halfString))
+            return self._getTmpPath('output_%s_symmetrized_%d_%s.vol' % (typeStr, index, halfString))
