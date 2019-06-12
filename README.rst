@@ -66,5 +66,8 @@ Status production version:
 .. image:: http://arquimedes.cnb.csic.es:9980/badges/ccp4_prod.svg
 
 
+================
+Acknowledgements
+================
 
-
+The authors acknowledge funding from the European Research Council under the European Union’s Horizon 2020 research and innovation programme (649053).
