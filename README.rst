@@ -15,19 +15,21 @@ Ilca SL, Kotecha A, Sun X, Poranen MM, Stuart DI & Huiskonen JT (2015). Localize
 Install this plugin
 ===================
 
-You will need to use `2.0.0 <https://github.com/I2PC/scipion/releases/tag/v2.0>`_ version of Scipion to run these protocols. To install the plugin, you have two options:
+You will need to use `2.0.0 <https://github.com/I2PC/scipion/releases/tag/v2.0>`_ version of Scipion to run these protocols. Two versions of the plugin are available:
 
-- **Stable version**  
+**Stable version**  
+
+Either use the following command
 
 .. code-block::
 
     scipion installp -p scipion-em-localrec
 
-OR
+or
 
-  - through the plugin manager GUI by launching Scipion and following **Configuration** >> **Plugins**
+Install the plugin through the plugin manager GUI by launching Scipion and following **Configuration** >> **Plugins**
 
-- **Developer's version** 
+**Developer's version** 
 
 1. Download repository: 
 
@@ -41,13 +43,17 @@ OR
 
            scipion installp -p path_to_scipion-em-localrec --devel
 
-- **Tests**
+3. Test the plugin:
 
-1. scipion test localrec.tests.test_protocol_localized_reconstruction
+.. code-block::
+
+           scipion test localrec.tests.test_protocol_localized_reconstruction
 
 ========
 Protocols
 ========
+
+The following protocols have been implemented so far
 
 * localized subparticles: Calculate the orientations of the subunits of interest and their positions in the original particle images.
 * filter subunits: Filter the subunits (sub-particles) based on spatial distance, angular distance, etc.
