@@ -122,7 +122,7 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
                             'Different values must be separated by commas.')
 
         group = form.addGroup('Sub-particles')
-        group.addParam('alignSubparticles', BooleanParam, default=False,
+        group.addParam('alignSubParticles', BooleanParam, default=False,
                       label='Align the subparticles?',
                       help='Align sub-particles to the standard orientation. ')
 
@@ -172,7 +172,7 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
                                                subpartVectorList,
                                                params["dim"],
                                                self.randomize, 0,
-                                               self.alignSubparticles,
+                                               self.alignSubParticles,
                                                params["pxSize"])
 
             for subpart in subparticles:

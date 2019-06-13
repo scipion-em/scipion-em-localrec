@@ -190,8 +190,8 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
         print("Run ProtLocalized Reconstruction")
 
         # Test for filter sub-particles which are aligned in the z
-        localSubparticlesAligned = self._runSubparticles(600, [-177.8, 5.5, 0.5], alignSubparticles=True)
-        localSubparticles = self._runSubparticles(600, [-1.2, 111.6, -177.4], alignSubparticles=False)
+        localSubparticlesAligned = self._runSubparticles(600, [-177.8, 5.5, 0.5], alignSubParticles=True)
+        localSubparticles = self._runSubparticles(600, [-1.2, 111.6, -177.4], alignSubParticles=False)
 
         # Test for filter sub-particles which are aligned in the z
         localUniqueAligend = self._runFilterSubParticles(120, [149.0, 64.9, 73.2], localSubparticlesAligned, unique=5)
