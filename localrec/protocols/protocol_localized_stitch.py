@@ -1,6 +1,7 @@
 # **************************************************************************
 # *
 # * Authors:         Vahid Abrishami (vahid.abrishami@helsinki.fi)
+# *                  Juha Huiskonen (juha.huiskonen@helsinki.fi)
 # *
 # * Laboratory of Structural Biology,
 # * Helsinki Institute of Life Science HiLIFE
@@ -78,10 +79,6 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
                       label='Output volume size',
                       validators=[Positive],
                       help='This is size of the output volume after symmetrization')
-        form.addParam('alignedSubVolumes', BooleanParam,
-                      label="Sub-volumes are aligned?", default=False,
-                      help='If you aligned the sub-partilces with z-axis '
-                           'to apply symmetry')
         form.addParam('usePreRun', BooleanParam,
                       label="Use previous localrec run(s)", default=False)
         form.addParam('preRuns', MultiPointerParam, pointerClass='ProtLocalizedRecons',
@@ -98,6 +95,11 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
                             '* I2: Crowther 222 \n'
                             '* I3: 52-setting (as used in SPIDER?) \n'
                             '* I4: A different 52 setting \n')
+        form.addParam('alignSubParticles', BooleanParam,
+                      label="Sub-volumes are aligned?",condition="not usePreRun",
+                      default=False,
+                      help='If you aligned the sub-partilces with z-axis '
+                           'to apply symmetry')
 
         group = form.addGroup('Vectors', condition="not usePreRun")
         group.addParam('defineVector', EnumParam, default=CMM,
@@ -135,6 +137,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         depsSymVolHalf1 = []
         depsSymVolHalf2 = []
         depsSymMask = []
+        doAlign = False
 
         if self.usePreRun:
             localRecProt = self.preRuns[0].get()
@@ -144,8 +147,11 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
                 localRecSym = "%s%d" % (symDict[localRecSymGrp], localRecSymOrd)
             else:
                 localRecSym = symDict[localRecSymGrp]
+            doAlign = localRecProt.alignSubParticles
         else:
             localRecSym = self.symmetryGroup.get()
+            doAlign = self.alignSubParticles
+            print(doAlign)
 
         for i, (vol, vol2) in enumerate(zip(self.inputSubVolumesHalf1, self.inputSubVolumesHalf2)):
             # Check if we have a mask for this volume
@@ -161,13 +167,13 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
             maskVolumeHalf2Id = self._insertFunctionStep('maskVolume', volFn2, maskFn,
                                                          i, 'half2',
                                                          prerequisites=[inputStepId])
-            maskPreprationId = self._insertFunctionStep('prepareMask', i,
+            maskPreprationId = self._insertFunctionStep('prepareMask', i, doAlign,
                                                         prerequisites=[maskVolumeHalf1Id ,maskVolumeHalf2Id])
             volPreparationHalf1Id = self._insertFunctionStep('prepareVol',
-                                                             i, 'half1',
+                                                             i, 'half1', doAlign,
                                                              prerequisites=[maskVolumeHalf1Id])
             volPreparationHalf2Id = self._insertFunctionStep('prepareVol',
-                                                         i, 'half2',
+                                                         i, 'half2', doAlign,
                                                          prerequisites=[maskVolumeHalf2Id])
             symMaskStepId = self._insertFunctionStep('symmetrizeMask', i, localRecSym,
                                                      prerequisites=[maskPreprationId])
@@ -287,7 +293,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         self.runJob(program,args)
 
 
-    def prepareMask(self, index):
+    def prepareMask(self, index, doAlign):
 
         shiftX, shiftY, shiftZ, rotMatrix = self.readVector(index)
         rot, tilt, psi = np.rad2deg(euler_from_matrix(rotMatrix.transpose(), 'szyz'))
@@ -300,7 +306,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         self.runJob(program,args)
 
         #If sub-particles are aligned along z
-        if self.alignedSubVolumes:
+        if doAlign:
             program = 'xmipp_transform_geometry'
             args = '-i %s --rotate_volume euler %f %f %f -o %s'\
                    % (maskWin, rot, tilt, psi, maskWin)
@@ -314,7 +320,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
                   maskShifted, self.interpString))
         self.runJob(program,args)
 
-    def prepareVol(self, index, halfString):
+    def prepareVol(self, index, halfString, doAlign):
 
         shiftX, shiftY, shiftZ, rotMatrix = self.readVector(index)
         rot, tilt, psi = np.rad2deg(euler_from_matrix(rotMatrix.transpose(), 'szyz'))
@@ -329,7 +335,8 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         self.runJob(program,args)
 
         # If sub-particles are aligned along z
-        if self.alignedSubVolumes:
+        print(doAlign)
+        if doAlign:
             program = 'xmipp_transform_geometry'
             args = '-i %s --rotate_volume euler %f %f %f -o %s'\
                    % (volWin, rot, tilt, psi, volWin)
