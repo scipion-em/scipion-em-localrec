@@ -345,8 +345,8 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
                 # Pixel to Angstrom
                 z_ang = z * angpix
                 ctf = subpart.getCTF()
-                ctf.setDefocusU(subpart.getCTF().getDefocusU() + z_ang)
-                ctf.setDefocusV(subpart.getCTF().getDefocusV() + z_ang)
+                ctf.setDefocusU(subpart.getCTF().getDefocusU() - z_ang)
+                ctf.setDefocusV(subpart.getCTF().getDefocusV() - z_ang)
 
 
             subpart.setCoordinate(coord)
