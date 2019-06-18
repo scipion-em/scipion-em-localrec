@@ -25,7 +25,6 @@
 # *
 # *****************************************************************************
 
-from pyworkflow import VERSION_1_1
 from pyworkflow.protocol.params import (PointerParam, BooleanParam, StringParam,
                                         EnumParam, NumericRangeParam, IntParam,
                                         PathParam, LEVEL_ADVANCED)

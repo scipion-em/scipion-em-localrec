@@ -31,7 +31,6 @@ from pyworkflow.em.convert.transformations import euler_from_matrix
 from pyworkflow.em.protocol import ProtPreprocessVolumes
 from pyworkflow.em.data import *
 from pyworkflow.protocol.constants import STEPS_PARALLEL
-import pyworkflow.em.metadata as md
 
 import xmippLib
 
@@ -292,7 +291,6 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         args = '-i %s --mult %s -o %s' % (volFn, maskFn, volMasked)
         self.runJob(program,args)
 
-
     def prepareMask(self, index, doAlign):
 
         shiftX, shiftY, shiftZ, rotMatrix = self.readVector(index)
@@ -368,7 +366,6 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         args = '-i %s --sym %s -o %s --dont_wrap --sum --spline %d' % (volShifted, localRecSym, volSym, self.interpNum)
         self.runJob(program,args)
 
-
     def readVector(self, index):
 
         length = self.subVolCenterVec[index].get_length()
@@ -390,7 +387,6 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         else:
             vector = protocolSitich.vector.get()
         return load_vectors(cmmFn, vector, protocolSitich.length.get(), self.pxSize)
-
 
     def createOutputStep(self):
         vol = self.inputSubVolumesHalf1[0]
