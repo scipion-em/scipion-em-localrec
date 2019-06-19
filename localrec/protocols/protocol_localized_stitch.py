@@ -150,7 +150,6 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         else:
             localRecSym = self.symmetryGroup.get()
             doAlign = self.alignSubParticles
-            print(doAlign)
 
         for i, (vol, vol2) in enumerate(zip(self.inputSubVolumesHalf1, self.inputSubVolumesHalf2)):
             # Check if we have a mask for this volume
@@ -333,7 +332,6 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         self.runJob(program,args)
 
         # If sub-particles are aligned along z
-        print(doAlign)
         if doAlign:
             program = 'xmipp_transform_geometry'
             args = '-i %s --rotate_volume euler %f %f %f -o %s'\
@@ -379,7 +377,6 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
 
         vector = ""
         cmmFn = ""
-        print(protocolSitich)
         if protocolSitich == None:
             protocolSitich = self
         if  protocolSitich.defineVector== CMM:
