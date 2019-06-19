@@ -37,7 +37,7 @@ from localrec.constants import *
 from localrec.convert import *
 
 
-# _logo = "opic_logo.png"
+_logo = "localrec_logo.png"
 _references = ['Ilca2015']
 
 class Plugin(pyworkflow.em.Plugin):
@@ -46,49 +46,35 @@ class Plugin(pyworkflow.em.Plugin):
 
     @classmethod
     def _defineVariables(cls):
-        cls._defineEmVar(LOCALREC_HOME, 'localrec-1.2.0')
+        pass
+        #cls._defineEmVar(LOCALREC_HOME, 'localrec-1.2.0')
 
     @classmethod
     def getEnviron(cls):
         """ Setup the environment variables needed to launch localrec. """
         environ = Environ(os.environ)
-        print("getEnvirion(): %s"%os.environ.get(cls.getHome()))
-        if ('%s' % cls.getHome()) in environ:
+        if ('XMIPP_HOME') in environ:
+            xmippHome = os.environ.get('XMIPP_HOME')
             environ.update({
-                'PATH': cls.getHome(),
-                'LD_LIBRARY_PATH': os.environ[cls.getHome()],
-            }, position=Environ.BEGIN)
-        else:
-            # TODO: Find a generic way to warn of this situation
-            print("%s variable not set on environment." % cls.getHome())
+            'PATH': os.path.join(xmippHome, 'bin'),
+            'LD_LIBRARY_PATH': os.path.join(xmippHome, 'lib')}, position=Environ.BEGIN)
         return environ
 
     @classmethod
     def validateInstallation(cls):
-        """ This function will be used to check if RELION package is properly
-            installed."""
-
-        # missingPaths = ["%s: %s" % (var, os.environ[var])
-        #                 for var in [cls._homeVar]
-        #                 if not os.path.exists(os.environ[var])]
-        #
-        # if missingPaths:
-        #     return ["Missing variables:"] + missingPaths
-        # else:
-        #     print("returning no errors")
-        return []  # No errors
+        pass
 
     @classmethod
     def isVersionActive(cls):
-        return cls.getActiveVersion().startswith(V1_2_0)
+        return cls.getActiveVersion().startswith(V2_0)
 
     @classmethod
     def defineBinaries(cls, env):
-
+        pass
          # Add localrec
-         env.addPackage('localrec', version='1.2.0',
-                        tar='localrec-1.2.0.tgz',
-                        default=True)
+         #env.addPackage('localrec', version='1.2.0',
+         #               tar='localrec-1.2.0.tgz',
+         #               default=True)
 
 
 pyworkflow.em.Domain.registerPlugin(__name__)

@@ -41,7 +41,7 @@ class ProtFilterSubParts(ProtParticles):
     extend symmetry and localized subparticles. It can filter the particles
     (sub-particles) according to spatial distance, view, and angular distance.
     """
-    _label = 'filter_subunits'
+    _label = 'filter subparticles'
     _lastUpdateVersion = VERSION_1_1
 
     # -------------------------- DEFINE param functions -----------------------
@@ -190,7 +190,7 @@ class ProtFilterSubParts(ProtParticles):
     def _genOutputCoordinates(self, subParticles, coordArr, outputSet, minDist):
 
         for index, coordinate in enumerate(coordArr):
-            if minDist:
+            if minDist>0:
                 subpart = subParticles[index]
                 if filter_mindist(subParticles, subpart, minDist):
                     outputSet.append(coordinate.clone())

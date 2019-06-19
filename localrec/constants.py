@@ -28,8 +28,15 @@
 LOCALREC_HOME = 'LOCALREC_HOME'
 
 # Supported versions
-V1_2_0 = '1.2.0'
+V2_0 = '2.0'
 
 # Import vector is from Chimera or string
 CMM = 0
 HAND = 1
+
+# Intepolation method for stitch sub-particles
+LINEAR = 0
+BSPLINE = 1
+
+# Symmetry dictionary
+symDict = {0:'C', 1:'D', 2:'T', 3:'O', 4:'I1', 5:'I2', 6:'I3', 7:'I4'}
