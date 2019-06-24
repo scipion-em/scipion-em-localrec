@@ -24,20 +24,22 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # *****************************************************************************
-
+from __future__ import print_function
+import sys
 from pyworkflow.protocol.params import (PointerParam, BooleanParam, StringParam,
                                         EnumParam, NumericRangeParam, IntParam,
                                         PathParam, LEVEL_ADVANCED)
 from pyworkflow.em.constants import (SYM_CYCLIC, SYM_DIHEDRAL, SYM_OCTAHEDRAL,
                                      SYM_TETRAHEDRAL, SYM_I222, SYM_I222r,
-                                     SYM_In25, SYM_In25r, SCIPION_SYM_NAME)
+                                     SYM_In25, SYM_In25r, SCIPION_SYM_NAME,
+                                     SYM_I2n3, SYM_I2n3r, SYM_I2n5, SYM_I2n5r)
 from pyworkflow.em.convert.symmetry import getSymmetryMatrices
 from pyworkflow.em.protocol import ProtParticles, ProtParticlePicking
 import pyworkflow.em.metadata as md
 
 from localrec.utils import load_vectors, create_subparticles
 from localrec.constants import CMM, HAND
-
+from localrec.progressbar import ProgressBar
 
 class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
     """ This class contains a re-implementation to a method for the
@@ -73,7 +75,11 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
                                "I1" + " (" + SCIPION_SYM_NAME[SYM_I222] + ")",
                                "I2" + " (" + SCIPION_SYM_NAME[SYM_I222r] + ")",
                                "I3" + " (" + SCIPION_SYM_NAME[SYM_In25] + ")",
-                               "I4" + " (" + SCIPION_SYM_NAME[SYM_In25r] + ")"],
+                               "I4" + " (" + SCIPION_SYM_NAME[SYM_In25r] + ")",
+                               "I5" + " (" + SCIPION_SYM_NAME[SYM_I2n3] + ")",
+                               "I6" + " (" + SCIPION_SYM_NAME[SYM_I2n3r] + ")",
+                               "I7" + " (" + SCIPION_SYM_NAME[SYM_I2n5] + ")",
+                               "I8" + " (" + SCIPION_SYM_NAME[SYM_I2n5r] + ")"],
                       default=0,
                       label="Symmetry",
                       help="See http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/"
@@ -88,10 +94,11 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
         group.addParam('randomize', BooleanParam, default=False,
                        label='Randomize the order of the symmetry matrices?',
                        help='Useful for preventing preferred orientations.')
-        group.addParam('relaxSym', BooleanParam, default=False,
-                       expertLevel=LEVEL_ADVANCED,
-                       label='Relax symmetry?',
-                       help='Create one random subparticle for each particle ')
+# ROB this parameter is never used
+#        group.addParam('relaxSym', BooleanParam, default=False,
+#                       expertLevel=LEVEL_ADVANCED,
+#                       label='Relax symmetry?',
+#                       help='Create one random subparticle for each particle ')
 
         group = form.addGroup('Vectors')
         group.addParam('defineVector', EnumParam, default=CMM,
@@ -164,7 +171,16 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
             vectorsMd.setValue(md.MDL_SHIFT_Z, vector.vector[2], objId)
         vectorsMd.write(self._getOutpuVecMetadata())
 
-        for part in inputSet:
+        #for part in inputSet:
+        progress = ProgressBar(len(inputSet), fmt=ProgressBar.FULL)
+
+        step = max(100, len(inputSet) / 100)
+        print("Processing coordinates:")
+        for i, part in enumerate(inputSet):
+            if i%step == 0:
+                print(progress(), end='')
+                sys.stdout.flush()
+                progress.current += step
 
             subparticles = create_subparticles(part, symMatrices,
                                                subpartVectorList,
@@ -178,6 +194,7 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
                 outputSet.append(coord)
                 if part.hasAttribute('_rlnRandomSubset'):
                     coord._subparticle.copyAttributes(part, '_rlnRandomSubset')
+        print(progress.done())
 
         self._defineOutputs(outputCoordinates=outputSet)
         self._defineSourceRelation(self.inputParticles, outputSet)

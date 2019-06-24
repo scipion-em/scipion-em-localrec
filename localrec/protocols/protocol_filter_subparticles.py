@@ -25,8 +25,10 @@
 # *
 # **************************************************************************
 
+from __future__ import print_function
 import numpy as np
 import math
+import sys
 
 from pyworkflow import VERSION_1_1
 from pyworkflow.protocol.params import PointerParam, FloatParam
@@ -34,7 +36,7 @@ from pyworkflow.em.protocol import ProtParticles
 from pyworkflow.em.data import SetOfParticles
 
 from localrec.utils import *
-
+from localrec.progressbar import ProgressBar
 
 class ProtFilterSubParts(ProtParticles):
     """ This protocol mainly filters output particles from two protocols:
@@ -101,7 +103,16 @@ class ProtFilterSubParts(ProtParticles):
         lastPartId = None
         particlesList = []
 
+        progress = ProgressBar(len(inputSet), fmt=ProgressBar.FULL)
+        print("Processing particles:")
+        sys.stdout.flush()
+        step = max(100, len(inputSet) / 100)
         for particle in inputSet.iterItems(orderBy=['_index']):
+
+            if i%step == 0:
+                print(progress(), end='')
+                sys.stdout.flush()
+                progress.current += step
 
             partId = int(particle._index)
             if partId != lastPartId:
@@ -118,6 +129,8 @@ class ProtFilterSubParts(ProtParticles):
             particlesList.append(subpart)
             outputParts.append(subpart)
 
+        print(progress.done())
+
         self._defineOutputs(outputParticles=outputParts)
         self._defineSourceRelation(self.inputSet, outputParts)
 
@@ -132,8 +145,17 @@ class ProtFilterSubParts(ProtParticles):
         coordArr = []
         subParticleId = 0
 
-        for coord in inputSet.iterItems(orderBy=['_subparticle._micId',
-                                                 '_micId', 'id']):
+        progress = ProgressBar(len(inputSet), fmt=ProgressBar.FULL)
+        print("Processing coordinates:")
+        sys.stdout.flush()
+        step = max(100, len(inputSet) / 100)
+        for i, coord in enumerate(inputSet.iterItems(orderBy=['_subparticle._micId',
+                                                     '_micId', 'id'])):
+            if i%step == 0:
+                print(progress(), end='')
+                sys.stdout.flush()
+                progress.current += step
+
             # The original particle id is stored in the sub-particle as micId
             partId = coord._micId.get()
 
