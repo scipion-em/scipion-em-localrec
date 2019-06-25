@@ -39,7 +39,11 @@ import pyworkflow.em.metadata as md
 
 from localrec.utils import load_vectors, create_subparticles
 from localrec.constants import CMM, HAND
-from localrec.progressbar import ProgressBar
+# eventually progressbar will be move to scipion core
+try:
+    from pyworkflow.em.uitils.progressbar import Progressbar
+except:
+    from localrec.progressbar import ProgressBar
 
 class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
     """ This class contains a re-implementation to a method for the
