@@ -31,7 +31,12 @@ from pyworkflow import VERSION_1_1
 from pyworkflow.em.convert import ImageHandler
 from pyworkflow.protocol.params import PointerParam
 from pyworkflow.em.protocol import ProtParticles, IntParam
-from localrec.progressbar import ProgressBar
+
+# eventually progressbar will be move to scipion core
+try:
+    from pyworkflow.em.uitils.progressbar import Progressbar
+except:
+    from localrec.progressbar import ProgressBar
 
 class ProtLocalizedExtraction(ProtParticles):
     """ Extract computed sub-particles from a SetOfParticles. """
