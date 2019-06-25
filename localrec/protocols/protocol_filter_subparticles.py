@@ -36,7 +36,11 @@ from pyworkflow.em.protocol import ProtParticles
 from pyworkflow.em.data import SetOfParticles
 
 from localrec.utils import *
-from localrec.progressbar import ProgressBar
+# eventually progressbar will be move to scipion core
+try:
+    from pyworkflow.em.uitils.progressbar import Progressbar
+except:
+    from localrec.progressbar import ProgressBar
 
 class ProtFilterSubParts(ProtParticles):
     """ This protocol mainly filters output particles from two protocols:
