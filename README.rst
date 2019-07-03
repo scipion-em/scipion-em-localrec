@@ -60,6 +60,13 @@ The following protocols have been implemented so far
 * localized extraction: Extract computed sub-particles from a SetOfParticles.
 * stitch particles: Regenerate a particle (volume) from its sub-particles (sub-volumes). 
 
+
+=====
+Tests
+=====
+
+* scipion test localrec.tests.test_protocol_localized_reconstruction
+
 ===============
 Buildbot status
 ===============
