@@ -41,7 +41,7 @@ from localrec.utils import load_vectors, create_subparticles
 from localrec.constants import CMM, HAND
 # eventually progressbar will be move to scipion core
 try:
-    from pyworkflow.em.uitils.progressbar import Progressbar
+    from pyworkflow.utils import ProgressBar
 except:
     from localrec.progressbar import ProgressBar
 
@@ -86,7 +86,7 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
                                "I8" + " (" + SCIPION_SYM_NAME[SYM_I2n5r] + ")"],
                       default=0,
                       label="Symmetry",
-                      help="See http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/"
+                      help="See https://scipion-em.github.io/docs/docs/developer/symmetries"
                            "Symmetry for a description of the symmetry groups "
                            "format in Xmipp.\n"
                            "If no symmetry is present, use _c1_."
@@ -176,15 +176,15 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
         vectorsMd.write(self._getOutpuVecMetadata())
 
         #for part in inputSet:
-        progress = ProgressBar(len(inputSet), fmt=ProgressBar.FULL)
+        print("Processing coordinates:")
+        progress = ProgressBar(total=len(inputSet), fmt=ProgressBar.NOBAR)
+        progress.start()
 
         step = max(100, len(inputSet) / 100)
-        print("Processing coordinates:")
+
         for i, part in enumerate(inputSet):
             if i%step == 0:
-                print(progress(), end='')
-                sys.stdout.flush()
-                progress.current += step
+                progress.update(i+1)
 
             subparticles = create_subparticles(part, symMatrices,
                                                subpartVectorList,
@@ -198,7 +198,7 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
                 outputSet.append(coord)
                 if part.hasAttribute('_rlnRandomSubset'):
                     coord._subparticle.copyAttributes(part, '_rlnRandomSubset')
-        print(progress.done())
+        progress.finish()
 
         self._defineOutputs(outputCoordinates=outputSet)
         self._defineSourceRelation(self.inputParticles, outputSet)
