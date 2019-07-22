@@ -113,7 +113,7 @@ class ProtFilterSubParts(ProtParticles):
 
         sys.stdout.flush()
         step = max(100, len(inputSet) / 100)
-        for particle in inputSet.iterItems(orderBy=['_index']):
+        for i, particle in enumerate(inputSet.iterItems(orderBy=['_index'])):
 
             if i%step == 0:
                 progress.update(i+1)
