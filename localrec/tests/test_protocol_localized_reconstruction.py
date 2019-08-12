@@ -81,7 +81,7 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
     #         cls.protImportVol = cls.runImportVolumes(cls.vol, 1)
 
     def _runSubparticles(self, checkSize, angles, defVector=0, **kwargs):
-        label = 'localized subpartices ('
+        label = 'define subpartices ('
         for t in kwargs.iteritems():
             label += '%s=%s' % t
         label += ')'

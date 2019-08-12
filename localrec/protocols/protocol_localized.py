@@ -46,7 +46,7 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
     corresponding to the subunits can be extracted and treated as
     single particles.
     """
-    _label = 'localized subparticles'
+    _label = 'define subparticles'
 
     def __init__(self, **args):
         ProtParticlePicking.__init__(self, **args)
