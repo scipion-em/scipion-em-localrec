@@ -283,7 +283,7 @@ def filter_subparticles(subparticles, filters):
 
 def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
                         part_image_size, randomize, subparticles_total,
-                        align_subparticles, angpix):
+                        align_subparticles, handness, angpix):
     """ Obtain all subparticles from a given particle and set
     the properties of each such subparticle. """
 
@@ -319,14 +319,20 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
 
             # subparticle origin
             d = subparticle_vector.get_length()
+            print(d)
+            print(shifts[0], shifts[1])
             x = -m[0, 2] * d + shifts[0]
             y = -m[1, 2] * d + shifts[1]
             z = -m[2, 2] * d
+
+            print(x)
+            print(y)
 
             # save the subparticle coordinates (integer part) relative to the
             # user given image size and as a small shift in the origin (decimal part)
             x_d, x_i = math.modf(x)
             y_d, y_i = math.modf(y)
+            print(x_d, x_i, y_d, y_i)
             alignment = em.Transform()
             alignmentOrg = em.Transform()
             M = matrixFromGeometry(np.array([x_d, y_d, 0]), angles, True)
@@ -340,13 +346,18 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
             coord.setX(int(part_image_size / 2) - x_i)
             coord.setY(int(part_image_size / 2) - y_i)
             coord.setMicId(particle.getObjId())
-
+            print((part_image_size / 2.0) - x_i)
+            print((part_image_size / 2.0) - y_i)
+            print(coord.getX())
+            print(coord.getY())
             if subpart.hasCTF():
                 # Pixel to Angstrom
                 z_ang = z * angpix
+                if not handness:
+                    z_ang *= -1
                 ctf = subpart.getCTF()
-                ctf.setDefocusU(subpart.getCTF().getDefocusU() - z_ang)
-                ctf.setDefocusV(subpart.getCTF().getDefocusV() - z_ang)
+                ctf.setDefocusU(subpart.getCTF().getDefocusU() + z_ang)
+                ctf.setDefocusV(subpart.getCTF().getDefocusV() + z_ang)
 
 
             subpart.setCoordinate(coord)
