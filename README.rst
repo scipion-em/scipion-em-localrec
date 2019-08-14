@@ -55,10 +55,10 @@ Protocols
 
 The following protocols have been implemented so far
 
-* localized subparticles: Calculate the orientations of the subunits of interest and their positions in the original particle images.
-* filter subunits: Filter the subunits (sub-particles) based on spatial distance, angular distance, etc.
-* localized extraction: Extract computed sub-particles from a SetOfParticles.
-* stitch particles: Regenerate a particle (volume) from its sub-particles (sub-volumes). 
+* localrec - define subparticles: Calculate the orientations of the sub-particlesunits of interest and their positions in the original particle images.
+* localrec - filter subparticles: Filter the sub-particles based on spatial distance, angular distance, etc.
+* localrec - extract subparticles: Extract computed sub-particles from a SetOfParticles.
+* localrec - stitch subparticles: Regenerate a particle (volume) from its sub-particle based reconstructions. 
 
 ===============
 Buildbot status
