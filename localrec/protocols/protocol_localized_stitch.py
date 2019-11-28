@@ -59,12 +59,20 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
     #--------------------------- DEFINE param functions ------------------------
     def _defineParams(self, form):
         form.addSection(label='Input')
+        form.addParam('useHalMaps', BooleanParam,
+                      label="Use two half maps?", important=True,
+                      default=False,
+                      help='Stitch half maps seperately')
+        form.addParam('inputSubVolumes', MultiPointerParam,
+                      pointerClass='Volume', condition="not useHalMaps",
+                      label="Input sub-volumes ", important=True,
+                      help='Select input sub-volume for stitching')
         form.addParam('inputSubVolumesHalf1', MultiPointerParam,
-                      pointerClass='Volume',
+                      pointerClass='Volume', condition="useHalMaps",
                       label="Input sub-volume for half 1", important=True,
                       help='Select the input sub-volume for half 1')
         form.addParam('inputSubVolumesHalf2', MultiPointerParam,
-                      pointerClass='Volume',
+                      pointerClass='Volume', condition="useHalMaps",
                       label="Input sub_volumes for half 2", important=True,
                       help='Select the input sub-volume for half 2')
         form.addParam('symMasks', MultiPointerParam, pointerClass='VolumeMask',
@@ -135,6 +143,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         inputStepId = self._insertFunctionStep('convertInputStep')
         depsSymVolHalf1 = []
         depsSymVolHalf2 = []
+        depsSymVol = []
         depsSymMask = []
         doAlign = False
 
@@ -151,49 +160,75 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
             localRecSym = self.symmetryGroup.get()
             doAlign = self.alignSubParticles
 
-        for i, (vol, vol2) in enumerate(zip(self.inputSubVolumesHalf1, self.inputSubVolumesHalf2)):
-            # Check if we have a mask for this volume
-            maskFn = None
-            volFn = vol.get().getFileName()
-            volFn2 = vol2.get().getFileName()
-            if len(self.symMasks) >= i+1:
-                maskFn = self.symMasks[i].get().getFileName()
+        if self.useHalMaps:
+            for i, (vol, vol2) in enumerate(zip(self.inputSubVolumesHalf1, self.inputSubVolumesHalf2)):
+                # Check if we have a mask for this volume
+                maskFn = None
+                volFn = vol.get().getFileName()
+                volFn2 = vol2.get().getFileName()
+                if len(self.symMasks) >= i+1:
+                    maskFn = self.symMasks[i].get().getFileName()
 
-            maskVolumeHalf1Id = self._insertFunctionStep('maskVolume', volFn, maskFn,
-                                                         i, 'half1',
-                                                         prerequisites=[inputStepId])
-            maskVolumeHalf2Id = self._insertFunctionStep('maskVolume', volFn2, maskFn,
-                                                         i, 'half2',
-                                                         prerequisites=[inputStepId])
-            maskPreprationId = self._insertFunctionStep('prepareMask', i, doAlign,
-                                                        prerequisites=[maskVolumeHalf1Id ,maskVolumeHalf2Id])
-            volPreparationHalf1Id = self._insertFunctionStep('prepareVol',
-                                                             i, 'half1', doAlign,
-                                                             prerequisites=[maskVolumeHalf1Id])
-            volPreparationHalf2Id = self._insertFunctionStep('prepareVol',
-                                                         i, 'half2', doAlign,
-                                                         prerequisites=[maskVolumeHalf2Id])
-            symMaskStepId = self._insertFunctionStep('symmetrizeMask', i, localRecSym,
-                                                     prerequisites=[maskPreprationId])
+                maskVolumeHalf1Id = self._insertFunctionStep('maskVolume', volFn, maskFn,
+                                                             i, 'half1',
+                                                             prerequisites=[inputStepId])
+                maskVolumeHalf2Id = self._insertFunctionStep('maskVolume', volFn2, maskFn,
+                                                             i, 'half2',
+                                                             prerequisites=[inputStepId])
+                maskPreprationId = self._insertFunctionStep('prepareMask', i, doAlign,
+                                                            prerequisites=[maskVolumeHalf1Id ,maskVolumeHalf2Id])
+                volPreparationHalf1Id = self._insertFunctionStep('prepareVol',
+                                                                 i, 'half1', doAlign,
+                                                                 prerequisites=[maskVolumeHalf1Id])
+                volPreparationHalf2Id = self._insertFunctionStep('prepareVol',
+                                                             i, 'half2', doAlign,
+                                                             prerequisites=[maskVolumeHalf2Id])
+                symMaskStepId = self._insertFunctionStep('symmetrizeMask', i, localRecSym,
+                                                         prerequisites=[maskPreprationId])
 
-            symVolHalf1StepId = self._insertFunctionStep('symmetrizeVolume', i,
-                                                         localRecSym, 'half1',
-                                                         prerequisites=[maskPreprationId,
-                                                                        volPreparationHalf1Id])
-            symVolHalf2StepId = self._insertFunctionStep('symmetrizeVolume', i,
-                                                         localRecSym, 'half2',
-                                                         prerequisites=[maskPreprationId,
-                                                                        volPreparationHalf2Id])
-            depsSymVolHalf1.append(symVolHalf1StepId)
-            depsSymVolHalf2.append(symVolHalf2StepId)
-            depsSymMask.append(symMaskStepId)
+                symVolHalf1StepId = self._insertFunctionStep('symmetrizeVolume', i,
+                                                             localRecSym, 'half1',
+                                                             prerequisites=[maskPreprationId,
+                                                                            volPreparationHalf1Id])
+                symVolHalf2StepId = self._insertFunctionStep('symmetrizeVolume', i,
+                                                             localRecSym, 'half2',
+                                                             prerequisites=[maskPreprationId,
+                                                                            volPreparationHalf2Id])
+                depsSymVolHalf1.append(symVolHalf1StepId)
+                depsSymVolHalf2.append(symVolHalf2StepId)
+                depsSymMask.append(symMaskStepId)
+            stitchStepHalf1Id = self._insertFunctionStep('stitchParticles', 'half1',
+                                                        prerequisites=depsSymMask + depsSymVolHalf1)
+            stitchStepHalf2Id = self._insertFunctionStep('stitchParticles', 'half2',
+                                                        prerequisites=depsSymMask + depsSymVolHalf2)
+            self._insertFunctionStep('createOutputStep', prerequisites=[stitchStepHalf1Id,
+                                                                        stitchStepHalf2Id])
+        else:
+            for i, vol in enumerate(self.inputSubVolumes):
+                maskFn = None
+                volFn = vol.get().getFileName()
+                if len(self.symMasks) >= i+1:
+                    maskFn = self.symMasks[i].get().getFileName()
 
-        stitchStepHalf1Id = self._insertFunctionStep('stitchParticles', 'half1',
-                                                     prerequisites=depsSymMask + depsSymVolHalf1)
-        stitchStepHalf2Id = self._insertFunctionStep('stitchParticles', 'half2',
-                                                     prerequisites=depsSymMask + depsSymVolHalf2)
-        self._insertFunctionStep('createOutputStep', prerequisites=[stitchStepHalf1Id,
-                                                                    stitchStepHalf2Id])
+                maskVolumeId = self._insertFunctionStep('maskVolume', volFn,
+                                                        maskFn,i, '',
+                                                        prerequisites=[inputStepId])
+                maskPreprationId = self._insertFunctionStep('prepareMask', i, doAlign,
+                                                            prerequisites=[maskVolumeId])
+                volPreparationId = self._insertFunctionStep('prepareVol',
+                                                            i, '', doAlign,
+                                                            prerequisites=[maskVolumeId])
+                symMaskStepId = self._insertFunctionStep('symmetrizeMask', i, localRecSym,
+                                                         prerequisites=[maskPreprationId])
+                symVolStepId = self._insertFunctionStep('symmetrizeVolume', i,
+                                                             localRecSym, '',
+                                                             prerequisites=[maskPreprationId,
+                                                                            volPreparationId])
+                depsSymVol.append(symVolStepId)
+                depsSymMask.append(symMaskStepId)
+                stitchStepId = self._insertFunctionStep('stitchParticles', '',
+                                                        prerequisites=depsSymMask + depsSymVol)
+                self._insertFunctionStep('createOutputStep', prerequisites=[stitchStepId])
 
     #--------------------------- STEPS functions -------------------------------
     def convertInputStep(self):
@@ -216,10 +251,11 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
     def stitchParticles(self, halfString):
 
         # define the required file name to make a proper mask
-        binarizedMaskFn = self._getTmpPath('binarized_mask_%s.vol' % halfString)
-        erodedMaskFn = self._getTmpPath('eroded_mask_%s.vol' % halfString)
-        softMaskFn = self._getTmpPath('soft_edge_mask_%s.vol' % halfString)
-        volWithouMask = self._getTmpPath('vol_without_mask._%s.vol' % halfString)
+        auxString = '' if halfString == '' else '_{}'.format(halfString)
+        binarizedMaskFn = self._getTmpPath('binarized_mask%s.vol' % auxString)
+        erodedMaskFn = self._getTmpPath('eroded_mask%s.vol' % auxString)
+        softMaskFn = self._getTmpPath('soft_edge_mask%s.vol' % auxString)
+        volWithouMask = self._getTmpPath('vol_without_mask.%s.vol' % auxString)
 
         ih = ImageHandler()
         sumImg = ih.createImage()
@@ -235,7 +271,10 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         sumMask.convert2DataType(ih.DT_DOUBLE)
 
         # Loop over the halfX subvolumes and sum them up (and mask)
-        for i, vol in enumerate(self.inputSubVolumesHalf1):
+        listObj = self.inputSubVolumesHalf1
+        if not self.useHalMaps:
+            listObj = self.inputSubVolumes
+        for i, vol in enumerate(listObj):
              if i==0:
                  continue
              volSym = self._getSymFn('volume', i+1, halfString)
@@ -386,15 +425,24 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         return load_vectors(cmmFn, vector, protocolSitich.length.get(), self.pxSize)
 
     def createOutputStep(self):
-        vol = self.inputSubVolumesHalf1[0]
-        volumes = self._createSetOfVolumes()
-        volumes.setSamplingRate(self.pxSize)
-        for halfString in ['half1', 'half2']:
+        if self.useHalMaps:
+            vol = self.inputSubVolumesHalf1[0]
+            volumes = self._createSetOfVolumes()
+            volumes.setSamplingRate(self.pxSize)
+            for halfString in ['half1', 'half2']:
+                outVol = Volume()
+                outVol.setFileName(self._getOutputVol(halfString))
+                volumes.append(outVol)
+            self._defineOutputs(outputVolumes=volumes)
+            self._defineSourceRelation(vol, volumes)
+        else:
+            vol = self.inputSubVolumes[0]
             outVol = Volume()
-            outVol.setFileName(self._getOutputVol(halfString))
-            volumes.append(outVol)
-        self._defineOutputs(outputVolumes=volumes)
-        self._defineSourceRelation(vol, volumes)
+            outVol.setSamplingRate(self.pxSize)
+            outVol.setFileName(self._getOutputVol())
+            self._defineOutputs(outputVolume=outVol)
+            self._defineSourceRelation(vol,outVol)
+
 
     #--------------------------- INFO functions --------------------------------
     def _validate(self):
@@ -431,26 +479,22 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
     def _getMaskFn(self, index):
         return self._getTmpPath('output_mask_%d.vol' % index)
 
-    def _getOutputVol(self, halfString):
-        return self._getExtraPath('output_volume_%s.vol' % halfString)
+    def _getOutputVol(self, halfString=''):
+        auxString = '' if halfString == '' else '_{}'.format(halfString)
+        return self._getExtraPath('output_volume%s.vol' % auxString)
 
-    def _getMaskedVolFn(self, index, halfString):
-        return self._getTmpPath('output_volume_masked_%d_%s.vol' % (index, halfString))
+    def _getMaskedVolFn(self, index, halfString=''):
+        auxString = '' if halfString == '' else '_{}'.format(halfString)
+        return self._getTmpPath('output_volume_masked_%d%s.vol' % (index, auxString))
 
     def _getWinFn(self, typeStr, index, halfString=''):
-        if halfString == '':
-            return self._getTmpPath('output_%s_windowed_%d.vol' % (typeStr, index))
-        else:
-            return self._getTmpPath('output_%s_windowed_%d_%s.vol' % (typeStr, index, halfString))
+        auxString = '' if halfString == '' else '_{}'.format(halfString)
+        return self._getTmpPath('output_%s_windowed_%d%s.vol' % (typeStr, index, auxString))
 
     def _getShiftedFn(self, typeStr, index, halfString=''):
-        if halfString == '':
-            return self._getTmpPath('output_%s_shifted_%d.vol' % (typeStr, index))
-        else:
-            return self._getTmpPath('output_%s_shifted_%d_%s.vol' % (typeStr, index, halfString))
+        auxString = '' if halfString == '' else '_{}'.format(halfString)
+        return self._getTmpPath('output_%s_shifted_%d%s.vol' % (typeStr, index, auxString))
 
     def _getSymFn(self, typeStr, index, halfString=''):
-        if halfString == '':
-            return self._getTmpPath('output_%s_symmetrized_%d.vol' % (typeStr, index))
-        else:
-            return self._getTmpPath('output_%s_symmetrized_%d_%s.vol' % (typeStr, index, halfString))
+        auxString = '' if halfString == '' else '_{}'.format(halfString)
+        return self._getTmpPath('output_%s_symmetrized_%d%s.vol' % (typeStr, index, auxString))
