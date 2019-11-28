@@ -15,7 +15,7 @@ Ilca SL, Kotecha A, Sun X, Poranen MM, Stuart DI & Huiskonen JT (2015). Localize
 Install this plugin
 ===================
 
-You will need to use `2.0.0 <https://github.com/I2PC/scipion/releases/tag/v2.0>`_ version of Scipion to run these protocols. Two versions of the plugin are available:
+You will need to use `2.0.0 <https://github.com/I2PC/scipion/releases/tag/v2.0>`_ version of Scipion or later to run these protocols. Two versions of the plugin are available:
 
 **Stable version**  
 
@@ -55,11 +55,10 @@ Protocols
 
 The following protocols have been implemented so far
 
-* localized subparticles: Calculate the orientations of the subunits of interest and their positions in the original particle images.
-* filter subunits: Filter the subunits (sub-particles) based on spatial distance, angular distance, etc.
-* localized extraction: Extract computed sub-particles from a SetOfParticles.
-* stitch particles: Regenerate a particle (volume) from its sub-particles (sub-volumes). 
-
+* localrec - define subparticles: Calculate the orientations of the sub-particlesunits of interest and their positions in the original particle images.
+* localrec - filter subparticles: Filter the sub-particles based on spatial distance, angular distance, etc.
+* localrec - extract subparticles: Extract computed sub-particles from a SetOfParticles.
+* localrec - stitch subparticles: Regenerate a particle (volume) from its sub-particle based reconstructions. 
 
 =====
 Tests
