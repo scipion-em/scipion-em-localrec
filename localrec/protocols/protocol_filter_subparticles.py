@@ -25,8 +25,10 @@
 # *
 # **************************************************************************
 
+from __future__ import print_function
 import numpy as np
 import math
+import sys
 
 from pyworkflow import VERSION_1_1
 from pyworkflow.protocol.params import PointerParam, FloatParam
@@ -34,7 +36,11 @@ from pyworkflow.em.protocol import ProtParticles
 from pyworkflow.em.data import SetOfParticles
 
 from localrec.utils import *
-
+# eventually progressbar will be move to scipion core
+try:
+    from pyworkflow.utils import ProgressBar
+except:
+    from localrec.progressbar import ProgressBar
 
 class ProtFilterSubParts(ProtParticles):
     """ This protocol mainly filters output particles from two protocols:
@@ -101,7 +107,16 @@ class ProtFilterSubParts(ProtParticles):
         lastPartId = None
         particlesList = []
 
-        for particle in inputSet.iterItems(orderBy=['_index']):
+        print("Processing particles:")
+        progress = ProgressBar(total=len(inputSet), fmt=ProgressBar.NOBAR)
+        progress.start()
+
+        sys.stdout.flush()
+        step = max(100, len(inputSet) / 100)
+        for i, particle in enumerate(inputSet.iterItems(orderBy=['_index'])):
+
+            if i%step == 0:
+                progress.update(i+1)
 
             partId = int(particle._index)
             if partId != lastPartId:
@@ -118,6 +133,8 @@ class ProtFilterSubParts(ProtParticles):
             particlesList.append(subpart)
             outputParts.append(subpart)
 
+        progress.finish()
+
         self._defineOutputs(outputParticles=outputParts)
         self._defineSourceRelation(self.inputSet, outputParts)
 
@@ -132,8 +149,15 @@ class ProtFilterSubParts(ProtParticles):
         coordArr = []
         subParticleId = 0
 
-        for coord in inputSet.iterItems(orderBy=['_subparticle._micId',
-                                                 '_micId', 'id']):
+        progress = ProgressBar(len(inputSet), fmt=ProgressBar.NOBAR)
+        print("Processing coordinates:")
+        progress.start()
+        step = max(100, len(inputSet) / 100)
+        for i, coord in enumerate(inputSet.iterItems(orderBy=['_subparticle._micId',
+                                                     '_micId', 'id'])):
+            if i%step == 0:
+                progress.update(i+1)
+
             # The original particle id is stored in the sub-particle as micId
             partId = coord._micId.get()
 
@@ -155,7 +179,7 @@ class ProtFilterSubParts(ProtParticles):
                 continue
             subParticles.append(subpart)
             coordArr.append(coord.clone())
-
+        progress.finish()
         self._genOutputCoordinates(subParticles, coordArr, outputSet, params["mindist"])
         self._defineOutputs(outputCoordinates=outputSet)
         self._defineTransformRelation(self.inputSet, self.outputCoordinates)

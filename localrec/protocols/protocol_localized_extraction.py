@@ -23,14 +23,20 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-
+from __future__ import print_function
 import numpy as np
+import sys
 
 from pyworkflow import VERSION_1_1
 from pyworkflow.em.convert import ImageHandler
 from pyworkflow.protocol.params import PointerParam
 from pyworkflow.em.protocol import ProtParticles, IntParam
 
+# eventually progressbar will be move to scipion core
+try:
+    from pyworkflow.utils import ProgressBar
+except:
+    from localrec.progressbar import ProgressBar
 
 class ProtLocalizedExtraction(ProtParticles):
     """ Extract computed sub-particles from a SetOfParticles. """
@@ -87,8 +93,14 @@ class ProtLocalizedExtraction(ProtParticles):
         partIdExcluded = []
         lastPartId = None
 
-        for coord in inputCoords.iterItems(orderBy=['_subparticle._micId',
-                                                    '_micId', 'id']):
+        progress = ProgressBar(len(inputCoords), fmt=ProgressBar.NOBAR)
+        progress.start()
+        step = max(100, len(inputCoords) / 100)
+        for i, coord in enumerate(inputCoords.iterItems(orderBy=['_subparticle._micId',
+                                                    '_micId', 'id'])):
+            if i%step == 0:
+                progress.update(i+1)
+
             # The original particle id is stored in the sub-particle as micId
             partId = coord._micId.get()
 
@@ -132,6 +144,7 @@ class ProtLocalizedExtraction(ProtParticles):
                 subpart.setObjId(None)  # Force to insert as a new item
                 outputSet.append(subpart)
 
+        progress.finish()
         if outliers:
             self.info("WARNING: Discarded %s particles because laid out of the "
                       "particle (for a box size of %d" % (outliers, boxSize))
