@@ -40,7 +40,7 @@ except:
 
 class ProtLocalizedExtraction(ProtParticles):
     """ Extract computed sub-particles from a SetOfParticles. """
-    _label = 'localized extraction'
+    _label = 'extract subparticles'
     _lastUpdateVersion = VERSION_1_1
 
     # -------------------------- DEFINE param functions -----------------------

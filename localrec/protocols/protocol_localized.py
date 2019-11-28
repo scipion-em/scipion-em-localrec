@@ -52,7 +52,7 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
     corresponding to the subunits can be extracted and treated as
     single particles.
     """
-    _label = 'localized subparticles'
+    _label = 'define subparticles'
 
     def __init__(self, **args):
         ProtParticlePicking.__init__(self, **args)
@@ -71,7 +71,7 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
                       help='Select the input images from the project.')
 
         group = form.addGroup('Symmetry')
-        form.addParam('symGrp', EnumParam,
+        group.addParam('symGrp', EnumParam,
                       choices=["Cn" + " (" + SCIPION_SYM_NAME[SYM_CYCLIC] + ")",
                                "Dn" + " (" + SCIPION_SYM_NAME[SYM_DIHEDRAL] + ")",
                                "T" + " (" + SCIPION_SYM_NAME[SYM_TETRAHEDRAL] + ")",
@@ -91,7 +91,7 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
                            "format in Xmipp.\n"
                            "If no symmetry is present, use _c1_."
                       )
-        form.addParam('symmetryOrder', IntParam, default=1,
+        group.addParam('symmetryOrder', IntParam, default=1,
                       condition='symGrp<=%d' % SYM_DIHEDRAL,
                       label='Symmetry Order',
                       help='Order of cyclic symmetry.')
@@ -103,6 +103,8 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
 #                       expertLevel=LEVEL_ADVANCED,
 #                       label='Relax symmetry?',
 #                       help='Create one random subparticle for each particle ')
+
+
 
         group = form.addGroup('Vectors')
         group.addParam('defineVector', EnumParam, default=CMM,
@@ -134,7 +136,11 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
         group.addParam('alignSubParticles', BooleanParam, default=False,
                       label='Align the subparticles?',
                       help='Align sub-particles to the standard orientation. ')
-
+        group.addParam('handness', BooleanParam, default=False,
+                      label='Consider alternative handedness?',
+                      help='If set to yes, the alternative hand is assumed'
+                           ' to be correct and defocus gradient correction'
+                           ' will be applied in the opposite direction . ')
 
         form.addParallelSection(threads=0, mpi=0)
 
@@ -191,6 +197,7 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
                                                params["dim"],
                                                self.randomize, 0,
                                                self.alignSubParticles,
+                                               self.handness,
                                                params["pxSize"])
 
             for subpart in subparticles:

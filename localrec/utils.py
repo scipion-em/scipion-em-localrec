@@ -283,7 +283,7 @@ def filter_subparticles(subparticles, filters):
 
 def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
                         part_image_size, randomize, subparticles_total,
-                        align_subparticles, angpix):
+                        align_subparticles, handness, angpix):
     """ Obtain all subparticles from a given particle and set
     the properties of each such subparticle. """
 
@@ -327,6 +327,7 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
             # user given image size and as a small shift in the origin (decimal part)
             x_d, x_i = math.modf(x)
             y_d, y_i = math.modf(y)
+
             alignment = em.Transform()
             alignmentOrg = em.Transform()
             M = matrixFromGeometry(np.array([x_d, y_d, 0]), angles, True)
@@ -344,10 +345,11 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
             if subpart.hasCTF():
                 # Pixel to Angstrom
                 z_ang = z * angpix
+                if not handness:
+                    z_ang *= -1
                 ctf = subpart.getCTF()
-                ctf.setDefocusU(subpart.getCTF().getDefocusU() - z_ang)
-                ctf.setDefocusV(subpart.getCTF().getDefocusV() - z_ang)
-
+                ctf.setDefocusU(subpart.getCTF().getDefocusU() + z_ang)
+                ctf.setDefocusV(subpart.getCTF().getDefocusV() + z_ang)
 
             subpart.setCoordinate(coord)
             coord._subparticle = subpart.clone()
