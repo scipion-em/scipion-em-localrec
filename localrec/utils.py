@@ -33,13 +33,12 @@ import math
 import random
 import numpy as np
 from numpy.linalg import inv
-from itertools import izip
 import xml.etree.ElementTree
 
-from pyworkflow.em.convert.transformations import (vector_norm, unit_vector,
+from pwem.convert.transformations import (vector_norm, unit_vector,
                                            euler_matrix, euler_from_matrix)
-from pyworkflow.em.data import Coordinate
-import pyworkflow.em as em
+from pwem.objects.data import Coordinate
+import pwem as em
 
 
 class Vector3:
@@ -84,7 +83,7 @@ class Vector3:
 
 
 def geometryFromMatrix(matrix):
-    from pyworkflow.em.convert.transformations import translation_from_matrix, euler_from_matrix
+    from pwem.convert.transformations import translation_from_matrix, euler_from_matrix
 
     shifts = -1.0 * translation_from_matrix(matrix)
     angles = -1.0 * np.ones(3) * euler_from_matrix(matrix, axes='szyz')
@@ -96,7 +95,7 @@ def matrixFromGeometry(shifts, angles, inverseTransform):
     2D shifts in X and Y...and the 3 euler angles.
     """
 
-    from pyworkflow.em.convert.transformations import euler_matrix
+    from pwem.convert.transformations import euler_matrix
     # angles list is in radians, but sign changed
     radAngles = -angles
 
@@ -131,7 +130,7 @@ def load_vectors(cmm_file, vectors_str, distances_str, angpix):
             raise Exception("Error: The number of distances does not match "
                             "the number of vectors!")
 
-        for vector, distance in izip(subparticle_vector_list,
+        for vector, distance in zip(subparticle_vector_list,
                                      subparticle_distances):
             if distance > 0:
                 vector.set_length(distance)
@@ -328,8 +327,8 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
             x_d, x_i = math.modf(x)
             y_d, y_i = math.modf(y)
 
-            alignment = em.Transform()
-            alignmentOrg = em.Transform()
+            alignment = em.objects.data.Transform()
+            alignmentOrg = em.objects.data.Transform()
             M = matrixFromGeometry(np.array([x_d, y_d, 0]), angles, True)
             MOrg = matrixFromGeometry(np.array([x_d, y_d, 0]), angles_org, True)
             alignment.setMatrix(M)

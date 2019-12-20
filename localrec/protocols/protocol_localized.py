@@ -24,26 +24,21 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # *****************************************************************************
-from __future__ import print_function
-import sys
 from pyworkflow.protocol.params import (PointerParam, BooleanParam, StringParam,
                                         EnumParam, NumericRangeParam, IntParam,
                                         PathParam, LEVEL_ADVANCED)
-from pyworkflow.em.constants import (SYM_CYCLIC, SYM_DIHEDRAL, SYM_OCTAHEDRAL,
+from pwem.constants import (SYM_CYCLIC, SYM_DIHEDRAL, SYM_OCTAHEDRAL,
                                      SYM_TETRAHEDRAL, SYM_I222, SYM_I222r,
                                      SYM_In25, SYM_In25r, SCIPION_SYM_NAME,
                                      SYM_I2n3, SYM_I2n3r, SYM_I2n5, SYM_I2n5r)
-from pyworkflow.em.convert.symmetry import getSymmetryMatrices
-from pyworkflow.em.protocol import ProtParticles, ProtParticlePicking
-import pyworkflow.em.metadata as md
+from pwem.convert.symmetry import getSymmetryMatrices
+from pwem.protocols import ProtParticles, ProtParticlePicking
+import pwem.metadata as md
 
 from localrec.utils import load_vectors, create_subparticles
 from localrec.constants import CMM, HAND
 # eventually progressbar will be move to scipion core
-try:
-    from pyworkflow.utils import ProgressBar
-except:
-    from localrec.progressbar import ProgressBar
+from pyworkflow.utils import ProgressBar
 
 class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
     """ This class contains a re-implementation to a method for the

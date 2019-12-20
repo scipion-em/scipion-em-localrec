@@ -29,10 +29,10 @@ This sub-package contains data and protocol classes
 wrapping Localized recontruction of subunits.
 """
 import os
-import pyworkflow.em
+import pwem
 from pyworkflow.utils import Environ
 
-from bibtex import _bibtex # Load bibtex dict with references
+from .bibtex import _bibtex # Load bibtex dict with references
 from localrec.constants import *
 from localrec.convert import *
 
@@ -40,7 +40,7 @@ from localrec.convert import *
 _logo = "localrec_logo.png"
 _references = ['Ilca2015']
 
-class Plugin(pyworkflow.em.Plugin):
+class Plugin(pwem.Plugin):
     _homeVar = LOCALREC_HOME
     _pathVars = [LOCALREC_HOME]
 
@@ -77,4 +77,4 @@ class Plugin(pyworkflow.em.Plugin):
          #               default=True)
 
 
-pyworkflow.em.Domain.registerPlugin(__name__)
+pwem.Domain.registerPlugin(__name__)

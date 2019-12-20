@@ -23,25 +23,22 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-from __future__ import print_function
 import numpy as np
-import sys
 
-from pyworkflow import VERSION_1_1
-from pyworkflow.em.convert import ImageHandler
+from pyworkflow import VERSION_1_2
+from pwem.convert import ImageHandler
 from pyworkflow.protocol.params import PointerParam
-from pyworkflow.em.protocol import ProtParticles, IntParam
+from pwem.protocols import ProtParticles
+from pyworkflow.protocol.params import IntParam
 
 # eventually progressbar will be move to scipion core
-try:
-    from pyworkflow.utils import ProgressBar
-except:
-    from localrec.progressbar import ProgressBar
+from pyworkflow.utils import ProgressBar
+
 
 class ProtLocalizedExtraction(ProtParticles):
     """ Extract computed sub-particles from a SetOfParticles. """
     _label = 'extract subparticles'
-    _lastUpdateVersion = VERSION_1_1
+    _lastUpdateVersion = VERSION_1_2
 
     # -------------------------- DEFINE param functions -----------------------
     def _defineParams(self, form):

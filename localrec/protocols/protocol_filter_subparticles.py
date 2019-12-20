@@ -26,21 +26,17 @@
 # **************************************************************************
 
 from __future__ import print_function
-import numpy as np
-import math
 import sys
 
-from pyworkflow import VERSION_1_1
+from pyworkflow import VERSION_1_2
 from pyworkflow.protocol.params import PointerParam, FloatParam
-from pyworkflow.em.protocol import ProtParticles
-from pyworkflow.em.data import SetOfParticles
+from pwem.protocols import ProtParticles
+from pwem.objects.data import SetOfParticles
 
 from localrec.utils import *
 # eventually progressbar will be move to scipion core
-try:
-    from pyworkflow.utils import ProgressBar
-except:
-    from localrec.progressbar import ProgressBar
+from pyworkflow.utils import ProgressBar
+
 
 class ProtFilterSubParts(ProtParticles):
     """ This protocol mainly filters output particles from two protocols:
@@ -48,7 +44,7 @@ class ProtFilterSubParts(ProtParticles):
     (sub-particles) according to spatial distance, view, and angular distance.
     """
     _label = 'filter subparticles'
-    _lastUpdateVersion = VERSION_1_1
+    _lastUpdateVersion = VERSION_1_2
 
     # -------------------------- DEFINE param functions -----------------------
     def _defineParams(self, form):
