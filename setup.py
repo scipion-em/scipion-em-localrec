@@ -105,17 +105,17 @@ setup(
         #   3 - Alpha
         #   4 - Beta
         #   5 - Production/Stable
-     #   'Development Status :: 3 - Alpha',
+    #   'Development Status :: 3 - Alpha',
 
-        # Indicate who your project is intended for
-     #   'Intended Audience :: Users',
+    # Indicate who your project is intended for
+    #   'Intended Audience :: Users',
 
-        # Pick your license as you wish
-     #   'License :: OSI Approved :: MIT License',
+    # Pick your license as you wish
+    #   'License :: OSI Approved :: MIT License',
 
-        # Specify the Python versions you support here. In particular, ensure
-        # that you indicate whether you support Python 2, Python 3 or both.
-     #   'Programming Language :: Python :: 2.7'
+    # Specify the Python versions you support here. In particular, ensure
+    # that you indicate whether you support Python 2, Python 3 or both.
+    #   'Programming Language :: Python :: 2.7'
     #],
 
     # This field adds keywords for your project which will appear on the
@@ -163,7 +163,7 @@ setup(
     # MANIFEST.in as well.
     # include_package_data=True,
     package_data={  # Optional
-       'localrec': ['localrec_logo.png', 'protocols.conf'],
+        'localrec': ['localrec_logo.png', 'protocols.conf'],
     },
 
     # Although 'package_data' is the preferred approach, in some case you may

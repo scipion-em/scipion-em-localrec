@@ -39,5 +39,4 @@ LINEAR = 0
 BSPLINE = 1
 
 # Symmetry dictionary
-symDict = {0:'C', 1:'D', 2:'T', 3:'O', 4:'I1', 5:'I2', 6:'I3', 7:'I4'}
-
+symDict = {0: 'C', 1: 'D', 2: 'T', 3: 'O', 4: 'I1', 5: 'I2', 6: 'I3', 7: 'I4'}
