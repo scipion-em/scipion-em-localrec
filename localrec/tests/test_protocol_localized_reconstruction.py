@@ -185,7 +185,6 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
                                 **kwargs)
         prot.inputSet.set(subParticles.outputCoordinates)
 
-
     def testProtLocalizedReconstruction(self):
         print("Run ProtLocalized Reconstruction")
 

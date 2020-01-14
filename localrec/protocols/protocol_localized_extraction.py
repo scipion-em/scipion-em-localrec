@@ -95,7 +95,7 @@ class ProtLocalizedExtraction(ProtParticles):
         step = max(100, len(inputCoords) / 100)
         for i, coord in enumerate(inputCoords.iterItems(orderBy=['_subparticle._micId',
                                                     '_micId', 'id'])):
-            if i%step == 0:
+            if i % step == 0:
                 progress.update(i+1)
 
             # The original particle id is stored in the sub-particle as micId
@@ -120,7 +120,7 @@ class ProtLocalizedExtraction(ProtParticles):
             # If particle is not in inputParticles, subparticles will not be
             # generated. Now, subtract from a subset of original particles is
             # supported.
-            if not partId in partIdExcluded:
+            if partId not in partIdExcluded:
                 xpos = coord.getX()
                 ypos = coord.getY()
 

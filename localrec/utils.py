@@ -36,7 +36,7 @@ from numpy.linalg import inv
 import xml.etree.ElementTree
 
 from pwem.convert.transformations import (vector_norm, unit_vector,
-                                           euler_matrix, euler_from_matrix)
+                                          euler_matrix, euler_from_matrix)
 from pwem.objects.data import Coordinate
 import pwem as em
 
@@ -120,7 +120,7 @@ def load_vectors(cmm_file, vectors_str, distances_str, angpix):
     else:
         subparticle_vector_list = vectors_from_string(vectors_str)
 
-    if float(distances_str)>0.0:
+    if float(distances_str) > 0.0:
 
         # Change distances from A to pixel units
         subparticle_distances = [float(x) / angpix for x in
@@ -131,7 +131,7 @@ def load_vectors(cmm_file, vectors_str, distances_str, angpix):
                             "the number of vectors!")
 
         for vector, distance in zip(subparticle_vector_list,
-                                     subparticle_distances):
+                                    subparticle_distances):
             if distance > 0:
                 vector.set_length(distance)
             else:
@@ -160,7 +160,6 @@ def vectors_from_cmm(input_cmm, angpix):
     # coordinates in the CMM file need to be in Angstrom
     vector_list = []
     e = xml.etree.ElementTree.parse(input_cmm).getroot()
-
 
     for marker in e.findall('marker'):
         x = float(marker.get('x')) / angpix
@@ -311,7 +310,7 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
                                                                 matrix_from_subparticle_vector.transpose())))
             angles_org = -1.0 * np.ones(3) * euler_from_matrix(m, 'szyz')
             if align_subparticles:
-                  angles = -1.0 * np.ones(3) * euler_from_matrix(m, 'szyz')
+                angles = -1.0 * np.ones(3) * euler_from_matrix(m, 'szyz')
             else:
                 m2 = np.matmul(matrix_particle[0:3, 0:3], symmetry_matrix.transpose())
                 angles = -1.0 * np.ones(3) * euler_from_matrix(m2, 'szyz')

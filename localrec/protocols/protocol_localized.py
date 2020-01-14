@@ -26,11 +26,11 @@
 # *****************************************************************************
 from pyworkflow.protocol.params import (PointerParam, BooleanParam, StringParam,
                                         EnumParam, NumericRangeParam, IntParam,
-                                        PathParam, LEVEL_ADVANCED)
+                                        PathParam)
 from pwem.constants import (SYM_CYCLIC, SYM_DIHEDRAL, SYM_OCTAHEDRAL,
-                                     SYM_TETRAHEDRAL, SYM_I222, SYM_I222r,
-                                     SYM_In25, SYM_In25r, SCIPION_SYM_NAME,
-                                     SYM_I2n3, SYM_I2n3r, SYM_I2n5, SYM_I2n5r)
+                            SYM_TETRAHEDRAL, SYM_I222, SYM_I222r,
+                            SYM_In25, SYM_In25r, SCIPION_SYM_NAME,
+                            SYM_I2n3, SYM_I2n3r, SYM_I2n5, SYM_I2n5r)
 from pwem.convert.symmetry import getSymmetryMatrices
 from pwem.protocols import ProtParticles, ProtParticlePicking
 import pwem.metadata as md
@@ -39,6 +39,7 @@ from localrec.utils import load_vectors, create_subparticles
 from localrec.constants import CMM, HAND
 # eventually progressbar will be move to scipion core
 from pyworkflow.utils import ProgressBar
+
 
 class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
     """ This class contains a re-implementation to a method for the
@@ -85,7 +86,7 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
                            "Symmetry for a description of the symmetry groups "
                            "format in Xmipp.\n"
                            "If no symmetry is present, use _c1_."
-                      )
+                       )
         group.addParam('symmetryOrder', IntParam, default=1,
                       condition='symGrp<=%d' % SYM_DIHEDRAL,
                       label='Symmetry Order',
@@ -98,8 +99,6 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
 #                       expertLevel=LEVEL_ADVANCED,
 #                       label='Relax symmetry?',
 #                       help='Create one random subparticle for each particle ')
-
-
 
         group = form.addGroup('Vectors')
         group.addParam('defineVector', EnumParam, default=CMM,
@@ -155,8 +154,8 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
                   "dim": self.inputParticles.get().getXDim()
                   }
 
-        symMatrices = getSymmetryMatrices(sym = self.symGrp.get(),
-                                          n = self.symmetryOrder.get())
+        symMatrices = getSymmetryMatrices(sym=self.symGrp.get(),
+                                          n=self.symmetryOrder.get())
         if self.defineVector == CMM:
             cmmFn = params["vectorFile"]
             vector = " "
@@ -184,7 +183,7 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
         step = max(100, len(inputSet) / 100)
 
         for i, part in enumerate(inputSet):
-            if i%step == 0:
+            if i % step == 0:
                 progress.update(i+1)
 
             subparticles = create_subparticles(part, symMatrices,

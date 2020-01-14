@@ -110,7 +110,7 @@ class ProtFilterSubParts(ProtParticles):
         step = max(100, len(inputSet) / 100)
         for i, particle in enumerate(inputSet.iterItems(orderBy=['_index'])):
 
-            if i%step == 0:
+            if i % step == 0:
                 progress.update(i+1)
 
             partId = int(particle._index)
@@ -150,7 +150,7 @@ class ProtFilterSubParts(ProtParticles):
         step = max(100, len(inputSet) / 100)
         for i, coord in enumerate(inputSet.iterItems(orderBy=['_subparticle._micId',
                                                      '_micId', 'id'])):
-            if i%step == 0:
+            if i % step == 0:
                 progress.update(i+1)
 
             # The original particle id is stored in the sub-particle as micId
@@ -209,7 +209,7 @@ class ProtFilterSubParts(ProtParticles):
     def _genOutputCoordinates(self, subParticles, coordArr, outputSet, minDist):
 
         for index, coordinate in enumerate(coordArr):
-            if minDist>0:
+            if minDist > 0:
                 subpart = subParticles[index]
                 if filter_mindist(subParticles, subpart, minDist):
                     outputSet.append(coordinate.clone())
