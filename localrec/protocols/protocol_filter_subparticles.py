@@ -25,10 +25,9 @@
 # *
 # **************************************************************************
 
-from __future__ import print_function
 import sys
 
-from pyworkflow import VERSION_1_2
+from pyworkflow import VERSION_3_0
 from pyworkflow.protocol.params import PointerParam, FloatParam
 from pwem.protocols import ProtParticles
 from pwem.objects.data import SetOfParticles
@@ -44,7 +43,7 @@ class ProtFilterSubParts(ProtParticles):
     (sub-particles) according to spatial distance, view, and angular distance.
     """
     _label = 'filter subparticles'
-    _lastUpdateVersion = VERSION_1_2
+    _lastUpdateVersion = VERSION_3_0
 
     # -------------------------- DEFINE param functions -----------------------
     def _defineParams(self, form):
