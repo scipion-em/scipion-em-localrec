@@ -29,7 +29,7 @@ from pwem.protocols import ProtImportParticles, ProtImportVolumes
 from pyworkflow.tests import *
 from localrec.utils import *
 from localrec.protocols import *
-
+from localrec.constants import symDict
 
 # Some utility functions to import micrographs that are used
 # in several tests.
@@ -88,7 +88,7 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
 
         prot = self.newProtocol(ProtLocalizedRecons,
                                 objLabel=label,
-                                symGrp=6,
+                                symGrp=8, #  symDict['I5'],
                                 defineVector=defVector,
                                 **kwargs)
         prot.inputParticles.set(self.protImport.outputParticles)
