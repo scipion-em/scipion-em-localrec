@@ -76,6 +76,3 @@ class Plugin(pwem.Plugin):
         #env.addPackage('localrec', version='1.2.0',
         #               tar='localrec-1.2.0.tgz',
         #               default=True)
-
-
-pwem.Domain.registerPlugin(__name__)
