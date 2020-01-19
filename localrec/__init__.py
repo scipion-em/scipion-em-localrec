@@ -32,7 +32,6 @@ import os
 import pwem
 from pyworkflow.utils import Environ
 
-from .bibtex import _bibtex  # Load bibtex dict with references
 from localrec.constants import *
 from localrec.convert import *
 
