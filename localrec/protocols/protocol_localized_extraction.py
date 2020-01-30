@@ -26,7 +26,7 @@
 import numpy as np
 
 from pyworkflow import VERSION_1_2
-from pwem.convert import ImageHandler
+from pwem.emlib.image import ImageHandler
 from pyworkflow.protocol.params import PointerParam
 from pwem.protocols import ProtParticles
 from pyworkflow.protocol.params import IntParam

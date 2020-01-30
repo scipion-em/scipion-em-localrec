@@ -28,7 +28,7 @@
 from pyworkflow.protocol.params import (EnumParam, IntParam, StringParam, BooleanParam,
                                         NumericRangeParam, PathParam, Positive, MultiPointerParam)
 from pwem.convert.transformations import euler_from_matrix
-from pwem.convert import ImageHandler
+from pwem.emlib.image import ImageHandler
 from pwem.protocols import ProtPreprocessVolumes
 from pwem.objects.data import *
 from pyworkflow.protocol.constants import STEPS_PARALLEL
