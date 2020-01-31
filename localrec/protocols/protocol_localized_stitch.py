@@ -28,7 +28,7 @@
 from pyworkflow.protocol.params import (EnumParam, IntParam, StringParam, BooleanParam,
                                         NumericRangeParam, PathParam, Positive, MultiPointerParam)
 from pwem.convert.transformations import euler_from_matrix
-from pwem.emlib.image import ImageHandler
+from pwem.emlib.image import ImageHandler, DT_DOUBLE
 from pwem.protocols import ProtPreprocessVolumes
 from pwem.objects.data import *
 from pyworkflow.protocol.constants import STEPS_PARALLEL
@@ -267,8 +267,8 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         maskSym = self._getSymFn('mask', 1)
         sumImg.read(volSym)
         sumMask.read(maskSym)
-        sumImg.convert2DataType(ih.DT_DOUBLE)
-        sumMask.convert2DataType(ih.DT_DOUBLE)
+        sumImg.convert2DataType(DT_DOUBLE)
+        sumMask.convert2DataType(DT_DOUBLE)
 
         # Loop over the halfX subvolumes and sum them up (and mask)
         listObj = self.inputSubVolumesHalf1
@@ -281,8 +281,8 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
             maskSym = self._getSymFn('mask', i+1)
             img.read(volSym)
             imgMask.read(maskSym)
-            img.convert2DataType(ih.DT_DOUBLE)
-            imgMask.convert2DataType(ih.DT_DOUBLE)
+            img.convert2DataType(DT_DOUBLE)
+            imgMask.convert2DataType(DT_DOUBLE)
             sumImg.inplaceAdd(img)
             sumMask.inplaceAdd(imgMask)
         sumMaskData = sumMask.getData()

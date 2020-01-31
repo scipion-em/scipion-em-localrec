@@ -37,7 +37,6 @@ import pwem.emlib.metadata as md
 
 from localrec.utils import load_vectors, create_subparticles
 from localrec.constants import CMM, HAND
-# eventually progressbar will be move to scipion core
 from pyworkflow.utils import ProgressBar
 
 
@@ -180,7 +179,7 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
         progress = ProgressBar(total=len(inputSet), fmt=ProgressBar.NOBAR)
         progress.start()
 
-        step = max(100, len(inputSet) / 100)
+        step = max(100, len(inputSet) // 100)
 
         for i, part in enumerate(inputSet):
             if i % step == 0:

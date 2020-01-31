@@ -107,7 +107,7 @@ class ProtFilterSubParts(ProtParticles):
         progress.start()
 
         sys.stdout.flush()
-        step = max(100, len(inputSet) / 100)
+        step = max(100, len(inputSet) // 100)
         for i, particle in enumerate(inputSet.iterItems(orderBy=['_index'])):
 
             if i % step == 0:
@@ -147,7 +147,7 @@ class ProtFilterSubParts(ProtParticles):
         progress = ProgressBar(len(inputSet), fmt=ProgressBar.NOBAR)
         print("Processing coordinates:")
         progress.start()
-        step = max(100, len(inputSet) / 100)
+        step = max(100, len(inputSet) // 100)
         for i, coord in enumerate(inputSet.iterItems(orderBy=['_subparticle._micId',
                                                      '_micId', 'id'])):
             if i % step == 0:

@@ -92,7 +92,7 @@ class ProtLocalizedExtraction(ProtParticles):
 
         progress = ProgressBar(len(inputCoords), fmt=ProgressBar.NOBAR)
         progress.start()
-        step = max(100, len(inputCoords) / 100)
+        step = max(100, len(inputCoords) // 100)
         for i, coord in enumerate(inputCoords.iterItems(orderBy=['_subparticle._micId',
                                                     '_micId', 'id'])):
             if i % step == 0:
