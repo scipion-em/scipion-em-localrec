@@ -33,7 +33,7 @@ from pwem.protocols import ProtPreprocessVolumes
 from pwem.objects.data import *
 from pyworkflow.protocol.constants import STEPS_PARALLEL
 
-import xmippLib
+from pwem import emlib
 
 from localrec.constants import CMM, LINEAR, symDict
 from localrec.utils import load_vectors
@@ -317,7 +317,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
             maskFn = self._getMaskFn(index+1)
             volSize = ih.getDimensions(volFn)[0]
             radius = volSize/2 - 1
-            xmippLib.createEmptyFile(maskFn, volSize, volSize, volSize)
+            emlib.createEmptyFile(maskFn, volSize, volSize, volSize)
             program = "xmipp_transform_mask"
             args = "-i %s --mask circular %d --create_mask %s " % (maskFn, -1 * radius, maskFn)
             self.runJob(program, args)
