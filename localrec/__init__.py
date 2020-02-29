@@ -53,11 +53,10 @@ class Plugin(pwem.Plugin):
     def getEnviron(cls):
         """ Setup the environment variables needed to launch localrec. """
         environ = Environ(os.environ)
-        if 'XMIPP_HOME' in environ:
-            xmippHome = os.environ.get('XMIPP_HOME')
-            environ.update({
-                'PATH': os.path.join(xmippHome, 'bin'),
-                'LD_LIBRARY_PATH': os.path.join(xmippHome, 'lib')}, position=Environ.BEGIN)
+        xmippHome = pwem.Config.XMIPP_HOME
+        environ.update({
+            'PATH': os.path.join(xmippHome, 'bin'),
+            'LD_LIBRARY_PATH': os.path.join(xmippHome, 'lib')}, position=Environ.BEGIN)
         return environ
 
     @classmethod
