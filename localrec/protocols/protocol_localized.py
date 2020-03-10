@@ -2,6 +2,7 @@
 # *
 # * Authors:     Josue Gomez Blanco (josue.gomez-blanco@mcgill.ca)
 # *              Vahid Abrishami (vahid.abrishami@helsinki.fi)
+# *              Roberto Marabini (roberto@cnb.csic.es)
 # *
 # * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
 # *
@@ -105,7 +106,7 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
                        choices=['cmm file', 'string'],
                        display=EnumParam.DISPLAY_HLIST)
         group.addParam('vector', NumericRangeParam, default='0,0,1',
-                       label='Location vectors', condition="defineVector==1",
+                       label='Location vectors (px)', condition="defineVector==1",
                        help='Vector defining the location of the '
                             'subparticles. The vector is defined by 3 '
                             'values x,y,z separated by comma. \n'
@@ -152,9 +153,30 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
                   "pxSize": self.inputParticles.get().getSamplingRate(),
                   "dim": self.inputParticles.get().getXDim()
                   }
-
-        symMatrices = getSymmetryMatrices(sym=self.symGrp.get(),
+        # convert symmetry to scipion
+        sym = self.symGrp.get()
+        # symDict = {0: 'C', 1: 'D', 2: 'T', 3: 'O',
+        # 4: 'I1', 5: 'I2', 6: 'I3', 7: 'I4'}
+        if sym == 0: sym = SYM_CYCLIC
+        elif sym == 1: sym = SYM_DIHEDRAL
+        elif sym == 2: sym = SYM_TETRAHEDRAL
+        elif sym == 3: sym = SYM_OCTAHEDRAL
+        elif sym == 4: sym = SYM_I222
+        elif sym == 5: sym = SYM_I222r
+        elif sym == 6: sym = SYM_In25
+        elif sym == 7: sym = SYM_In25r
+        elif sym == 8: sym = SYM_I2n3
+        elif sym == 9: sym = SYM_I2n3r
+        elif sym == 10: sym = SYM_I2n5
+        elif sym == 11: sym = SYM_I2n5r
+        symMatrices = getSymmetryMatrices(sym=sym,
                                           n=self.symmetryOrder.get())
+###ROB                                          n = self.symmetryOrder.get())
+#        for mat in symMatrices:
+#            print (mat)
+#        exit(0)
+####
+
         if self.defineVector == CMM:
             cmmFn = params["vectorFile"]
             vector = " "

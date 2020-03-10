@@ -39,6 +39,8 @@ from pwem.convert.transformations import (vector_norm, unit_vector,
                                           euler_matrix, euler_from_matrix)
 from pwem.objects.data import Coordinate
 import pwem as em
+import pyworkflow.utils as pwutils
+from pyworkflow import SCIPION_DEBUG_NOCLEAN
 
 
 class Vector3:
@@ -143,13 +145,11 @@ def load_vectors(cmm_file, vectors_str, distances_str, angpix):
     print("Using vectors:")
 
     for subparticle_vector in subparticle_vector_list:
-        print("Vector: ")
         subparticle_vector.compute_unit_vector()
         subparticle_vector.compute_matrix()
-        subparticle_vector.print_vector()
-        print("")
-        print("Length: %.2f pixels" % subparticle_vector.get_length())
-    print("")
+        # print only is debugging
+        if pwutils.envVarOn(SCIPION_DEBUG_NOCLEAN):
+            subparticle_vector.print_vector()
 
     return subparticle_vector_list
 
@@ -160,7 +160,6 @@ def vectors_from_cmm(input_cmm, angpix):
     # coordinates in the CMM file need to be in Angstrom
     vector_list = []
     e = xml.etree.ElementTree.parse(input_cmm).getroot()
-
     for marker in e.findall('marker'):
         x = float(marker.get('x')) / angpix
         y = float(marker.get('y')) / angpix
@@ -196,7 +195,7 @@ def vectors_from_string(input_str):
     return vectors
 
 
-def within_mindist(p1, p2, mindist):
+def within_mindist(p1, p2, mindist, keepRedundant):
     """ Returns True if two particles are closer to each other
     than the given distance in the projection. """
 
@@ -208,8 +207,14 @@ def within_mindist(p1, p2, mindist):
     y2 = coordinate_p2.getY()
     distance_sqr = (x1 - x2) ** 2 + (y1 - y2) ** 2
     mindist_sqr = mindist ** 2
-
-    return distance_sqr < mindist_sqr
+#    return distance_sqr < mindist_sqr
+    if distance_sqr < mindist_sqr:
+        if distance_sqr < 1. and keepRedundant:
+            return False
+        else:
+            return True
+    else:
+        return False
 
 
 def vector_from_two_eulers(rot, tilt):
@@ -254,17 +259,32 @@ def filter_unique(subparticles, subpart, unique):
     return True
 
 
-def filter_mindist(subparticles, subpart, mindist):
+def filter_mindist(subparticles, subpart, mindist, keepRedundant):
     """ Return True if subpart is not close to any other subparticle
-    by mindist. """
-
+    by mindist. That is returns True is particle must ne kept """
+    if mindist < 0.:
+        return True
     for sp in subparticles:
         if (sp._id != subpart._id and
-                within_mindist(sp, subpart, mindist)):
+                within_mindist(sp, subpart, mindist, keepRedundant)):
             return False
 
     return True
 
+def filter_distorigin(subparticles, subpart, distorigin):
+    "return True is particle must be kept"
+    # original particle dimensions
+    xDim, yDim, _ = subpart.getDim()
+    coordinate = subpart.getCoordinate()
+
+    # subparticle coordinates respect to the particle and origin in at
+    # corner (not center)
+    x = coordinate.getX()
+    y = coordinate.getY()
+
+    # distance to center
+    distance_sqr = (x - xDim/2.) ** 2 + (y - yDim/2.) ** 2
+    return distance_sqr > (distorigin ** 2)
 
 def filter_side(subpart, side):
     return (abs(abs(subpart._angles[1]) - math.radians(90))) < math.radians(side)
