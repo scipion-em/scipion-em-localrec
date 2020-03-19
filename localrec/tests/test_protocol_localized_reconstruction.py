@@ -95,7 +95,7 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
 
         prot = self.newProtocol(ProtLocalizedRecons,
                                 objLabel=label,
-                                symGrp=SYM_I2n3, #  symDict['I5'],
+                                symGrp=SYM_I222, #  symDict['I3'],
                                 defineVector=defVector,
                                 **kwargs)
         prot.inputParticles.set(self.protImport.outputParticles)
