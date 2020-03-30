@@ -29,6 +29,7 @@ from __future__ import print_function
 import numpy as np
 import math
 import sys
+import pprint
 
 from pyworkflow import VERSION_1_1
 from pyworkflow.protocol.params import PointerParam, FloatParam
@@ -106,6 +107,10 @@ class ProtFilterSubParts(ProtParticles):
 
         lastPartId = None
         particlesList = []
+        isSubPart = False;
+        firstParticle = inputSet.getFirstItem()
+        if firstParticle.hasAttribute('_transorg'):
+            isSubPart = True;
 
         print("Processing particles:")
         progress = ProgressBar(total=len(inputSet), fmt=ProgressBar.NOBAR)
@@ -118,13 +123,19 @@ class ProtFilterSubParts(ProtParticles):
             if i%step == 0:
                 progress.update(i+1)
 
-            partId = int(particle._index)
+            if (isSubPart):
+                partId = int(particle._coordinate._micId)
+            else:
+                partId = int(particle._index)
             if partId != lastPartId:
                 lastPartId = partId
                 particlesList = []
 
             subpart = particle.clone()
-            _, cAngles = geometryFromMatrix(inv(particle.getTransform().getMatrix()))
+            if (isSubPart):
+                _, cAngles = geometryFromMatrix(inv(particle._transorg.getMatrix()))
+            else:
+                _, cAngles = geometryFromMatrix(inv(particle.getTransform().getMatrix()))
             subpart._angles = cAngles
 
             if not self._filterParticles(params, particlesList, subpart):
