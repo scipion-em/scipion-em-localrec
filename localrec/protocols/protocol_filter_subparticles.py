@@ -25,22 +25,17 @@
 # *
 # **************************************************************************
 
-from __future__ import print_function
-import numpy as np
-import math
 import sys
 
-from pyworkflow import VERSION_1_1
-from pyworkflow.protocol.params import PointerParam, FloatParam
-from pyworkflow.em.protocol import ProtParticles
-from pyworkflow.em.data import SetOfParticles
+from pyworkflow import VERSION_3_0
+from pyworkflow.protocol.params import PointerParam, FloatParam, BooleanParam
+from pwem.protocols import ProtParticles
+from pwem.objects.data import SetOfParticles
 
 from localrec.utils import *
 # eventually progressbar will be move to scipion core
-try:
-    from pyworkflow.utils import ProgressBar
-except:
-    from localrec.progressbar import ProgressBar
+from pyworkflow.utils import ProgressBar
+
 
 class ProtFilterSubParts(ProtParticles):
     """ This protocol mainly filters output particles from two protocols:
@@ -48,7 +43,7 @@ class ProtFilterSubParts(ProtParticles):
     (sub-particles) according to spatial distance, view, and angular distance.
     """
     _label = 'filter subparticles'
-    _lastUpdateVersion = VERSION_1_1
+    _lastUpdateVersion = VERSION_3_0
 
     # -------------------------- DEFINE param functions -----------------------
     def _defineParams(self, form):
@@ -67,6 +62,18 @@ class ProtFilterSubParts(ProtParticles):
                       help='In pixels. Minimum distance between the '
                            'subparticles in the image. All overlapping ones '
                            'will be discarded.')
+        form.addParam('keepRedundant', BooleanParam, default=False,
+                      condition='mindist>0',
+                      label='keep overlapping particles in simmetry axis',
+                      help="In order to break symmetry constraints, sometimes you want"
+                           " all the repetitions of your particle related by symmetry."
+                           " but not particles that overlap"
+                      )
+        form.addParam('distorigin', FloatParam, default=-1,
+                      label='Minimum distance to origin (px)',
+                      help='In pixels. Minimum distance from subparticle to origin'
+                           ' If positive it will drop the subparticles closer'
+                           ' to the origin')
         form.addParam('side', FloatParam, default=-1,
                       label='Angle to keep sub-particles from side views (deg)',
                       help='Keep only particles within specified angular '
@@ -91,6 +98,8 @@ class ProtFilterSubParts(ProtParticles):
         inputSet = self.inputSet.get()
         params = {"unique": self.unique.get(),
                   "mindist": self.mindist.get(),
+                  "keepRedundant": self.keepRedundant.get(),
+                  "distorigin": self.distorigin.get(),
                   "side": self.side.get(),
                   "top": self.top.get()
                   }
@@ -112,10 +121,10 @@ class ProtFilterSubParts(ProtParticles):
         progress.start()
 
         sys.stdout.flush()
-        step = max(100, len(inputSet) / 100)
+        step = max(100, len(inputSet) // 100)
         for i, particle in enumerate(inputSet.iterItems(orderBy=['_index'])):
 
-            if i%step == 0:
+            if i % step == 0:
                 progress.update(i+1)
 
             partId = int(particle._index)
@@ -152,10 +161,10 @@ class ProtFilterSubParts(ProtParticles):
         progress = ProgressBar(len(inputSet), fmt=ProgressBar.NOBAR)
         print("Processing coordinates:")
         progress.start()
-        step = max(100, len(inputSet) / 100)
+        step = max(100, len(inputSet) // 100)
         for i, coord in enumerate(inputSet.iterItems(orderBy=['_subparticle._micId',
                                                      '_micId', 'id'])):
-            if i%step == 0:
+            if i % step == 0:
                 progress.update(i+1)
 
             # The original particle id is stored in the sub-particle as micId
@@ -163,7 +172,9 @@ class ProtFilterSubParts(ProtParticles):
 
             # Load the particle if it has changed from the last sub-particle
             if partId != lastPartId:
-                self._genOutputCoordinates(subParticles, coordArr, outputSet, params["mindist"])
+                self._genOutputCoordinates(subParticles, coordArr, outputSet,
+                                           params["mindist"], params["keepRedundant"],
+                                           params["distorigin"])
                 subParticleId = 0
                 coordArr = []
                 subParticles = []
@@ -180,7 +191,9 @@ class ProtFilterSubParts(ProtParticles):
             subParticles.append(subpart)
             coordArr.append(coord.clone())
         progress.finish()
-        self._genOutputCoordinates(subParticles, coordArr, outputSet, params["mindist"])
+        self._genOutputCoordinates(subParticles, coordArr, outputSet,
+                                   params["mindist"], params["keepRedundant"],
+                                   params["distorigin"])
         self._defineOutputs(outputCoordinates=outputSet)
         self._defineTransformRelation(self.inputSet, self.outputCoordinates)
 
@@ -211,13 +224,18 @@ class ProtFilterSubParts(ProtParticles):
         return []
 
     # -------------------------- UTILS functions ------------------------------
-    def _genOutputCoordinates(self, subParticles, coordArr, outputSet, minDist):
 
+    def _genOutputCoordinates(self, subParticles, coordArr,
+                              outputSet, minDist, keepRedundant,
+                              distorigin):
         for index, coordinate in enumerate(coordArr):
-            if minDist>0:
+            if minDist > 0 or distorigin > 0:
                 subpart = subParticles[index]
-                if filter_mindist(subParticles, subpart, minDist):
-                    outputSet.append(coordinate.clone())
+                if not filter_mindist(subParticles, subpart, minDist, keepRedundant):
+                    continue
+                if not filter_distorigin(subParticles, subpart, distorigin):
+                    continue
+                outputSet.append(coordinate.clone())
             else:
                 outputSet.append(coordinate.clone())
 

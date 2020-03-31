@@ -65,7 +65,7 @@ setup(
     # For a discussion on single-sourcing the version across setup.py and the
     # project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='2.0',  # Required
+    version='3.0',  # Required
 
     # This is a one-line description or tagline of what your project does. This
     # corresponds to the "Summary" metadata field:
@@ -105,24 +105,24 @@ setup(
         #   3 - Alpha
         #   4 - Beta
         #   5 - Production/Stable
-     #   'Development Status :: 3 - Alpha',
+    #   'Development Status :: 3 - Alpha',
 
-        # Indicate who your project is intended for
-     #   'Intended Audience :: Users',
+    # Indicate who your project is intended for
+    #   'Intended Audience :: Users',
 
-        # Pick your license as you wish
-     #   'License :: OSI Approved :: MIT License',
+    # Pick your license as you wish
+    #   'License :: OSI Approved :: MIT License',
 
-        # Specify the Python versions you support here. In particular, ensure
-        # that you indicate whether you support Python 2, Python 3 or both.
-     #   'Programming Language :: Python :: 2.7'
+    # Specify the Python versions you support here. In particular, ensure
+    # that you indicate whether you support Python 2, Python 3 or both.
+    #   'Programming Language :: Python :: 2.7'
     #],
 
     # This field adds keywords for your project which will appear on the
     # project page. What does your project relate to?
     #
     # Note that this is a string of words separated by whitespace, not a list.
-    keywords='localizedreconstruction cryoem imageprocessing scipion-2.0',  # Optional
+    keywords='localizedreconstruction cryoem imageprocessing scipion-3.0',  # Optional
 
     # You can just specify package directories manually here if your project is
     # simple. Or you can use find_packages().
@@ -163,7 +163,7 @@ setup(
     # MANIFEST.in as well.
     # include_package_data=True,
     package_data={  # Optional
-       'localrec': ['localrec_logo.png', 'protocols.conf'],
+        'localrec': ['localrec_logo.png', 'protocols.conf'],
     },
 
     # Although 'package_data' is the preferred approach, in some case you may
@@ -180,9 +180,7 @@ setup(
     #
     # For example, the following would provide a command called `sample` which
     # executes the function `main` from this package when invoked:
-    #entry_points={  # Optional
-    #    'console_scripts': [
-    #        'sample=sample:main',
-    #    ],
-    #},
+    entry_points={
+        'pyworkflow.plugin': 'localrec = localrec'
+    }
 )
