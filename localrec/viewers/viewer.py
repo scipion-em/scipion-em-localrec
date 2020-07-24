@@ -46,7 +46,7 @@ class ProtLocalOrigSamplingViewer(Viewer):
         Chimera.createCoordinateAxisFile(dim,
                                          bildFileName=bildFileName,
                                          sampling=sampling)
-        fnCmd = self.protocol._getTmpPath("chimera_output.cmd")
+        fnCmd = self.protocol._getTmpPath("chimera_output.cxc")
         f = open(fnCmd, 'w')
         # change to workingDir
         # If we do not use cd and the project name has an space
@@ -64,8 +64,8 @@ class ProtLocalOrigSamplingViewer(Viewer):
         else:
             x, y, z = _showVol.getOrigin(force=True).getShifts()
 
-        f.write("volume #1 style surface voxelSize %f\n"
-                "volume #1 origin %0.2f,%0.2f,%0.2f\n"
+        f.write("volume #2 style surface voxelSize %f\n"
+                "volume #2 origin %0.2f,%0.2f,%0.2f\n"
                 % (_showVol.getSamplingRate(), x, y, z))
         # show atom struct)
         atomstruct = self.protocol.atomStruct.get()
