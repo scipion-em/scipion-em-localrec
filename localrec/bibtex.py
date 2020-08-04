@@ -25,8 +25,8 @@
 # *
 # **************************************************************************
 
-_bibtexStr = """
-@Article{Ilca2015,
+"""
+@article{Ilca2015,
   Title                    = {Localized reconstruction of subunits from electron cryomicroscopy images.},
   Author                   = {Ilca, Serban L. and Kotecha, A. Sun, Xiaoyu and Poranen, Minna M. and Stuart, David I. and Huiskonen, Juha T.},
   Journal                  = {Nat Commun},
@@ -37,7 +37,3 @@ _bibtexStr = """
   Url                      = {http://www.nature.com/ncomms/2015/151104/ncomms9843/full/ncomms9843.html}
 }
 """
-
-from pyworkflow.utils import parseBibTex
-
-_bibtex = parseBibTex(_bibtexStr)

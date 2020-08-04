@@ -27,3 +27,5 @@
 from .protocol_localized import ProtLocalizedRecons
 from .protocol_localized_extraction import ProtLocalizedExtraction
 from .protocol_filter_subparticles import ProtFilterSubParts
+from .protocol_localized_stitch import ProtLocalizedStich
+from .protocol_localized_set_origin import ProtLocalOrigSampling

@@ -4,6 +4,7 @@
 # *           Juha T. Huiskonen (juha@strubi.ox.ac.uk)
 # *           J.M. de la Rosa Trevin
 # *           Vahid Abrishami (vahid.abrishami@helsinki.fi)
+# *           Roberto Marabini
 # *
 # * Laboratory of Structural Biology,
 # * Helsinki Institute of Life Science HiLIFE
@@ -32,17 +33,14 @@ import math
 import random
 import numpy as np
 from numpy.linalg import inv
-from itertools import izip
 import xml.etree.ElementTree
 
-from pyworkflow.em.convert.transformations import (vector_norm, unit_vector,
-                                           euler_matrix, euler_from_matrix)
-from pyworkflow.em.constants import (SYM_CYCLIC, SYM_DIHEDRAL, SYM_OCTAHEDRAL,
-                                     SYM_TETRAHEDRAL, SYM_I222, SYM_I222r,
-                                     SYM_In25, SYM_In25r)
-from pyworkflow.em.convert.symmetry import getSymmetryMatrices
-from pyworkflow.em.data import Coordinate
-import pyworkflow.em as em
+from pwem.convert.transformations import (vector_norm, unit_vector,
+                                          euler_matrix, euler_from_matrix)
+from pwem.objects.data import Coordinate
+import pwem as em
+import pyworkflow.utils as pwutils
+from pyworkflow import SCIPION_DEBUG_NOCLEAN
 
 
 class Vector3:
@@ -80,48 +78,16 @@ class Vector3:
             tilt = math.acos(self.vector[2])
 
         psi = 0
-        self.matrix = euler_matrix(-rot, -tilt, -psi)
+        self.matrix = euler_matrix(-rot, -tilt, -psi, 'szyz')
 
     def print_vector(self):
-        print(self.vector[2])
         print("[%.3f,%.3f,%.3f]" % (self.vector[0], self.vector[1], self.vector[2]))
 
 
-def getSymMatricesXmipp(symmetryGroup):
-    """ Return symmetry matrices related to a point group"""
-
-    symmetryGroupLetter = symmetryGroup[0].upper()
-
-    if symmetryGroupLetter == 'I':
-        symmetryGroupNum = int(symmetryGroup[1])
-        if symmetryGroupNum == 1:
-            return getSymmetryMatrices(SYM_I222)
-        if symmetryGroupNum == 2:
-            return getSymmetryMatrices(SYM_I222r)
-        if symmetryGroupNum == 3:
-            return getSymmetryMatrices(SYM_In25)
-        if symmetryGroupNum == 4:
-            return getSymmetryMatrices(SYM_In25r)
-
-    if symmetryGroupLetter == 'C':
-        symmetryGroupNum = int(symmetryGroup[1])
-        return getSymmetryMatrices(SYM_CYCLIC, n=symmetryGroupNum)
-
-    if symmetryGroupLetter == 'D':
-        symmetryGroupNum = int(symmetryGroup[1])
-        return getSymmetryMatrices(SYM_DIHEDRAL, n=symmetryGroupNum)
-
-    if symmetryGroupLetter == 'T':
-        return getSymmetryMatrices(SYM_TETRAHEDRAL, n=symmetryGroupNum)
-
-    if symmetryGroupLetter == 'O':
-        return getSymmetryMatrices(SYM_TETRAHEDRAL, n=SYM_OCTAHEDRAL)
-
-
 def geometryFromMatrix(matrix):
-    from pyworkflow.em.convert.transformations import translation_from_matrix, euler_from_matrix
+    from pwem.convert.transformations import translation_from_matrix, euler_from_matrix
 
-    shifts = translation_from_matrix(matrix)
+    shifts = -1.0 * translation_from_matrix(matrix)
     angles = -1.0 * np.ones(3) * euler_from_matrix(matrix, axes='szyz')
     return shifts, angles
 
@@ -131,7 +97,7 @@ def matrixFromGeometry(shifts, angles, inverseTransform):
     2D shifts in X and Y...and the 3 euler angles.
     """
 
-    from pyworkflow.em.convert.transformations import euler_matrix
+    from pwem.convert.transformations import euler_matrix
     # angles list is in radians, but sign changed
     radAngles = -angles
 
@@ -156,7 +122,8 @@ def load_vectors(cmm_file, vectors_str, distances_str, angpix):
     else:
         subparticle_vector_list = vectors_from_string(vectors_str)
 
-    if distances_str:
+    if float(distances_str) > 0.0:
+
         # Change distances from A to pixel units
         subparticle_distances = [float(x) / angpix for x in
                                  distances_str.split(',')]
@@ -165,8 +132,8 @@ def load_vectors(cmm_file, vectors_str, distances_str, angpix):
             raise Exception("Error: The number of distances does not match "
                             "the number of vectors!")
 
-        for vector, distance in izip(subparticle_vector_list,
-                                     subparticle_distances):
+        for vector, distance in zip(subparticle_vector_list,
+                                    subparticle_distances):
             if distance > 0:
                 vector.set_length(distance)
             else:
@@ -178,13 +145,11 @@ def load_vectors(cmm_file, vectors_str, distances_str, angpix):
     print("Using vectors:")
 
     for subparticle_vector in subparticle_vector_list:
-        print("Vector: ")
         subparticle_vector.compute_unit_vector()
         subparticle_vector.compute_matrix()
-        subparticle_vector.print_vector()
-        print("")
-        print("Length: %.2f pixels" % subparticle_vector.get_length())
-    print("")
+        # print only is debugging
+        if pwutils.envVarOn(SCIPION_DEBUG_NOCLEAN):
+            subparticle_vector.print_vector()
 
     return subparticle_vector_list
 
@@ -195,7 +160,6 @@ def vectors_from_cmm(input_cmm, angpix):
     # coordinates in the CMM file need to be in Angstrom
     vector_list = []
     e = xml.etree.ElementTree.parse(input_cmm).getroot()
-
     for marker in e.findall('marker'):
         x = float(marker.get('x')) / angpix
         y = float(marker.get('y')) / angpix
@@ -231,7 +195,7 @@ def vectors_from_string(input_str):
     return vectors
 
 
-def within_mindist(p1, p2, mindist):
+def within_mindist(p1, p2, mindist, keepRedundant):
     """ Returns True if two particles are closer to each other
     than the given distance in the projection. """
 
@@ -243,8 +207,14 @@ def within_mindist(p1, p2, mindist):
     y2 = coordinate_p2.getY()
     distance_sqr = (x1 - x2) ** 2 + (y1 - y2) ** 2
     mindist_sqr = mindist ** 2
-
-    return distance_sqr < mindist_sqr
+#    return distance_sqr < mindist_sqr
+    if distance_sqr < mindist_sqr:
+        if distance_sqr < 1. and keepRedundant:
+            return False
+        else:
+            return True
+    else:
+        return False
 
 
 def vector_from_two_eulers(rot, tilt):
@@ -272,7 +242,6 @@ def within_unique(p1, p2, unique):
         dp = 1.000
 
     angle = math.acos(dp)
-    # print(np.degrees(angle))
 
     return angle <= math.radians(unique)
 
@@ -290,17 +259,32 @@ def filter_unique(subparticles, subpart, unique):
     return True
 
 
-def filter_mindist(subparticles, subpart, mindist):
+def filter_mindist(subparticles, subpart, mindist, keepRedundant):
     """ Return True if subpart is not close to any other subparticle
-    by mindist. """
-
+    by mindist. That is returns True is particle must ne kept """
+    if mindist < 0.:
+        return True
     for sp in subparticles:
         if (sp._id != subpart._id and
-                within_mindist(sp, subpart, mindist)):
+                within_mindist(sp, subpart, mindist, keepRedundant)):
             return False
 
     return True
 
+def filter_distorigin(subparticles, subpart, distorigin):
+    "return True is particle must be kept"
+    # original particle dimensions
+    xDim, yDim, _ = subpart.getDim()
+    coordinate = subpart.getCoordinate()
+
+    # subparticle coordinates respect to the particle and origin in at
+    # corner (not center)
+    x = coordinate.getX()
+    y = coordinate.getY()
+
+    # distance to center
+    distance_sqr = (x - xDim/2.) ** 2 + (y - yDim/2.) ** 2
+    return distance_sqr > (distorigin ** 2)
 
 def filter_side(subpart, side):
     return (abs(abs(subpart._angles[1]) - math.radians(90))) < math.radians(side)
@@ -317,7 +301,7 @@ def filter_subparticles(subparticles, filters):
 
 def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
                         part_image_size, randomize, subparticles_total,
-                        align_subparticles):
+                        align_subparticles, handness, angpix):
     """ Obtain all subparticles from a given particle and set
     the properties of each such subparticle. """
 
@@ -346,7 +330,7 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
                                                                 matrix_from_subparticle_vector.transpose())))
             angles_org = -1.0 * np.ones(3) * euler_from_matrix(m, 'szyz')
             if align_subparticles:
-                  angles = -1.0 * np.ones(3) * euler_from_matrix(m, 'szyz')
+                angles = -1.0 * np.ones(3) * euler_from_matrix(m, 'szyz')
             else:
                 m2 = np.matmul(matrix_particle[0:3, 0:3], symmetry_matrix.transpose())
                 angles = -1.0 * np.ones(3) * euler_from_matrix(m2, 'szyz')
@@ -361,10 +345,11 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
             # user given image size and as a small shift in the origin (decimal part)
             x_d, x_i = math.modf(x)
             y_d, y_i = math.modf(y)
-            alignment = em.Transform()
-            alignmentOrg = em.Transform()
-            M = matrixFromGeometry(np.array([-x_d, -y_d, 0]), angles, True)
-            MOrg = matrixFromGeometry(np.array([-x_d, -y_d, 0]), angles_org, True)
+
+            alignment = em.objects.data.Transform()
+            alignmentOrg = em.objects.data.Transform()
+            M = matrixFromGeometry(np.array([x_d, y_d, 0]), angles, True)
+            MOrg = matrixFromGeometry(np.array([x_d, y_d, 0]), angles_org, True)
             alignment.setMatrix(M)
             alignmentOrg.setMatrix(MOrg)
             subpart._transorg = alignmentOrg.clone()
@@ -376,9 +361,13 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
             coord.setMicId(particle.getObjId())
 
             if subpart.hasCTF():
+                # Pixel to Angstrom
+                z_ang = z * angpix
+                if not handness:
+                    z_ang *= -1
                 ctf = subpart.getCTF()
-                ctf.setDefocusU(subpart.getDefocusU() + z)
-                ctf.setDefocusV(subpart.getDefocusV() + z)
+                ctf.setDefocusU(subpart.getCTF().getDefocusU() + z_ang)
+                ctf.setDefocusV(subpart.getCTF().getDefocusV() + z_ang)
 
             subpart.setCoordinate(coord)
             coord._subparticle = subpart.clone()
