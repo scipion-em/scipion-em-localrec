@@ -25,15 +25,17 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+from pwem.emlib import DT_DOUBLE
 from pyworkflow.protocol.params import (EnumParam, IntParam, StringParam, BooleanParam,
                                         NumericRangeParam, PathParam, Positive, MultiPointerParam)
-from pyworkflow.em.convert.transformations import euler_from_matrix
-from pyworkflow.em.protocol import ProtPreprocessVolumes
-from pyworkflow.em.data import *
+from pwem.convert.transformations import euler_from_matrix
+from pwem.emlib.image import ImageHandler
+from pwem.protocols import ProtPreprocessVolumes
+from pwem.objects.data import *
 from pyworkflow.protocol.constants import STEPS_PARALLEL
 import pyworkflow.utils.path as putils
 
-import xmippLib
+from pwem import emlib
 
 from localrec.constants import CMM, LINEAR, symDict
 from localrec.utils import load_vectors
@@ -53,8 +55,8 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
     LINEAR = 0
     BSPLINE = 1
 
-    def __init__(self, *args,**kwargs):
-        ProtPreprocessVolumes.__init__(self, *args, **kwargs)
+    def __init__(self, **kwargs):
+        ProtPreprocessVolumes.__init__(self, **kwargs)
         self.stepsExecutionMode = STEPS_PARALLEL
 
     #--------------------------- DEFINE param functions ------------------------
@@ -95,16 +97,16 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
                       help="This is the symmetirzed masked of the assymetric unit"
                            " which is used for overlapping normalization")
         form.addParam('symmetryGroup', StringParam, default='I1',
-                       label="Symmetry", condition="not usePreRun",
-                       help='There are multiple possibilities for '
-                            'icosahedral symmetry: \n'
-                            '* I1: No-Crowther 222 (standard in Heymann, '
-                            'Chagoyen & Belnap, JSB, 151 (2005) 196-207)\n'
-                            '* I2: Crowther 222 \n'
-                            '* I3: 52-setting (as used in SPIDER?) \n'
-                            '* I4: A different 52 setting \n')
+                      label="Symmetry", condition="not usePreRun",
+                      help='There are multiple possibilities for '
+                           'icosahedral symmetry: \n'
+                           '* I1: No-Crowther 222 (standard in Heymann, '
+                           'Chagoyen & Belnap, JSB, 151 (2005) 196-207)\n'
+                           '* I2: Crowther 222 \n'
+                           '* I3: 52-setting (as used in SPIDER?) \n'
+                           '* I4: A different 52 setting \n')
         form.addParam('alignSubParticles', BooleanParam,
-                      label="Sub-volumes are aligned?",condition="not usePreRun",
+                      label="Sub-volumes are aligned?", condition="not usePreRun",
                       default=False,
                       help='If you aligned the sub-partilces with z-axis '
                            'to apply symmetry')
@@ -174,11 +176,10 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
                 maskVolumeHalf2Id = self._insertFunctionStep('maskVolume', volFn2,
                                                              maskFn, i, 'half2',
                                                              prerequisites=[inputStepId])
-                maskPreprationId = self._insertFunctionStep('prepareObj',
-                                                            i, '', doAlign, 'mask',
-                                                            prerequisites=[maskVolumeHalf1Id ,maskVolumeHalf2Id])
-                volPreparationHalf1Id = self._insertFunctionStep('prepareObj',
-                                                                 i, 'half1', doAlign, 'volume',
+                maskPreprationId = self._insertFunctionStep('prepareMask', i, doAlign,
+                                                            prerequisites=[maskVolumeHalf1Id, maskVolumeHalf2Id])
+                volPreparationHalf1Id = self._insertFunctionStep('prepareVol',
+                                                                 i, 'half1', doAlign,
                                                                  prerequisites=[maskVolumeHalf1Id])
                 volPreparationHalf2Id = self._insertFunctionStep('prepareObj',
                                                                  i, 'half2', doAlign, 'volume',
@@ -218,7 +219,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
 
                 #Generate mask and apply it to the volume
                 maskVolumeId = self._insertFunctionStep('maskVolume', volFn,
-                                                        maskFn,i, '',
+                                                        maskFn, i, '',
                                                         prerequisites=[inputStepId])
                 maskPreprationId = self._insertFunctionStep('prepareObj',
                                                             i, '', doAlign, 'mask',
@@ -226,19 +227,18 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
                 volPreparationId = self._insertFunctionStep('prepareObj',
                                                             i, '', doAlign, 'volume',
                                                             prerequisites=[maskVolumeId])
+
                 depsSymVol.append(volPreparationId)
                 depsSymMask.append(maskPreprationId)
 
             genAsymUnitId = self._insertFunctionStep('genAsymUnit','',
                                                       prerequisites=depsSymVol + depsSymMask)
-
             symMaskStepId = self._insertFunctionStep('symmetrizeObj',
                                                      localRecSym, '', 'mask',
                                                      prerequisites=[genAsymUnitId])
             symVolStepId = self._insertFunctionStep('symmetrizeObj',
                                                     localRecSym, '', 'volume',
                                                     prerequisites=[genAsymUnitId])
-
             stitchStepId = self._insertFunctionStep('stitchParticles', '',
                                                     prerequisites=[symMaskStepId, symVolStepId])
             self._insertFunctionStep('createOutputStep', prerequisites=[stitchStepId])
@@ -311,7 +311,6 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         volWithouMask = self._getFileName('volume', 'without_mask', -1, halfString)
         outputVol = self._getOutputFileName(halfString)
 
-
         # Read symmetrized volume and mask
         ih = ImageHandler()
         maskSymImg = ih.createImage()
@@ -333,19 +332,19 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         volSymImg.write(volWithouMask)
 
         # This is to generate a smooth mask
-        sumMaskDataTmp[sumMaskDataTmp<1.0] = 0.0
-        sumMaskDataTmp[sumMaskDataTmp>=1.0] = 1.0
+        sumMaskDataTmp[sumMaskDataTmp < 1.0] = 0.0
+        sumMaskDataTmp[sumMaskDataTmp >= 1.0] = 1.0
         finalMask.setData(sumMaskDataTmp)
         finalMask.write(binarizedMaskFn)
 
         # Apply morphology to mask to then apply softedge
         program = 'xmipp_transform_morphology'
         args = '-i %s --size 2.0 -o %s --binaryOperation erosion' % (binarizedMaskFn, erodedMaskFn)
-        self.runJob(program,args)
+        self.runJob(program, args)
         # Apply soft edge to the mask
         program = 'xmipp_transform_filter'
         args = '-i %s --fourier real_gaussian 2.0 -o %s' % (erodedMaskFn, softMaskFn)
-        self.runJob(program,args)
+        self.runJob(program, args)
         program = 'xmipp_image_operate'
         args = '-i %s --mult %s -o %s' % (volWithouMask, softMaskFn, outputVol)
         self.runJob(program,args)
@@ -359,8 +358,8 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
             maskFn = self._getFileName('mask', index+1)
             volSize = ih.getDimensions(volFn)[0]
             radius = volSize/2 - 1
-            xmippLib.createEmptyFile(maskFn, volSize, volSize, volSize)
-            program =  "xmipp_transform_mask"
+            emlib.createEmptyFile(maskFn, volSize, volSize, volSize)
+            program = "xmipp_transform_mask"
             args = "-i %s --mask circular %d --create_mask %s " % (maskFn, -1 * radius, maskFn)
             self.runJob(program,args)
         else:
@@ -374,7 +373,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         volMasked = self._getFileName('volume', 'masked', index+1, halfString);
         program = 'xmipp_image_operate'
         args = '-i %s --mult %s -o %s' % (volFn, maskFn, volMasked)
-        self.runJob(program,args)
+        self.runJob(program, args)
 
     def prepareObj(self, index, halfString, doAlign, objType):
 
@@ -388,16 +387,14 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         else:
             objMasked = self._getFileName(objType, 'masked', index+1, halfString)
 
-
         program = 'xmipp_transform_window'
-
         args = '-i %s --size %d -o %s' % (objMasked, self.outDim, objWin)
         self.runJob(program,args)
 
         # If sub-particles are aligned along z
         if doAlign:
             program = 'xmipp_transform_geometry'
-            args = '-i %s --rotate_volume euler %f %f %f -o %s'\
+            args = '-i %s --rotate_volume euler %f %f %f -o %s' \
                    % (objWin, rot, tilt, psi, objWin)
             self.runJob(program,args)
 
@@ -405,8 +402,8 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         objShifted = self._getFileName(objType, 'shifted', index+1, halfString)
         program = 'xmipp_transform_geometry'
         args = ('-i %s --shift %f %f %f -o %s --dont_wrap --interp %s'
-               % (objWin, shiftX, shiftY, shiftZ,
-                  objShifted, self.interpString))
+                % (objWin, shiftX, shiftY, shiftZ,
+                   objShifted, self.interpString))
         self.runJob(program,args)
 
     def symmetrizeObj(self, localRecSym, halfString, objType):
@@ -429,9 +426,9 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
 
         vector = ""
         cmmFn = ""
-        if protocolSitich == None:
+        if protocolSitich is None:
             protocolSitich = self
-        if  protocolSitich.defineVector== CMM:
+        if protocolSitich.defineVector == CMM:
             cmmFn = protocolSitich.vectorFile.get()
         else:
             vector = protocolSitich.vector.get()
@@ -466,6 +463,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         if len(self.inputSubVolumesHalf1) != len(self.inputSubVolumesHalf2):
             validateMsgs.append("The number of sub-volumes for"
                                 "half1 and half2 must be equal")
+
         listObj = self.inputSubVolumesHalf1
         if not self.useHalMaps:
             listObj = self.inputSubVolumes

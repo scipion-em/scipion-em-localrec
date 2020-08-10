@@ -29,10 +29,9 @@ This sub-package contains data and protocol classes
 wrapping Localized recontruction of subunits.
 """
 import os
-import pyworkflow.em
+import pwem
 from pyworkflow.utils import Environ
 
-from bibtex import _bibtex # Load bibtex dict with references
 from localrec.constants import *
 from localrec.convert import *
 
@@ -40,7 +39,8 @@ from localrec.convert import *
 _logo = "localrec_logo.png"
 _references = ['Ilca2015']
 
-class Plugin(pyworkflow.em.Plugin):
+
+class Plugin(pwem.Plugin):
     _homeVar = LOCALREC_HOME
     _pathVars = [LOCALREC_HOME]
 
@@ -53,11 +53,11 @@ class Plugin(pyworkflow.em.Plugin):
     def getEnviron(cls):
         """ Setup the environment variables needed to launch localrec. """
         environ = Environ(os.environ)
-        if ('XMIPP_HOME') in environ:
+        if 'XMIPP_HOME' in environ:
             xmippHome = os.environ.get('XMIPP_HOME')
             environ.update({
-            'PATH': os.path.join(xmippHome, 'bin'),
-            'LD_LIBRARY_PATH': os.path.join(xmippHome, 'lib')}, position=Environ.BEGIN)
+                'PATH': os.path.join(xmippHome, 'bin'),
+                'LD_LIBRARY_PATH': os.path.join(xmippHome, 'lib')}, position=Environ.BEGIN)
         return environ
 
     @classmethod
@@ -71,10 +71,7 @@ class Plugin(pyworkflow.em.Plugin):
     @classmethod
     def defineBinaries(cls, env):
         pass
-         # Add localrec
-         #env.addPackage('localrec', version='1.2.0',
-         #               tar='localrec-1.2.0.tgz',
-         #               default=True)
-
-
-pyworkflow.em.Domain.registerPlugin(__name__)
+        # Add localrec
+        #env.addPackage('localrec', version='1.2.0',
+        #               tar='localrec-1.2.0.tgz',
+        #               default=True)

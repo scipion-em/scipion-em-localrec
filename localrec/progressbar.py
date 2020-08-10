@@ -41,7 +41,7 @@ class ProgressBar(object):
         N = 1000
         pb = ProgressBar(N, fmt=ProgressBar.FULL)
         pb.start()
-        for x in xrange(N):
+        for x in range(N):
             pb.update(x+1)
             sleep(0.1)
         pb.finish()

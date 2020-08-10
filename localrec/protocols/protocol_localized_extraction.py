@@ -23,25 +23,22 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-from __future__ import print_function
 import numpy as np
-import sys
 
-from pyworkflow import VERSION_1_1
-from pyworkflow.em.convert import ImageHandler
+from pyworkflow import VERSION_1_2
+from pwem.emlib.image import ImageHandler
 from pyworkflow.protocol.params import PointerParam
-from pyworkflow.em.protocol import ProtParticles, IntParam
+from pwem.protocols import ProtParticles
+from pyworkflow.protocol.params import IntParam
 
 # eventually progressbar will be move to scipion core
-try:
-    from pyworkflow.utils import ProgressBar
-except:
-    from localrec.progressbar import ProgressBar
+from pyworkflow.utils import ProgressBar
+
 
 class ProtLocalizedExtraction(ProtParticles):
     """ Extract computed sub-particles from a SetOfParticles. """
     _label = 'extract subparticles'
-    _lastUpdateVersion = VERSION_1_1
+    _lastUpdateVersion = VERSION_1_2
 
     # -------------------------- DEFINE param functions -----------------------
     def _defineParams(self, form):
@@ -95,10 +92,10 @@ class ProtLocalizedExtraction(ProtParticles):
 
         progress = ProgressBar(len(inputCoords), fmt=ProgressBar.NOBAR)
         progress.start()
-        step = max(100, len(inputCoords) / 100)
+        step = max(100, len(inputCoords) // 100)
         for i, coord in enumerate(inputCoords.iterItems(orderBy=['_subparticle._micId',
                                                     '_micId', 'id'])):
-            if i%step == 0:
+            if i % step == 0:
                 progress.update(i+1)
 
             # The original particle id is stored in the sub-particle as micId
@@ -123,7 +120,7 @@ class ProtLocalizedExtraction(ProtParticles):
             # If particle is not in inputParticles, subparticles will not be
             # generated. Now, subtract from a subset of original particles is
             # supported.
-            if not partId in partIdExcluded:
+            if partId not in partIdExcluded:
                 xpos = coord.getX()
                 ypos = coord.getY()
 
