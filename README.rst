@@ -58,7 +58,7 @@ The following protocols have been implemented so far
 * localrec - define subparticles: Calculate the orientations of the sub-particlesunits of interest and their positions in the original particle images.
 * localrec - filter subparticles: Filter the sub-particles based on spatial distance, angular distance, etc.
 * localrec - extract subparticles: Extract computed sub-particles from a SetOfParticles.
-* localrec - stitch subparticles: Regenerate a particle (volume) from its sub-particle based reconstructions. 
+* localrec - stitch subparticles: Regenerate a particle (volume) from its sub-particle based reconstructions.
 
 =====
 Tests

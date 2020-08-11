@@ -36,4 +36,15 @@
   Doi                      = {http://dx.doi.org/10.1038/ncomms9843},
   Url                      = {http://www.nature.com/ncomms/2015/151104/ncomms9843/full/ncomms9843.html}
 }
+
+@article{Abrishami2020,
+title                      = "Localized reconstruction in Scipion expedites the analysis of symmetry mismatches in cryo-EM data",
+journal                    = "Progress in Biophysics and Molecular Biology",
+year                       = "2020",
+issn                       = "0079-6107",
+doi                        = "https://doi.org/10.1016/j.pbiomolbio.2020.05.004",
+url                        = "http://www.sciencedirect.com/science/article/pii/S0079610720300390",
+author                     = "Abrishami, Vahid,  and Ilca, Serban L. and Gomez-Blanco, Josue and Rissanen, Ilona and de la Rosa-Trevín, José Miguel and Reddy, Vijay S. and Carazo, José-Maria and Huiskonen, Juha T.",
+}
+
 """

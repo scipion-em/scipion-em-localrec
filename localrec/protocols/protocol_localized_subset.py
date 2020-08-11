@@ -91,7 +91,7 @@ class ProtParticleSubset(ProtParticles):
         return errors
 
     def _citations(self):
-        return ['Ilca2015']
+        return ['Ilca2015', 'Abrishami2020']
 
     def _summary(self):
         summary = []

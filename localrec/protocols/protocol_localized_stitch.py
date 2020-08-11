@@ -306,6 +306,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
 
         # define the required file name to make a proper mask
         binarizedMaskFn = self._getFileName('mask', 'binarized', -1, halfString)
+        binarizedMaskFn = self._getFileName('mask', 'binarized', -1, halfString)
         erodedMaskFn = self._getFileName('mask', 'eroded', -1, halfString)
         softMaskFn = self._getFileName('mask', 'soft_edge', -1, halfString)
         volWithouMask = self._getFileName('volume', 'without_mask', -1, halfString)
@@ -480,6 +481,9 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
                 validateMsgs.append("You must assign each sub-volume"
                                     " a previous run of localrec")
         return validateMsgs
+
+    def _citations(self):
+        return ['Ilca2015', 'Abrishami2020']
 
     def _summary(self):
         listObj = self.inputSubVolumesHalf1
