@@ -230,7 +230,7 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
         pass
 
     def _citations(self):
-        return ['Ilca2015']
+        return ['Ilca2015', 'Abrishami2020']
 
     def _summary(self):
         summary = []

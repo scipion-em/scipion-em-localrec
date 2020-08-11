@@ -36,10 +36,8 @@ from localrec.convert import *
 
 getXmippPath = pwem.Domain.importFromPlugin("xmipp3.base", 'getXmippPath')
 
-
 _logo = "localrec_logo.png"
-_references = ['Ilca2015']
-
+_references = ['Ilca2015', 'Abrishami2020']
 
 class Plugin(pwem.Plugin):
     _homeVar = LOCALREC_HOME
@@ -48,7 +46,6 @@ class Plugin(pwem.Plugin):
     @classmethod
     def _defineVariables(cls):
         pass
-        #cls._defineEmVar(LOCALREC_HOME, 'localrec-1.2.0')
 
     @classmethod
     def getEnviron(cls):
@@ -71,7 +68,3 @@ class Plugin(pwem.Plugin):
     @classmethod
     def defineBinaries(cls, env):
         pass
-        # Add localrec
-        #env.addPackage('localrec', version='1.2.0',
-        #               tar='localrec-1.2.0.tgz',
-        #               default=True)

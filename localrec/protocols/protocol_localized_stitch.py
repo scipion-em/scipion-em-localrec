@@ -481,6 +481,9 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
                                     " a previous run of localrec")
         return validateMsgs
 
+    def _citations(self):
+        return ['Ilca2015', 'Abrishami2020']
+
     def _summary(self):
         listObj = self.inputSubVolumesHalf1
         if not self.useHalMaps:
