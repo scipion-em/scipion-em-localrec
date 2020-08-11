@@ -63,20 +63,20 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
     def _defineParams(self, form):
         form.addSection(label='Input')
         form.addParam('useHalMaps', BooleanParam,
-                      label="Use two half maps?", important=True,
+                      label="Use two half maps?",
                       default=False,
                       help='Stitch half maps seperately')
         form.addParam('inputSubVolumes', MultiPointerParam,
                       pointerClass='Volume', condition="not useHalMaps",
-                      label="Input sub-volumes ", important=True,
+                      label="Input sub-volumes ", allowsNull=True,
                       help='Select input sub-volume for stitching')
         form.addParam('inputSubVolumesHalf1', MultiPointerParam,
                       pointerClass='Volume', condition="useHalMaps",
-                      label="Input sub-volume for half 1", important=True,
+                      label="Input sub-volume for half 1", allowsNull=True,
                       help='Select the input sub-volume for half 1')
         form.addParam('inputSubVolumesHalf2', MultiPointerParam,
                       pointerClass='Volume', condition="useHalMaps",
-                      label="Input sub_volumes for half 2", important=True,
+                      label="Input sub_volumes for half 2", allowsNull=True,
                       help='Select the input sub-volume for half 2')
         form.addParam('symMasks', MultiPointerParam, pointerClass='VolumeMask',
                       label='Masks', allowsNull=True,
@@ -277,8 +277,8 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         volShifted = self._getFileName('volume', 'shifted', 1, halfString)
         sumImg.read(volShifted)
         sumMask.read(maskShifted)
-        sumImg.convert2DataType(ih.DT_DOUBLE)
-        sumMask.convert2DataType(ih.DT_DOUBLE)
+        sumImg.convert2DataType(DT_DOUBLE)
+        sumMask.convert2DataType(DT_DOUBLE)
 
          # Loop over the halfX subvolumes and sum them up (and mask)
         if not self.useHalMaps:
@@ -293,8 +293,8 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
              maskShifted = self._getFileName('mask', 'shifted', i+1)
              img.read(volShifted)
              imgMask.read(maskShifted)
-             img.convert2DataType(ih.DT_DOUBLE)
-             imgMask.convert2DataType(ih.DT_DOUBLE)
+             img.convert2DataType(DT_DOUBLE)
+             imgMask.convert2DataType(DT_DOUBLE)
              # Add vol and mask to related sums
              sumImg.inplaceAdd(img)
              sumMask.inplaceAdd(imgMask)
@@ -320,8 +320,8 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         maskSymFn = self._getFileName('mask', 'symmetrized')
         volSymImg.read(volSymFn)
         maskSymImg.read(maskSymFn)
-        volSymImg.convert2DataType(ih.DT_DOUBLE)
-        maskSymImg.convert2DataType(ih.DT_DOUBLE)
+        volSymImg.convert2DataType(DT_DOUBLE)
+        maskSymImg.convert2DataType(DT_DOUBLE)
 
         # Here we divide volume by mask
         maskSymData = maskSymImg.getData()
@@ -458,14 +458,14 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
 
     #--------------------------- INFO functions --------------------------------
     def _validate(self):
+
         validateMsgs = []
-
-        if len(self.inputSubVolumesHalf1) != len(self.inputSubVolumesHalf2):
-            validateMsgs.append("The number of sub-volumes for"
-                                "half1 and half2 must be equal")
-
-        listObj = self.inputSubVolumesHalf1
-        if not self.useHalMaps:
+        if self.useHalMaps:
+            if len(self.inputSubVolumesHalf1) != len(self.inputSubVolumesHalf2):
+                validateMsgs.append("The number of sub-volumes for"
+                                    "half1 and half2 must be equal")
+            listObj = self.inputSubVolumesHalf1
+        else:
             listObj = self.inputSubVolumes
         if len(listObj)>1:
             pxSize = listObj[0].get().getSamplingRate()
@@ -475,7 +475,6 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
                 if pxSize != vol.get().getSamplingRate():
                     validateMsgs.append("The sampling rate of Volumes"
                                         " *MUST BE EQUAL*")
-
         if self.usePreRun:
             if len(listObj) != len(self.preRuns):
                 validateMsgs.append("You must assign each sub-volume"
@@ -499,7 +498,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         auxString = '' if halfString == '' else '_{}'.format(halfString)
         auxString2 = '' if index == -1 else '_{}'.format(index)
         auxString3 = '' if desc == '' else '_{}'.format(desc)
-        return self._getExtraPath('output_%s%s%s%s.vol'
+        return self._getTmpPath('output_%s%s%s%s.vol'
                                   % (imgType, auxString3,
                                      auxString2, auxString))
     def _getOutputFileName(self, halfString=''):

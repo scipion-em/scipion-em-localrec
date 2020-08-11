@@ -27,7 +27,7 @@
 
 from pyworkflow import VERSION_1_1
 from pyworkflow.protocol.params import PointerParam, FloatParam
-from pyworkflow.em.protocol import ProtParticles
+from pwem.protocols import ProtParticles
 
 class ProtParticleSubset(ProtParticles):
     """ This protocol make a subset of particles for which there is at least
