@@ -306,7 +306,6 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
 
         # define the required file name to make a proper mask
         binarizedMaskFn = self._getFileName('mask', 'binarized', -1, halfString)
-        binarizedMaskFn = self._getFileName('mask', 'binarized', -1, halfString)
         erodedMaskFn = self._getFileName('mask', 'eroded', -1, halfString)
         softMaskFn = self._getFileName('mask', 'soft_edge', -1, halfString)
         volWithouMask = self._getFileName('volume', 'without_mask', -1, halfString)
