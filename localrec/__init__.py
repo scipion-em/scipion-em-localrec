@@ -31,9 +31,10 @@ wrapping Localized recontruction of subunits.
 import os
 import pwem
 from pyworkflow.utils import Environ
-
 from localrec.constants import *
 from localrec.convert import *
+
+getXmippPath = pwem.Domain.importFromPlugin("xmipp3.base", 'getXmippPath')
 
 
 _logo = "localrec_logo.png"
@@ -53,11 +54,10 @@ class Plugin(pwem.Plugin):
     def getEnviron(cls):
         """ Setup the environment variables needed to launch localrec. """
         environ = Environ(os.environ)
-        if 'XMIPP_HOME' in environ:
-            xmippHome = os.environ.get('XMIPP_HOME')
-            environ.update({
-                'PATH': os.path.join(xmippHome, 'bin'),
-                'LD_LIBRARY_PATH': os.path.join(xmippHome, 'lib')}, position=Environ.BEGIN)
+        environ.update({
+            'PATH': getXmippPath('bin'),
+            'LD_LIBRARY_PATH': getXmippPath('lib')
+        }, position=Environ.BEGIN)
         return environ
 
     @classmethod
