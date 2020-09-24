@@ -36,6 +36,7 @@ from localrec.convert import *
 
 getXmippPath = pwem.Domain.importFromPlugin("xmipp3.base", 'getXmippPath')
 
+__version__ = '3.0.1'
 _logo = "localrec_logo.png"
 _references = ['Ilca2015', 'Abrishami2020']
 
