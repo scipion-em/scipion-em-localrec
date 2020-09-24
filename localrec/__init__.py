@@ -31,14 +31,14 @@ wrapping Localized recontruction of subunits.
 import os
 import pwem
 from pyworkflow.utils import Environ
-
 from localrec.constants import *
 from localrec.convert import *
 
+getXmippPath = pwem.Domain.importFromPlugin("xmipp3.base", 'getXmippPath')
 
+__version__ = '3.0.1'
 _logo = "localrec_logo.png"
-_references = ['Ilca2015']
-
+_references = ['Ilca2015', 'Abrishami2020']
 
 class Plugin(pwem.Plugin):
     _homeVar = LOCALREC_HOME
@@ -47,17 +47,15 @@ class Plugin(pwem.Plugin):
     @classmethod
     def _defineVariables(cls):
         pass
-        #cls._defineEmVar(LOCALREC_HOME, 'localrec-1.2.0')
 
     @classmethod
     def getEnviron(cls):
         """ Setup the environment variables needed to launch localrec. """
         environ = Environ(os.environ)
-        if 'XMIPP_HOME' in environ:
-            xmippHome = os.environ.get('XMIPP_HOME')
-            environ.update({
-                'PATH': os.path.join(xmippHome, 'bin'),
-                'LD_LIBRARY_PATH': os.path.join(xmippHome, 'lib')}, position=Environ.BEGIN)
+        environ.update({
+            'PATH': getXmippPath('bin'),
+            'LD_LIBRARY_PATH': getXmippPath('lib')
+        }, position=Environ.BEGIN)
         return environ
 
     @classmethod
@@ -71,7 +69,3 @@ class Plugin(pwem.Plugin):
     @classmethod
     def defineBinaries(cls, env):
         pass
-        # Add localrec
-        #env.addPackage('localrec', version='1.2.0',
-        #               tar='localrec-1.2.0.tgz',
-        #               default=True)
