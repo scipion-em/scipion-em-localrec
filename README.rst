@@ -50,9 +50,9 @@ Install the plugin through the plugin manager GUI by launching Scipion and follo
 
            scipion test localrec.tests.test_protocol_localized_reconstruction
 
-========
+=========
 Protocols
-========
+=========
 
 The following protocols have been implemented so far
 
