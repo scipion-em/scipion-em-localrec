@@ -134,7 +134,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         group.addParam('length', StringParam, default=-1,
                        label='Alternative length of the vector (A)',
                        help='Use to adjust the sub-particle center. If it '
-                            'is <= 0, the length of the given vector us used. '
+                            'is <= 0, the length of the given vector is used. '
                             'Multiple values must be separated by commas.')
 
         form.addParallelSection(threads=4, mpi=1)
