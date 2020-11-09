@@ -46,8 +46,8 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         Generate a full volume from a sub-volume applying a
         point group symmetry operation.
 
-        An example of usage is to generate the adenovirus Capsid
-        from its assymetric unit.
+        An example of usage is to generate the adenovirus capsid
+        from its asymmetric unit.
         """
 
     _label = 'stitch subvolumes'
@@ -65,19 +65,19 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         form.addParam('useHalMaps', BooleanParam,
                       label="Use two half maps?",
                       default=False,
-                      help='Stitch half maps seperately')
+                      help='Stitch half-maps separately')
         form.addParam('inputSubVolumes', MultiPointerParam,
                       pointerClass='Volume', condition="not useHalMaps",
                       label="Input sub-volumes ", allowsNull=True,
                       help='Select input sub-volume for stitching')
         form.addParam('inputSubVolumesHalf1', MultiPointerParam,
                       pointerClass='Volume', condition="useHalMaps",
-                      label="Input sub-volume for half 1", allowsNull=True,
-                      help='Select the input sub-volume for half 1')
+                      label="Input sub-volume for half-map 1", allowsNull=True,
+                      help='Select the input sub-volume for half-map 1')
         form.addParam('inputSubVolumesHalf2', MultiPointerParam,
                       pointerClass='Volume', condition="useHalMaps",
-                      label="Input sub_volumes for half 2", allowsNull=True,
-                      help='Select the input sub-volume for half 2')
+                      label="Input sub_volumes for half-map 2", allowsNull=True,
+                      help='Select the input sub-volume for half-map 2')
         form.addParam('symMasks', MultiPointerParam, pointerClass='VolumeMask',
                       label='Masks', allowsNull=True,
                       help='Mask to normalize final volume. By default a sphere'
@@ -94,8 +94,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         form.addParam('preRuns', MultiPointerParam, pointerClass='ProtLocalizedRecons',
                       label='Localrec previous runs', allowsNull=True,
                       condition="usePreRun",
-                      help="This is the symmetirzed masked of the assymetric unit"
-                           " which is used for overlapping normalization")
+                      help="Previous Localrec runs used to extract the parameters")
         form.addParam('symmetryGroup', StringParam, default='I1',
                       label="Symmetry", condition="not usePreRun",
                       help='There are multiple possibilities for '
@@ -108,8 +107,9 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         form.addParam('alignSubParticles', BooleanParam,
                       label="Sub-volumes are aligned?", condition="not usePreRun",
                       default=False,
-                      help='If you aligned the sub-partilces with z-axis '
-                           'to apply symmetry')
+                      help='Set to Yes if you aligned the sub-particles with the z-axis '
+                           'earlier. Note that the you can mix sub-particles with and '
+                           'without this additional alignment. ')
 
         group = form.addGroup('Vectors', condition="not usePreRun")
         group.addParam('defineVector', EnumParam, default=CMM,
@@ -119,9 +119,9 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         group.addParam('vector', NumericRangeParam, default='0,0,1',
                        label='Location vectors', condition="defineVector==1",
                        help='Vector defining the location of the '
-                            'subparticles. The vector is defined by 3 '
+                            'sub-particles. The vector is defined by 3 '
                             'values x,y,z separated by comma. \n'
-                            'More than one vector can be specified separated by'
+                            'More than one vector can be specified separated by a '
                             'semicolon. For example: \n'
                             '0,0,1            # Defines only one vector.\n'
                             '0,0,1; 1,0,0;    # Defines two vectors.'
@@ -130,12 +130,12 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
                        condition="defineVector==0",
                        label='file obtained by Chimera: ',
                        help='CMM file defining the location(s) of the '
-                            'sub-particle(s). Use instead of vector. ')
+                            'sub-particle(s). Use instead of a vector. ')
         group.addParam('length', StringParam, default=-1,
                        label='Alternative length of the vector (A)',
                        help='Use to adjust the sub-particle center. If it '
-                            'is <= 0, the length of the given vector. '
-                            'Different values must be separated by commas.')
+                            'is <= 0, the length of the given vector us used. '
+                            'Multiple values must be separated by commas.')
 
         form.addParallelSection(threads=4, mpi=1)
 
