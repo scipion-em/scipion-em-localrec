@@ -395,7 +395,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         if doAlign:
             program = 'xmipp_transform_geometry'
             args = '-i %s --rotate_volume euler %f %f %f -o %s' \
-                   % (objWin, rot, tilt, psi, objWin)
+                   % (objWin, -rot, -tilt, -psi, objWin)
             self.runJob(program,args)
 
         # Shift the sub-volume to its center in the volume
