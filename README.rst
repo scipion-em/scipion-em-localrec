@@ -10,7 +10,7 @@ If Localized Reconstruction is useful in your work, please cite:
 
 Ilca SL, Kotecha A, Sun X, Poranen MM, Stuart DI & Huiskonen JT (2015). Localized reconstruction of subunits from electron cryomicroscopy images of macromolecular complexes. Nat Commun 6, 8843. doi:10.1038/ncomms9843
 
-Abrishami V, Ilca SL, Gomez-Blanco J, Rissanen I, de la Rosa-Trevín JM, Reddy VS, Carazo JM, Huiskonen JT (2020). Localized reconstruction in Scipion expedites the analysis of symmetry mismatches in cryo-EM data. Prog. Biophys. Mol. Biol.
+Abrishami V, Ilca SL, Gomez-Blanco J, Rissanen I, de la Rosa-Trevín JM, Reddy VS, Carazo JM, Huiskonen JT (2020). Localized reconstruction in Scipion expedites the analysis of symmetry mismatches in cryo-EM data. Prog. Biophys. Mol. Biol. doi:10.1016/j.pbiomolbio.2020.05.004.
 
 ===================
 Install this plugin
