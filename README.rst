@@ -16,7 +16,7 @@ Abrishami V, Ilca SL, Gomez-Blanco J, Rissanen I, de la Rosa-Trevín JM, Reddy V
 Install this plugin
 ===================
 
-You will need to use `3.0.0 <https://scipion-em.github.io/docs/release-3.0.0/docs/scipion-modes/how-to-install.html>`_ version of Scipion to run these protocols.
+You will need to use `3.0.0 <https://scipion-em.github.io/docs/release-3.0.0/docs/scipion-modes/how-to-install.html>`_ version of Scipion or later to run these protocols.
 
 **Stable version**  
 
