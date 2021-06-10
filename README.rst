@@ -74,11 +74,11 @@ Buildbot status
 ===============
 Status devel version: 
 
-.. image:: http://scipion-test.cnb.csic.es:9980/badges/ccp4_devel.svg
+.. image:: http://scipion-test.cnb.csic.es:9980/badges/localrec_devel.svg
 
 Status production version: 
 
-.. image:: http://scipion-test.cnb.csic.es:9980/badges/ccp4_prod.svg
+.. image:: http://scipion-test.cnb.csic.es:9980/badges/localrec_prod.svg
 
 
 ================
