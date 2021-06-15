@@ -138,7 +138,7 @@ class ProtLocalizedExtraction(ProtParticles):
                 subpart = coord._subparticle
                 subpart.setLocation(
                     (i, outputStack))  # Change path to new stack
-                subpart.setObjId(None)  # Force to insert as a new item
+                subpart.setObjId(i)  # Ids will be always the same no mater the number of outliers 
                 outputSet.append(subpart)
 
         progress.finish()
