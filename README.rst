@@ -76,7 +76,6 @@ Status devel version:
 
 .. image:: http://scipion-test.cnb.csic.es:9980/badges/localrec_devel.svg
 
-
 Status production version: 
 
 .. image:: http://scipion-test.cnb.csic.es:9980/badges/localrec_prod.svg
