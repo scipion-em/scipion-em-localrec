@@ -24,11 +24,11 @@ Either use the following command
 
 .. code-block::
 
-    scipion installp -p scipion-em-localrec
+    scipion3 installp -p scipion-em-localrec
 
 or
 
-Install the plugin through the plugin manager GUI by launching Scipion and following **Configuration** >> **Plugins**
+Install plugin through the plugin manager GUI by launching Scipion and following **Configuration** >> **Plugins**
 
 **Developer's version** 
 
@@ -42,13 +42,13 @@ Install the plugin through the plugin manager GUI by launching Scipion and follo
 
 .. code-block::
 
-           scipion installp -p path_to_scipion-em-localrec --devel
+           scipion3 installp -p path_to_scipion-em-localrec --devel
 
 3. Test the plugin:
 
 .. code-block::
 
-           scipion test localrec.tests.test_protocol_localized_reconstruction
+           scipion3 test localrec.tests.test_protocol_localized_reconstruction
 
 =========
 Protocols
