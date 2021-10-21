@@ -25,6 +25,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+
 from pwem.emlib import DT_DOUBLE
 from pyworkflow.protocol.params import (EnumParam, IntParam, StringParam, BooleanParam,
                                         NumericRangeParam, PathParam, Positive, MultiPointerParam)
@@ -33,7 +34,7 @@ from pwem.emlib.image import ImageHandler
 from pwem.protocols import ProtPreprocessVolumes
 from pwem.objects.data import *
 from pyworkflow.protocol.constants import STEPS_PARALLEL
-import pyworkflow.utils.path as putils
+import pyworkflow.utils as pwutils
 
 from pwem import emlib
 
@@ -303,7 +304,6 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         sumImg.write(self._getFileName('volume', 'sum', -1, halfString))
 
     def stitchParticles(self, halfString):
-
         # define the required file name to make a proper mask
         binarizedMaskFn = self._getFileName('mask', 'binarized', -1, halfString)
         erodedMaskFn = self._getFileName('mask', 'eroded', -1, halfString)
@@ -363,7 +363,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
             args = "-i %s --mask circular %d --create_mask %s " % (maskFn, -1 * radius, maskFn)
             self.runJob(program,args)
         else:
-            putils.copyFile(maskFn, self._getFileName('mask', index+1))
+            pwutils.copyFile(maskFn, self._getFileName('mask', index+1))
             maskFn = self._getFileName('mask', index+1)
 
         # Read the volume if it is provided
@@ -455,6 +455,12 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
             outVol.setFileName(outputVolFn)
             self._defineOutputs(outputVolume=outVol)
             self._defineSourceRelation(vol,outVol)
+
+        # Move some files to extra folder to keep them after tmp cleanup
+        # TODO: test the following line
+        pwutils.moveFile(self._getFileName('volume', 'without_mask', -1, ''),
+                         self._getExtraPath())
+
 
     #--------------------------- INFO functions --------------------------------
     def _validate(self):
