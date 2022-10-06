@@ -38,7 +38,7 @@ import pyworkflow.utils.path as putils
 from pwem import emlib
 
 from localrec.constants import CMM, LINEAR, symDict
-from localrec.utils import load_vectors
+from localrec.utils import load_vectors, distances_from_string
 
 
 class ProtLocalizedStich(ProtPreprocessVolumes):
@@ -245,7 +245,8 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
 
     #--------------------------- STEPS functions -------------------------------
     def convertInputStep(self):
-
+        if self.length.get() != "-1":
+            self.distances = distances_from_string(self.length.get())
         # Read voxel size
         if self.useHalMaps:
             self.pxSize = self.inputSubVolumesHalf1[0].get().getSamplingRate()
@@ -416,8 +417,10 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         self.runJob(program,args)
 
     def readVector(self, index):
-
         length = self.subVolCenterVec[index].get_length()
+        if self.length.get() != "-1":
+            length = self.distances[index]
+            
         [shiftX, shiftY, shiftZ] = [x * length for x in self.subVolCenterVec[index].vector]
         rotMatrix = self.subVolCenterVec[index].get_matrix()
         return shiftX, shiftY, shiftZ, rotMatrix
