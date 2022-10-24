@@ -44,10 +44,10 @@ from pwem.constants import (SYM_CYCLIC, SYM_DIHEDRAL, SYM_OCTAHEDRAL,
                             SYM_I2n3, SYM_I2n3r, SYM_I2n5, SYM_I2n5r, SYM_DIHEDRAL_X, SYM_DIHEDRAL_Y)
 
 from localrec.constants import CMM
-from localrec.utils import distances_from_string, load_vectors, pdbIds_from_string, vectors_from_cmm, vectors_from_string
+from localrec.utils import distances_from_string, generate_chain_id, load_vectors, pdbIds_from_string, vectors_from_cmm, vectors_from_string
 I1 = 1
 
-class ProtLocalizedStichModels(EMProtocol):
+class ProtLocalizedStitchModels(EMProtocol):
     """
         Generate a full volume from a sub-model applying a
         point group symmetry operation.
@@ -101,7 +101,7 @@ class ProtLocalizedStichModels(EMProtocol):
                       condition="usePreRun",
                       help="Previous Localrec runs used to extract the parameters")
         group = form.addGroup('Symmetry')
-        form.addParam('symmetryName', EnumParam, 
+        group.addParam('symmetryName', EnumParam, 
                       default=0,
                       choices=[ SCIPION_SYM_NAME[SYM_CYCLIC],           # 'Cn'
                                 SCIPION_SYM_NAME[SYM_DIHEDRAL],         # 'Dn'
@@ -119,7 +119,7 @@ class ProtLocalizedStichModels(EMProtocol):
                            "format in Xmipp.\n"
                            "If no symmetry is present, use _c1_."
                        )
-        form.addParam('alignSubParticles', BooleanParam,
+        group.addParam('alignSubParticles', BooleanParam,
                       label="Sub-volumes are aligned?", condition="not usePreRun",
                       default=False,
                       help='Set to Yes if you aligned the sub-particles with the z-axis '
@@ -151,7 +151,12 @@ class ProtLocalizedStichModels(EMProtocol):
                        help='Use to adjust the sub-particle center. If it '
                             'is <= 0, the length of the given vector is used. '
                             'Multiple values must be separated by commas.')
-                            
+        group = form.addGroup('Output')   
+        group.addParam('outputOnlyMatrices', BooleanParam,
+                      label="Output symmetry matrices only",
+                      default=False,
+                      help='Set to Yes if you wat to get your output file with Biological Assembly.')
+                       
         form.addParallelSection(threads=4, mpi=1)
 
     #--------------------------- INSERT steps functions ------------------------
@@ -180,12 +185,15 @@ class ProtLocalizedStichModels(EMProtocol):
         tfCoordId = self._insertFunctionStep('transformCoordinatesStep',
                                                     prerequisites=[inputStepId])
 
-        applySymId = self._insertFunctionStep('applySymmetryStep',
-                                                    prerequisites=[tfCoordId])
-
+        if self.outputOnlyMatrices.get():
+            bioAssmblyId = self._insertFunctionStep('biologicalAssemblyStep', prerequisites=[tfCoordId])
+            self._insertFunctionStep('createOutputStep', prerequisites=[bioAssmblyId])
+        else:
+            applySymId = self._insertFunctionStep('applySymmetryStep', prerequisites=[tfCoordId])
+            self._insertFunctionStep('createOutputStep', prerequisites=[applySymId])
         # depsSymVol.append(applySymId)
         
-        self._insertFunctionStep('createOutputStep', prerequisites=[applySymId])
+        
 
     #--------------------------- STEPS functions -------------------------------
     def convertInputStep(self):
@@ -206,9 +214,15 @@ class ProtLocalizedStichModels(EMProtocol):
         else:
             self.inputFiles =  glob(self.pdbFile.get())
         self.inputFiles.sort()
-        self.vectors = vectors_from_cmm(self.vectorFile.get(), 1) if self.defineVector == CMM else vectors_from_string(self.vector.get())
-        self.distances = distances_from_string(self.length.get())
-        print(self.inputFiles)
+        if self.defineVector == CMM:
+            # self.vectorsFiles =  glob(self.vectorFile.get())
+            # self.vectorsFiles.sort()
+            self.vectorsFile = self.vectorFile.get()
+            self.vectors = [vectors_from_cmm(self.vectorsFile, 1)]
+        else:
+            self.vectors = vectors_from_string(self.vector.get())
+        print(list(i.vector for i in self.vectors))
+        self.distances = distances_from_string(self.length.get()) if self.length !='-1' else [-1]
         
 
 
@@ -217,32 +231,37 @@ class ProtLocalizedStichModels(EMProtocol):
         """
             Transform input structures and bind them to a master structure to make them ready for symmetrisation
         """
-        ah = AtomicStructHandler()
+        
         listOfAtomicStructObjects = []
         vectors = self.vectors
         distances = self.distances
-
+        # print(generate_chain_id(120))
         for file in self.inputFiles:
+            ah = AtomicStructHandler()
             ah.read(file)
             listOfAtomicStructObjects.append(ah.structure.copy())
         
         for i, struct in enumerate(listOfAtomicStructObjects):
+             
             distance = distances[0] if len(distances) == 1 else distances[i]
             vector = vectors[0] if len(vectors) == 1 else vectors[i]
+            print(struct)
+            print(vector.vector)
             rotMatrix = np.identity(3)
-
+            vectorForShift = vector.vector
+            vector.compute_unit_vector()
             if distance > 0:
-                vector.compute_unit_vector()
-                vector.vector = vector.vector*distance
+                vectorForShift = vector.vector*distance
 
             if self.doAlign:
                 vector.compute_matrix()
                 rotMatrix = vector.get_matrix()
 
             rotation_matrix_transposed = np.transpose(rotMatrix)   
-            struct.transform(rotation_matrix_transposed, vector.vector)    
+            struct.transform(rotation_matrix_transposed, vectorForShift)
     
         masterStructure = PDB.Structure.Structure("master")
+        
         i = 0
         for structure in listOfAtomicStructObjects:
             for model in structure.get_models():
@@ -251,10 +270,10 @@ class ProtLocalizedStichModels(EMProtocol):
                 new_model.serial_num=i+1
                 i = i+1
                 masterStructure.add(new_model)
-        self.masterStructure = masterStructure
+        self.outputStructure = masterStructure
 
     def applySymmetryStep(self):
-        structure = self.masterStructure
+        structure = self.outputStructure
         symMatrices = getSymmetryMatrices(sym=self.symGroup)
         structureList = [structure.copy() for i in range(len(symMatrices))]
 
@@ -279,23 +298,85 @@ class ProtLocalizedStichModels(EMProtocol):
                 outputStructure.add(new_model)
         self.outputStructure = outputStructure
 
-    def createOutputStep(self):
+    def biologicalAssemblyStep(self):
+        ah = AtomicStructHandler()
         io=MMCIFIO()
-        model = self.outputStructure
-        outputModelFn = self._getOutputFileName()
+        structure = self.outputStructure
+        chains = [i.id for i in list(structure.get_chains())]
+        # old_chains = list(structure.get_chains())
+        # new_chains_id = generate_chain_id(len(list(old_chains)))
+        # index = 0
+        # for chain in old_chains:
+        #     print(new_chains_id[index])
+        #     chain.id = new_chains_id[index]
+        #     index+=1
+                
 
-        io.set_structure(model)
+        symMatrices = getSymmetryMatrices(sym=self.symGroup)
+        matricesToWrite = symMatrices[:,:3, :3]
+        # print(symMatrices[:,:3, :3])
+        outputModelFn = self._getTmpPath("tempretureFileBeforeBioAssembly.cif")
+        io.set_structure(structure)
         io.save(outputModelFn)
-        self._defineOutputs(outputModel = model)
+        # io.save("test")
+        mmDict = ah.readLowLevel(outputModelFn)
+        mmDict['_pdbx_struct_assembly.id'] = '1'               
+        mmDict['_pdbx_struct_assembly.details'] = 'Scipion Defined Assembly'
+        mmDict['_pdbx_struct_assembly.method_details'] = SCIPION_SYM_NAME[self.symGroup]
+        mmDict['_pdbx_struct_assembly_gen.assembly_id'] = '1'
+        mmDict['_pdbx_struct_assembly_gen.asym_id_list'] = ','.join(chains)
+        mmDict['_pdbx_struct_assembly_gen.oper_expression'] = '(1-'+str(len(symMatrices))+')'
+
+        mmDict['_pdbx_struct_oper_list.id'] = [str(i+1) for i in range(len(symMatrices))]
+        mmDict['_pdbx_struct_oper_list.type'] = ['matrix'+str(i+1) for i in range(len(symMatrices))]
+        mmDict['_pdbx_struct_oper_list.name'] = ['?' for i in range(len(symMatrices))]
+        mmDict['_pdbx_struct_oper_list.matrix[1][1]'] = ['%.5f'%i for i in matricesToWrite[:,0, 0]]
+        mmDict['_pdbx_struct_oper_list.matrix[1][2]'] = ['%.5f'%i for i in matricesToWrite[:,0, 1]]
+        mmDict['_pdbx_struct_oper_list.matrix[1][3]'] = ['%.5f'%i for i in matricesToWrite[:,0, 2]]
+        mmDict['_pdbx_struct_oper_list.vector[1]'] = ['0.0000000000' for i in range(len(symMatrices))]
+        mmDict['_pdbx_struct_oper_list.matrix[2][1]'] = ['%.5f'%i for i in matricesToWrite[:,1, 0]]
+        mmDict['_pdbx_struct_oper_list.matrix[2][2]'] = ['%.5f'%i for i in matricesToWrite[:,1, 1]]
+        mmDict['_pdbx_struct_oper_list.matrix[2][3]'] = ['%.5f'%i for i in matricesToWrite[:,1, 2]]
+        mmDict['_pdbx_struct_oper_list.vector[2]'] = ['0.0000000000' for i in range(len(symMatrices))]
+        mmDict['_pdbx_struct_oper_list.matrix[3][1]'] = ['%.5f'%i for i in matricesToWrite[:,2, 0]]
+        mmDict['_pdbx_struct_oper_list.matrix[3][2]'] = ['%.5f'%i for i in matricesToWrite[:,2, 1]]
+        mmDict['_pdbx_struct_oper_list.matrix[3][3]'] = ['%.5f'%i for i in matricesToWrite[:,2, 2]]
+        mmDict['_pdbx_struct_oper_list.vector[3]'] = ['0.0000000000' for i in range(len(symMatrices))]
+
+        self.ouputDict = mmDict
+
+        # print(type(mmDict['_atom_site.id']))
+        
+        # print(mmDict['_atom_site.id'])
+
+    def createOutputStep(self):
+        if self.outputOnlyMatrices:
+            ah = AtomicStructHandler()
+            outputModelFn = self._getOutputFileName()
+            ah._writeLowLevel(outputModelFn, self.ouputDict)
+
+        else:
+            io=MMCIFIO()
+            model = self.outputStructure
+            outputModelFn = self._getOutputFileName()
+
+            io.set_structure(model)
+            io.save(outputModelFn)
+            self._defineOutputs(outputModel = model)
 
     #--------------------------- INFO functions --------------------------------
     def _validate(self):
-
         validateMsgs = []
         fileNum = len(glob(self.pdbFile.get()))
-        vectorNum = len(vectors_from_string(str(self.vector)))
+
+        if self.defineVector == CMM:
+            self.vectorsFile = self.vectorFile.get()
+            vectorNum = len(vectors_from_cmm(self.vectorsFile, 1))
+        else:
+            vectorNum = len(vectors_from_string(self.vector.get()))
+
         distanceNum = len(distances_from_string(str(self.length.get())))
-        if (fileNum != vectorNum and vectorNum != 1) or ((distanceNum !=0 or distanceNum !=1) and distanceNum != vectorNum):
+        if not (fileNum == vectorNum or vectorNum == 1) and (distanceNum ==0 or distanceNum ==1 or distanceNum == vectorNum):
             errMsg = "The number of vectors, distances and files you enter must be one or equal to the number of files entered(Number of Distances can be 0).\n Number of vectors: "+ str(vectorNum)+"\nNumber of files: "+ str(fileNum)+"\nNumber of Distances: "+ str(distanceNum)
             validateMsgs.append(errMsg)
         return validateMsgs

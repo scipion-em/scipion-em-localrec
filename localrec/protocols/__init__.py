@@ -30,5 +30,5 @@ from .protocol_filter_subparticles import ProtFilterSubParts
 from .protocol_localized_stitch import ProtLocalizedStich
 from .protocol_localized_subset import ProtParticleSubset
 from .protocol_localized_set_origin import ProtLocalOrigSampling
-from .protocol_localized_stitch_models import ProtLocalizedStichModels
+from .protocol_localized_stitch_models import ProtLocalizedStitchModels
 

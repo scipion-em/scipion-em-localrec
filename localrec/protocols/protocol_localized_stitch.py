@@ -124,7 +124,8 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
                             'More than one vector can be specified separated by a '
                             'semicolon. For example: \n'
                             '0,0,1            # Defines only one vector.\n'
-                            '0,0,1; 1,0,0;    # Defines two vectors.'
+                            '0,0,1; 1,0,0;    # Defines two vectors.\n'
+                            'IMPORTANT: You must provide vectors as Angstoms not pixels'
                        )
         group.addParam('vectorFile', PathParam, default='',
                        condition="defineVector==0",
@@ -245,8 +246,8 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
 
     #--------------------------- STEPS functions -------------------------------
     def convertInputStep(self):
-        if self.length.get() != "-1":
-            self.distances = distances_from_string(self.length.get())
+        # if self.length.get() != "-1":
+        #     self.distances = distances_from_string(self.length.get())
         # Read voxel size
         if self.useHalMaps:
             self.pxSize = self.inputSubVolumesHalf1[0].get().getSamplingRate()
@@ -264,6 +265,10 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
                 self.subVolCenterVec += self.createVector(self.preRuns[i].get())
         else:
             self.subVolCenterVec = self.createVector()
+        
+        for volume, vector in zip(self.inputSubVolumes, self.subVolCenterVec):
+            samplingRate = volume.get().getSamplingRate()
+            vector.set_vector(vector.vector/samplingRate)
 
     def genAsymUnit(self, halfString):
 
@@ -418,8 +423,11 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
 
     def readVector(self, index):
         length = self.subVolCenterVec[index].get_length()
-        if self.length.get() != "-1":
-            length = self.distances[index]
+        # if self.length.get() != "-1":
+        #     if len(self.distances) == 1:
+        #         length = self.distances[0]
+        #     else:
+        #         length = self.distances[index]
             
         [shiftX, shiftY, shiftZ] = [x * length for x in self.subVolCenterVec[index].vector]
         rotMatrix = self.subVolCenterVec[index].get_matrix()
@@ -458,6 +466,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
             outVol.setFileName(outputVolFn)
             self._defineOutputs(outputVolume=outVol)
             self._defineSourceRelation(vol,outVol)
+        raise Exception('exceptionnnnnnnnnn')
 
     #--------------------------- INFO functions --------------------------------
     def _validate(self):

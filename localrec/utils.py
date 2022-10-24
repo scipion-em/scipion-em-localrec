@@ -31,6 +31,7 @@
 
 import math
 import random
+import string
 import numpy as np
 from numpy.linalg import inv
 import xml.etree.ElementTree
@@ -122,7 +123,7 @@ def load_vectors(cmm_file, vectors_str, distances_str, angpix):
     else:
         subparticle_vector_list = vectors_from_string(vectors_str)
 
-    if float(distances_str) > 0.0:
+    if str(distances_str) != "-1":
 
         # Change distances from A to pixel units
         subparticle_distances = [float(x) / angpix for x in
@@ -199,6 +200,27 @@ def distances_from_string(alternateLength):
 
 def pdbIds_from_string(pdbIds):
         return [i.replace(" ", "") for i in pdbIds.split(',')]
+
+def generate_chain_id(numberOfChains):
+    """
+        Generates max 2 char chain ids (max 702 chain)
+    """
+    letters = string.ascii_uppercase
+    check = 0
+    index = 0
+    startLetter = -1
+    result_ids = []
+    for i in range(numberOfChains):
+        if index >= len(letters):
+            index = 0
+            startLetter += 1
+        if startLetter != -1:
+            result_ids.append(letters[startLetter]+letters[index])
+        else:
+            result_ids.append(letters[index])
+        index +=1    
+        
+    return result_ids
 
 def within_mindist(p1, p2, mindist, keepRedundant):
     """ Returns True if two particles are closer to each other
