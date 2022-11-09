@@ -89,6 +89,9 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
                       label='Output volume size',
                       validators=[Positive],
                       help='This is size of the output volume after symmetrization')
+        form.addParam('keepTmpFiles', BooleanParam,
+                      label="Keep intermediate files", default=False,
+                      help='Set to Yes if you want to keep temporary files in the extra path')
         form.addParam('usePreRun', BooleanParam,
                       label="Use previous localrec run(s)", default=False)
         form.addParam('preRuns', MultiPointerParam, pointerClass='ProtLocalizedRecons',
@@ -125,7 +128,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
                             'semicolon. For example: \n'
                             '0,0,1            # Defines only one vector.\n'
                             '0,0,1; 1,0,0;    # Defines two vectors.\n'
-                            'IMPORTANT: You must provide vectors as Angstoms not pixels'
+                            'IMPORTANT: You must provide vectors as Angstroms not pixels'
                        )
         group.addParam('vectorFile', PathParam, default='',
                        condition="defineVector==0",
@@ -148,7 +151,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         depsSymVolHalf2 = []
         depsSymVol = []
         depsSymMask = []
-
+        
         if self.usePreRun:
             localRecProt = self.preRuns[0].get()
             localRecSymGrp = localRecProt.symGrp.get()
@@ -466,7 +469,14 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
             outVol.setFileName(outputVolFn)
             self._defineOutputs(outputVolume=outVol)
             self._defineSourceRelation(vol,outVol)
-        raise Exception('exceptionnnnnnnnnn')
+        if self.keepTmpFiles:
+            source = self._getTmpPath()
+            destination = self._getExtraPath()
+            allfiles = os.listdir(source)
+            for f in allfiles:
+                src_path = os.path.join(source, f)
+                dst_path = os.path.join(destination, f)
+                os.rename(src_path, dst_path)
 
     #--------------------------- INFO functions --------------------------------
     def _validate(self):
