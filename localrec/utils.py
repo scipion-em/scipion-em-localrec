@@ -133,8 +133,7 @@ def load_vectors(cmm_file, vectors_str, distances_str, angpix):
             raise Exception("Error: The number of distances does not match "
                             "the number of vectors!")
 
-        for vector, distance in zip(subparticle_vector_list,
-                                    subparticle_distances):
+        for vector, distance in zip(subparticle_vector_list, subparticle_distances):
             if distance > 0:
                 vector.set_length(distance)
             else:
@@ -142,6 +141,8 @@ def load_vectors(cmm_file, vectors_str, distances_str, angpix):
     else:
         for vector in subparticle_vector_list:
             vector.compute_length()
+            ln = vector.get_length()
+            vector.set_length(ln/ angpix)
 
     print("Using vectors:")
 

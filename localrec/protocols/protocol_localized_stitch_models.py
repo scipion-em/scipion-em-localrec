@@ -164,34 +164,17 @@ class ProtLocalizedStitchModels(EMProtocol):
 
         
         inputStepId = self._insertFunctionStep('convertInputStep')
-        # if self.usePreRun:
-        #     localRecProt = self.preRuns[0].get()
-        #     localRecSymGrp = localRecProt.symGrp.get()
-        #     localRecSymOrd = localRecProt.symmetryOrder.get()
-        #     if localRecSymGrp == 0 or localRecSymGrp == 1:
-        #         localRecSym = "%s%d" % (symDict[localRecSymGrp], localRecSymOrd)
-        #     else:
-        #         localRecSym = symDict[localRecSymGrp]
-        #     doAlign = localRecProt.alignSubParticles
-        # else:
-        #     localRecSym = self.symmetryGroup.get()
-        # alt satır ileri itilecek
-        
-        
-        # halfmap olmadığı için direkt buraya giriyoruz
-        # Maskemizin olup olmadığına bakıyoruz bizde olmadığı için direkt buradan devam ediyoruz
-        # for i, vol in enumerate(self.inputAtomicStructs):
         
         tfCoordId = self._insertFunctionStep('transformCoordinatesStep',
                                                     prerequisites=[inputStepId])
 
+        # If user wants to get biological assembly in their outputfile, we continue with biological assembly step
         if self.outputOnlyMatrices.get():
             bioAssmblyId = self._insertFunctionStep('biologicalAssemblyStep', prerequisites=[tfCoordId])
             self._insertFunctionStep('createOutputStep', prerequisites=[bioAssmblyId])
         else:
             applySymId = self._insertFunctionStep('applySymmetryStep', prerequisites=[tfCoordId])
             self._insertFunctionStep('createOutputStep', prerequisites=[applySymId])
-        # depsSymVol.append(applySymId)
         
         
 
@@ -215,13 +198,10 @@ class ProtLocalizedStitchModels(EMProtocol):
             self.inputFiles =  glob(self.pdbFile.get())
         self.inputFiles.sort()
         if self.defineVector == CMM:
-            # self.vectorsFiles =  glob(self.vectorFile.get())
-            # self.vectorsFiles.sort()
             self.vectorsFile = self.vectorFile.get()
             self.vectors = [vectors_from_cmm(self.vectorsFile, 1)]
         else:
             self.vectors = vectors_from_string(self.vector.get())
-        print(list(i.vector for i in self.vectors))
         self.distances = distances_from_string(self.length.get()) if self.length !='-1' else [-1]
         
 
@@ -235,7 +215,6 @@ class ProtLocalizedStitchModels(EMProtocol):
         listOfAtomicStructObjects = []
         vectors = self.vectors
         distances = self.distances
-        # print(generate_chain_id(120))
         for file in self.inputFiles:
             ah = AtomicStructHandler()
             ah.read(file)
@@ -243,21 +222,26 @@ class ProtLocalizedStitchModels(EMProtocol):
         
         for i, struct in enumerate(listOfAtomicStructObjects):
              
+            # if user provided 1 distance/vector, we apply them to the all input models
             distance = distances[0] if len(distances) == 1 else distances[i]
+            print("distance", distance)
             vector = vectors[0] if len(vectors) == 1 else vectors[i]
-            print(struct)
-            print(vector.vector)
             rotMatrix = np.identity(3)
+
             vectorForShift = vector.vector
             vector.compute_unit_vector()
+            # if user provided distances 
             if distance > 0:
                 vectorForShift = vector.vector*distance
 
             if self.doAlign:
+                print("do align:",self.doAlign)
                 vector.compute_matrix()
                 rotMatrix = vector.get_matrix()
 
             rotation_matrix_transposed = np.transpose(rotMatrix)   
+            vectorForShift = np.array([0,0,0]) 
+            print("vectorForShift:", vectorForShift)
             struct.transform(rotation_matrix_transposed, vectorForShift)
     
         masterStructure = PDB.Structure.Structure("master")
@@ -303,13 +287,14 @@ class ProtLocalizedStitchModels(EMProtocol):
         io=MMCIFIO()
         structure = self.outputStructure
         chains = [i.id for i in list(structure.get_chains())]
-        # old_chains = list(structure.get_chains())
-        # new_chains_id = generate_chain_id(len(list(old_chains)))
-        # index = 0
-        # for chain in old_chains:
-        #     print(new_chains_id[index])
-        #     chain.id = new_chains_id[index]
-        #     index+=1
+
+        old_chains = list(structure.get_chains())
+        new_chains_id = generate_chain_id(len(list(old_chains)))
+        index = 0
+        for chain in old_chains:
+            print("new chain:", new_chains_id[index])
+            chain.id = new_chains_id[index]
+            index+=1
                 
 
         symMatrices = getSymmetryMatrices(sym=self.symGroup)
@@ -363,6 +348,7 @@ class ProtLocalizedStitchModels(EMProtocol):
             io.set_structure(model)
             io.save(outputModelFn)
             self._defineOutputs(outputModel = model)
+        raise Exception('exceptionnnn')
 
     #--------------------------- INFO functions --------------------------------
     def _validate(self):

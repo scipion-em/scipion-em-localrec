@@ -269,9 +269,9 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         else:
             self.subVolCenterVec = self.createVector()
         
-        for volume, vector in zip(self.inputSubVolumes, self.subVolCenterVec):
-            samplingRate = volume.get().getSamplingRate()
-            vector.set_vector(vector.vector/samplingRate)
+        # for volume, vector in zip(self.inputSubVolumes, self.subVolCenterVec):
+        #     samplingRate = volume.get().getSamplingRate()
+        #     vector.set_vector(vector.vector/samplingRate)
 
     def genAsymUnit(self, halfString):
 
