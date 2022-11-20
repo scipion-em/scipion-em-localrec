@@ -27,7 +27,7 @@
 # **************************************************************************
 from pwem.emlib import DT_DOUBLE
 from pyworkflow.protocol.params import (EnumParam, IntParam, StringParam, BooleanParam,
-                                        NumericRangeParam, PathParam, Positive, MultiPointerParam)
+                                        NumericRangeParam, PathParam, Positive, MultiPointerParam, LEVEL_ADVANCED, FloatParam)
 from pwem.convert.transformations import euler_from_matrix
 from pwem.emlib.image import ImageHandler
 from pwem.protocols import ProtPreprocessVolumes
@@ -89,9 +89,6 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
                       label='Output volume size',
                       validators=[Positive],
                       help='This is size of the output volume after symmetrization')
-        form.addParam('keepTmpFiles', BooleanParam,
-                      label="Keep intermediate files", default=False,
-                      help='Set to Yes if you want to keep temporary files in the extra path')
         form.addParam('usePreRun', BooleanParam,
                       label="Use previous localrec run(s)", default=False)
         form.addParam('preRuns', MultiPointerParam, pointerClass='ProtLocalizedRecons',
@@ -140,6 +137,16 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
                        help='Use to adjust the sub-particle center. If it '
                             'is <= 0, the length of the given vector is used. '
                             'Multiple values must be separated by commas.')
+
+        form.addParam('samplingRate', FloatParam, label='Sampling Rate',
+                      default=0.00, expertLevel=LEVEL_ADVANCED, condition="not useHalMaps",
+                      help='If you have calibrated the map pixel size in postprocessing.\n'
+                           'Give the original pixel size here.')
+        
+        form.addParam('keepTmpFiles', BooleanParam, expertLevel=LEVEL_ADVANCED,
+                      label="Keep intermediate files", default=False, 
+                      help='Set to Yes if you want to keep temporary files in the extra path')
+
 
         form.addParallelSection(threads=4, mpi=1)
 
@@ -249,13 +256,18 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
 
     #--------------------------- STEPS functions -------------------------------
     def convertInputStep(self):
+        print("samplingRate: ", self.samplingRate.get())
+        print("keepTmpFiles: ", self.keepTmpFiles.get())
         # if self.length.get() != "-1":
         #     self.distances = distances_from_string(self.length.get())
         # Read voxel size
         if self.useHalMaps:
             self.pxSize = self.inputSubVolumesHalf1[0].get().getSamplingRate()
         else:
-            self.pxSize = self.inputSubVolumes[0].get().getSamplingRate()
+            if self.samplingRate.get() > 0.0:
+                self.pxSize = self.samplingRate.get()
+            else:
+                self.pxSize = self.inputSubVolumes[0].get().getSamplingRate()
         interpMethod = self.interpMethod
         self.interpString = 'linear' if interpMethod.get() == LINEAR else 'spline'
         self.interpNum = 1 if interpMethod.get() == LINEAR else 3

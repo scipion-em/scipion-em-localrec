@@ -197,7 +197,7 @@ def vectors_from_string(input_str):
     return vectors
 
 def distances_from_string(alternateLength):
-        return [int(i) for i in alternateLength.split(',')]
+        return [float(i) for i in alternateLength.split(',')]
 
 def pdbIds_from_string(pdbIds):
         return [i.replace(" ", "") for i in pdbIds.split(',')]

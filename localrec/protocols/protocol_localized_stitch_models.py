@@ -239,10 +239,10 @@ class ProtLocalizedStitchModels(EMProtocol):
                 vector.compute_matrix()
                 rotMatrix = vector.get_matrix()
 
-            rotation_matrix_transposed = np.transpose(rotMatrix)   
-            vectorForShift = np.array([0,0,0]) 
+            # rotation_matrix_transposed = np.transpose(rotMatrix)   
+            # vectorForShift = np.array([0,0,0]) 
             print("vectorForShift:", vectorForShift)
-            struct.transform(rotation_matrix_transposed, vectorForShift)
+            struct.transform(rotMatrix, vectorForShift)
     
         masterStructure = PDB.Structure.Structure("master")
         
