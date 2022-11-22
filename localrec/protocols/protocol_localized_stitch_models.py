@@ -197,12 +197,30 @@ class ProtLocalizedStitchModels(EMProtocol):
         else:
             self.inputFiles =  glob(self.pdbFile.get())
         self.inputFiles.sort()
+
+
+        # if self.defineVector == CMM:
+        #     self.vectorsFile = self.vectorFile.get()
+        #     #self.vectors = [vectors_from_cmm(self.vectorsFile, 1)]
+        # else:
+        #     self.vectors = vectors_from_string(self.vector.get())
+        # self.distances = distances_from_string(self.length.get()) if self.length !='-1' else [-1]
+        
+        vector = ""
+        cmmFn = ""
         if self.defineVector == CMM:
-            self.vectorsFile = self.vectorFile.get()
-            self.vectors = [vectors_from_cmm(self.vectorsFile, 1)]
+            cmmFn = self.vectorFile.get()
         else:
-            self.vectors = vectors_from_string(self.vector.get())
-        self.distances = distances_from_string(self.length.get()) if self.length !='-1' else [-1]
+            vector = self.vector.get()
+
+        self.subVolCenterVec = load_vectors(cmmFn, vector, self.length.get(), 1)
+
+
+        # for vector, distance in zip(self.vectors, self.distances):
+        #     if distance > 0:
+        #         vector.set_length(distance)
+        #     else:
+        #         vector.compute_length()
         
 
 
@@ -213,8 +231,8 @@ class ProtLocalizedStitchModels(EMProtocol):
         """
         
         listOfAtomicStructObjects = []
-        vectors = self.vectors
-        distances = self.distances
+        # vectors = self.subparticle_vector_list
+        # distances = self.distances
         for file in self.inputFiles:
             ah = AtomicStructHandler()
             ah.read(file)
@@ -223,25 +241,28 @@ class ProtLocalizedStitchModels(EMProtocol):
         for i, struct in enumerate(listOfAtomicStructObjects):
              
             # if user provided 1 distance/vector, we apply them to the all input models
-            distance = distances[0] if len(distances) == 1 else distances[i]
-            print("distance", distance)
-            vector = vectors[0] if len(vectors) == 1 else vectors[i]
-            rotMatrix = np.identity(3)
+            # distance = distances[0] if len(distances) == 1 else distances[i]
+            # print("distance", distance)
+            # vector = vectors[0] if len(vectors) == 1 else vectors[i]
+            
+            shiftX, shiftY, shiftZ, rotMatrixFromVector = self.readVector(i)
 
-            vectorForShift = vector.vector
-            vector.compute_unit_vector()
-            # if user provided distances 
-            if distance > 0:
-                vectorForShift = vector.vector*distance
+            # vector.compute_unit_vector()
+
+            # # if user provided distances 
+            # if distance > 0:
+            #     vectorForShift = vector.vector*distance
+            rotMatrix = np.identity(3)
 
             if self.doAlign:
                 print("do align:",self.doAlign)
-                vector.compute_matrix()
-                rotMatrix = vector.get_matrix()
+                rotMatrix = rotMatrixFromVector
 
             # rotation_matrix_transposed = np.transpose(rotMatrix)   
-            # vectorForShift = np.array([0,0,0]) 
+            # vectorForShift = np.array([shiftX, shiftY, shiftZ])
+            vectorForShift = np.array([0, 0, 0])
             print("vectorForShift:", vectorForShift)
+            print("rotMatrix:", rotMatrix)
             struct.transform(rotMatrix, vectorForShift)
     
         masterStructure = PDB.Structure.Structure("master")
@@ -349,6 +370,14 @@ class ProtLocalizedStitchModels(EMProtocol):
             io.save(outputModelFn)
             self._defineOutputs(outputModel = model)
         raise Exception('exceptionnnn')
+        
+    def readVector(self, index):
+        
+        length = self.subVolCenterVec[index].get_length()            
+        [shiftX, shiftY, shiftZ] = [x * length for x in self.subVolCenterVec[index].vector]
+        rotMatrix = self.subVolCenterVec[index].get_matrix()
+        return shiftX, shiftY, shiftZ, rotMatrix
+
 
     #--------------------------- INFO functions --------------------------------
     def _validate(self):

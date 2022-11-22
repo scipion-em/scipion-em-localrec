@@ -435,13 +435,8 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         self.runJob(program,args)
 
     def readVector(self, index):
-        length = self.subVolCenterVec[index].get_length()
-        # if self.length.get() != "-1":
-        #     if len(self.distances) == 1:
-        #         length = self.distances[0]
-        #     else:
-        #         length = self.distances[index]
-            
+        
+        length = self.subVolCenterVec[index].get_length()            
         [shiftX, shiftY, shiftZ] = [x * length for x in self.subVolCenterVec[index].vector]
         rotMatrix = self.subVolCenterVec[index].get_matrix()
         return shiftX, shiftY, shiftZ, rotMatrix
@@ -479,6 +474,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
             outVol.setFileName(outputVolFn)
             self._defineOutputs(outputVolume=outVol)
             self._defineSourceRelation(vol,outVol)
+            
         if self.keepTmpFiles:
             source = self._getTmpPath()
             destination = self._getExtraPath()
@@ -533,10 +529,10 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         auxString = '' if halfString == '' else '_{}'.format(halfString)
         auxString2 = '' if index == -1 else '_{}'.format(index)
         auxString3 = '' if desc == '' else '_{}'.format(desc)
-        return self._getTmpPath('output_%s%s%s%s.vol'
+        return self._getTmpPath('output_%s%s%s%s.mrc'
                                   % (imgType, auxString3,
                                      auxString2, auxString))
     def _getOutputFileName(self, halfString=''):
         auxString = '' if halfString == '' else '_{}'.format(halfString)
-        return self._getExtraPath('output_volume%s.vol'
+        return self._getExtraPath('output_volume%s.mrc'
                                   % auxString)
