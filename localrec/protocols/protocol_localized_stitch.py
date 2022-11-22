@@ -529,7 +529,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         auxString = '' if halfString == '' else '_{}'.format(halfString)
         auxString2 = '' if index == -1 else '_{}'.format(index)
         auxString3 = '' if desc == '' else '_{}'.format(desc)
-        return self._getTmpPath('output_%s%s%s%s.mrc'
+        return self._getTmpPath('output_%s%s%s%s.vol'
                                   % (imgType, auxString3,
                                      auxString2, auxString))
     def _getOutputFileName(self, halfString=''):
