@@ -475,7 +475,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
             outVol.setFileName(outputVolFn)
             self._defineOutputs(outputVolume=outVol)
             self._defineSourceRelation(vol,outVol)
-            setMRCSamplingRate(outputVolFn, self.pxSize)
+            setMRCSamplingRate(outputVolFn, self.inputSubVolumes[0].get().getSamplingRate())
             
         if self.keepTmpFiles:
             source = self._getTmpPath()
