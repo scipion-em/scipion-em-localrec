@@ -29,6 +29,7 @@ from pwem.emlib import DT_DOUBLE
 from pyworkflow.protocol.params import (EnumParam, IntParam, StringParam, BooleanParam,
                                         NumericRangeParam, PathParam, Positive, MultiPointerParam, LEVEL_ADVANCED, FloatParam)
 from pwem.convert.transformations import euler_from_matrix
+from pwem.convert.headers import setMRCSamplingRate
 from pwem.emlib.image import ImageHandler
 from pwem.protocols import ProtPreprocessVolumes
 from pwem.objects.data import *
@@ -474,6 +475,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
             outVol.setFileName(outputVolFn)
             self._defineOutputs(outputVolume=outVol)
             self._defineSourceRelation(vol,outVol)
+            setMRCSamplingRate(outputVolFn, self.inputSubVolumes[0].get().getSamplingRate())
             
         if self.keepTmpFiles:
             source = self._getTmpPath()
@@ -529,7 +531,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         auxString = '' if halfString == '' else '_{}'.format(halfString)
         auxString2 = '' if index == -1 else '_{}'.format(index)
         auxString3 = '' if desc == '' else '_{}'.format(desc)
-        return self._getTmpPath('output_%s%s%s%s.mrc'
+        return self._getTmpPath('output_%s%s%s%s.vol'
                                   % (imgType, auxString3,
                                      auxString2, auxString))
     def _getOutputFileName(self, halfString=''):
