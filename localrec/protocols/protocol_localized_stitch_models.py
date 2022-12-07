@@ -30,7 +30,9 @@ from pwem.emlib import DT_DOUBLE
 from pyworkflow.protocol.params import (EnumParam, StringParam, BooleanParam,
                                         NumericRangeParam, PathParam, MultiPointerParam)
 
+
 from pwem.convert.atom_struct import AtomicStructHandler
+from pwem.convert.transformations import euler_from_matrix, euler_matrix
 from pwem.protocols import EMProtocol
 from pwem.objects.data import *
 from pyworkflow.protocol.constants import STEPS_PARALLEL
@@ -44,7 +46,7 @@ from pwem.constants import (SYM_CYCLIC, SYM_DIHEDRAL, SYM_OCTAHEDRAL,
                             SYM_I2n3, SYM_I2n3r, SYM_I2n5, SYM_I2n5r, SYM_DIHEDRAL_X, SYM_DIHEDRAL_Y)
 
 from localrec.constants import CMM
-from localrec.utils import distances_from_string, generate_chain_id, load_vectors, pdbIds_from_string, vectors_from_cmm, vectors_from_string
+from localrec.utils import euler2matrix,distances_from_string, generate_chain_id, load_vectors, pdbIds_from_string, vectors_from_cmm, vectors_from_string
 I1 = 1
 
 class ProtLocalizedStitchModels(EMProtocol):
@@ -235,6 +237,7 @@ class ProtLocalizedStitchModels(EMProtocol):
         # distances = self.distances
         for file in self.inputFiles:
             ah = AtomicStructHandler()
+            print(file)
             ah.read(file)
             listOfAtomicStructObjects.append(ah.structure.copy())
         
@@ -255,15 +258,16 @@ class ProtLocalizedStitchModels(EMProtocol):
             rotMatrix = np.identity(3)
 
             if self.doAlign:
-                print("do align:",self.doAlign)
                 rotMatrix = rotMatrixFromVector
 
             # rotation_matrix_transposed = np.transpose(rotMatrix)   
-            # vectorForShift = np.array([shiftX, shiftY, shiftZ])
-            vectorForShift = np.array([0, 0, 0])
-            print("vectorForShift:", vectorForShift)
-            print("rotMatrix:", rotMatrix)
-            struct.transform(rotMatrix, vectorForShift)
+            rot, tilt, psi = np.rad2deg(euler_from_matrix(rotMatrix.transpose(), 'szyz'))
+            
+            npmatix = euler2matrix(-rot, -tilt, -psi)
+            print(euler2matrix(-rot, -tilt, -psi))
+            vectorForShift = np.array([shiftX, shiftY, shiftZ])
+            # vectorForShift = np.array([0, 0, 0])
+            struct.transform(npmatix, vectorForShift)
     
         masterStructure = PDB.Structure.Structure("master")
         

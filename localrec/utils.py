@@ -112,7 +112,30 @@ def matrixFromGeometry(shifts, angles, inverseTransform):
 
     return M
 
+def euler2matrix(rot, tilt, psi):
+    mtrix = np.zeros((3,3), dtype=float)
+    ca = np.cos(np.degrees(rot))
+    sa = np.sin(np.degrees(rot))
+    cb = np.cos(np.degrees(tilt))
+    sb = np.sin(np.degrees(tilt))
+    cg = np.cos(np.degrees(psi))
+    sg = np.sin(np.degrees(psi))
 
+    cc = cb * ca
+    cs = cb * sa
+    sc = sb * ca
+    ss = sb * sa
+
+    mtrix[0, 0] =  cg * cc - sg * sa
+    mtrix[0, 1] =  cg * cs + sg * ca
+    mtrix[0, 2] = -cg * sb
+    mtrix[1, 0] = -sg * cc - cg * sa
+    mtrix[1, 1] = -sg * cs + cg * ca
+    mtrix[1, 2] = sg * sb
+    mtrix[2, 0] =  sc
+    mtrix[2, 1] =  ss
+    mtrix[2, 2] = cb
+    return mtrix
 def load_vectors(cmm_file, vectors_str, distances_str, angpix):
     """ Load subparticle vectors either from Chimera CMM file or from
     a vectors string. Distances can also be specified for each vector
