@@ -240,35 +240,40 @@ class ProtLocalizedStitchModels(EMProtocol):
             print(file)
             ah.read(file)
             listOfAtomicStructObjects.append(ah.structure.copy())
-        
+        boxSize = 800
+        samplingRate = 1.34
+        # valueToShift = (boxSize/2)*samplingRate
+
+        valueToShift = (((boxSize/2)/2)/2)*(samplingRate+0.04*3) # 100*1.46 = 146
+        print(valueToShift)
+        for struct in listOfAtomicStructObjects:
+            rotMatrix = np.identity(3)
+            struct.transform(rotMatrix, np.array([-valueToShift, -valueToShift, -valueToShift]))
+        #vectorsForShift = [np.array([628.89361348, 390.23970294, 732.22162194]), np.array([459.99159856, 399.05464447, 733.41199339])]
         for i, struct in enumerate(listOfAtomicStructObjects):
-             
-            # if user provided 1 distance/vector, we apply them to the all input models
-            # distance = distances[0] if len(distances) == 1 else distances[i]
-            # print("distance", distance)
-            # vector = vectors[0] if len(vectors) == 1 else vectors[i]
             
             shiftX, shiftY, shiftZ, rotMatrixFromVector = self.readVector(i)
-
-            # vector.compute_unit_vector()
-
-            # # if user provided distances 
-            # if distance > 0:
-            #     vectorForShift = vector.vector*distance
             rotMatrix = np.identity(3)
 
             if self.doAlign:
                 rotMatrix = rotMatrixFromVector
 
             # rotation_matrix_transposed = np.transpose(rotMatrix)   
-            rot, tilt, psi = np.rad2deg(euler_from_matrix(rotMatrix.transpose(), 'szyz'))
-            
-            npmatix = euler2matrix(-rot, -tilt, -psi)
-            print(euler2matrix(-rot, -tilt, -psi))
             vectorForShift = np.array([shiftX, shiftY, shiftZ])
-            # vectorForShift = np.array([0, 0, 0])
-            struct.transform(npmatix, vectorForShift)
-    
+            vectorForShift = np.array([0, 0, 0])
+            struct.transform(rotMatrix, vectorForShift)
+
+        for struct in listOfAtomicStructObjects:
+            rotMatrix = np.identity(3)
+            struct.transform(rotMatrix, np.array([valueToShift, valueToShift, valueToShift]))
+
+        for i, struct in enumerate(listOfAtomicStructObjects):
+            
+            shiftX, shiftY, shiftZ, rotMatrixFromVector = self.readVector(i)
+            rotMatrix = np.identity(3)
+            vectorForShift = np.array([shiftX, shiftY, shiftZ])
+            struct.transform(rotMatrix, vectorForShift)
+            
         masterStructure = PDB.Structure.Structure("master")
         
         i = 0
@@ -280,8 +285,10 @@ class ProtLocalizedStitchModels(EMProtocol):
                 i = i+1
                 masterStructure.add(new_model)
         self.outputStructure = masterStructure
+        
 
     def applySymmetryStep(self):
+        
         structure = self.outputStructure
         symMatrices = getSymmetryMatrices(sym=self.symGroup)
         structureList = [structure.copy() for i in range(len(symMatrices))]
