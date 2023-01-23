@@ -244,7 +244,7 @@ class ProtLocalizedStitchModels(EMProtocol):
         samplingRate = 1.38
         # valueToShift = (boxSize/2)*samplingRate
 
-        valueToShift = ((boxSize/2)-1)*samplingRate # 222*1.38 = 151.8
+        valueToShift = ((boxSize/2)-1)*samplingRate # (222/2-1)*1.38 = 151.8
         print(valueToShift)
         for struct in listOfAtomicStructObjects:
             rotMatrix = np.identity(3)
@@ -265,14 +265,14 @@ class ProtLocalizedStitchModels(EMProtocol):
 
         """for struct in listOfAtomicStructObjects:
             rotMatrix = np.identity(3)
-            struct.transform(rotMatrix, np.array([valueToShift, valueToShift, valueToShift]))"""
+            struct.transform(rotMatrix, np.array([valueToShift, valueToShift, valueToShift]))
 
         for i, struct in enumerate(listOfAtomicStructObjects):
             
             shiftX, shiftY, shiftZ, rotMatrixFromVector = self.readVector(i)
             rotMatrix = np.identity(3)
             vectorForShift = np.array([shiftX, shiftY, shiftZ])
-            struct.transform(rotMatrix, vectorForShift)
+            struct.transform(rotMatrix, vectorForShift)"""
             
         masterStructure = PDB.Structure.Structure("master")
         
