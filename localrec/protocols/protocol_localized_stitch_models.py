@@ -29,7 +29,7 @@
 from turtle import distance
 from pwem.emlib import DT_DOUBLE
 from pyworkflow.protocol.params import (EnumParam, StringParam, BooleanParam,
-                                        NumericRangeParam, IntParam, FloatParan, PathParam, MultiPointerParam)
+                                        NumericRangeParam, IntParam, PathParam, MultiPointerParam)
 
 
 from pwem.convert.atom_struct import AtomicStructHandler
