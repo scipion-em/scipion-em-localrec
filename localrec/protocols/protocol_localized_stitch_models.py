@@ -167,7 +167,7 @@ class ProtLocalizedStitchModels(EMProtocol):
                             'example...'
                             'example...')
         
-        group.addParam('calibratedSamplingRate', FloatParam, default=1.0, 
+        group.addParam('calibratedSamplingRate', StringParam, default=1.0, 
                          label='Calibrated sampling rate', 
                        help='example...'
                             'example...'
@@ -209,7 +209,7 @@ class ProtLocalizedStitchModels(EMProtocol):
         self.doAlign = self.alignSubParticles
         self.bigBox = self.fullBoxSize.get()
         self.smallBox = self.smallBoxSize.get()
-        self.samplingRate = self.calibratedSamplingRate.get()
+        self.samplingRate = float(self.calibratedSamplingRate.get())
         # As we don't use Dyn symmetry and we get symmetry matrices by their enum correspondings 
         # we need to add 1 if choosen symmetry comes after Dyn
         self.symGroup = self.symGroup + 1 if self.symGroup > 2 else self.symGroup
