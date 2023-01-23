@@ -2,6 +2,7 @@
 # *
 # * Authors:         Vahid Abrishami (vahid.abrishami@helsinki.fi)
 # *                  Juha Huiskonen (juha.huiskonen@helsinki.fi)
+# *                  Mücahit Kutsal (mucahit.kutsal@helsinki.fi)
 # *
 # * Laboratory of Structural Biology,
 # * Helsinki Institute of Life Science HiLIFE
@@ -28,7 +29,7 @@
 from turtle import distance
 from pwem.emlib import DT_DOUBLE
 from pyworkflow.protocol.params import (EnumParam, StringParam, BooleanParam,
-                                        NumericRangeParam, PathParam, MultiPointerParam)
+                                        NumericRangeParam, IntParam, PathParam, MultiPointerParam)
 
 
 from pwem.convert.atom_struct import AtomicStructHandler
@@ -153,6 +154,25 @@ class ProtLocalizedStitchModels(EMProtocol):
                        help='Use to adjust the sub-particle center. If it '
                             'is <= 0, the length of the given vector is used. '
                             'Multiple values must be separated by commas.')
+        
+        group.addParam('fullBoxSize', IntParam, default=-1,
+                       label='Box size of the full map', important=True,
+                       help='example...'
+                            'example...'
+                            'example...')
+        
+        group.addParam('smallBoxSize', IntParam, default=-1,
+                         label='Box size of the small map', important=True,
+                       help='example...'
+                            'example...'
+                            'example...')
+        
+        group.addParam('calibratedSamplingRate', IntParam, default=-1,
+                         label='Calibrated sampling rate', important=True,
+                       help='example...'
+                            'example...'
+                            'example...')
+        
         group = form.addGroup('Output')   
         group.addParam('outputOnlyMatrices', BooleanParam,
                       label="Output symmetry matrices only",
@@ -187,6 +207,9 @@ class ProtLocalizedStitchModels(EMProtocol):
         """
         self.symGroup = self.symmetryName.get()
         self.doAlign = self.alignSubParticles
+        self.bigBox = self.fullBoxSize.get()
+        self.smallBox = self.smallBoxSize.get()
+        self.samplingRate = self.calibratedSamplingRate.get()
         # As we don't use Dyn symmetry and we get symmetry matrices by their enum correspondings 
         # we need to add 1 if choosen symmetry comes after Dyn
         self.symGroup = self.symGroup + 1 if self.symGroup > 2 else self.symGroup
@@ -201,12 +224,7 @@ class ProtLocalizedStitchModels(EMProtocol):
         self.inputFiles.sort()
 
 
-        # if self.defineVector == CMM:
-        #     self.vectorsFile = self.vectorFile.get()
-        #     #self.vectors = [vectors_from_cmm(self.vectorsFile, 1)]
-        # else:
-        #     self.vectors = vectors_from_string(self.vector.get())
-        # self.distances = distances_from_string(self.length.get()) if self.length !='-1' else [-1]
+        
         
         vector = ""
         cmmFn = ""
@@ -218,11 +236,7 @@ class ProtLocalizedStitchModels(EMProtocol):
         self.subVolCenterVec = load_vectors(cmmFn, vector, self.length.get(), 1)
 
 
-        # for vector, distance in zip(self.vectors, self.distances):
-        #     if distance > 0:
-        #         vector.set_length(distance)
-        #     else:
-        #         vector.compute_length()
+        
         
 
 
@@ -240,16 +254,15 @@ class ProtLocalizedStitchModels(EMProtocol):
             print(file)
             ah.read(file)
             listOfAtomicStructObjects.append(ah.structure.copy())
-        boxSize = 222
-        samplingRate = 1.38
-        # valueToShift = (boxSize/2)*samplingRate
+        boxSize = self.smallBox
+        samplingRate = self.samplingRate
 
-        valueToShift = ((boxSize/2)-1)*samplingRate # (222/2-1)*1.38 = 151.8
-        print(valueToShift)
+        valueToShift = ((boxSize/2)-1)*samplingRate 
+        
         for struct in listOfAtomicStructObjects:
             rotMatrix = np.identity(3)
             struct.transform(rotMatrix, np.array([-valueToShift, -valueToShift, -valueToShift]))
-        #vectorsForShift = [np.array([628.89361348, 390.23970294, 732.22162194]), np.array([459.99159856, 399.05464447, 733.41199339])]
+            
         for i, struct in enumerate(listOfAtomicStructObjects):
             
             shiftX, shiftY, shiftZ, rotMatrixFromVector = self.readVector(i)
@@ -258,9 +271,7 @@ class ProtLocalizedStitchModels(EMProtocol):
             if self.doAlign:
                 rotMatrix = rotMatrixFromVector
 
-            # rotation_matrix_transposed = np.transpose(rotMatrix)   
             vectorForShift = np.array([shiftX, shiftY, shiftZ])
-            # vectorForShift = np.array([0, 0, 0])
             struct.transform(rotMatrix, vectorForShift)
 
         """for struct in listOfAtomicStructObjects:
@@ -331,11 +342,11 @@ class ProtLocalizedStitchModels(EMProtocol):
 
         symMatrices = getSymmetryMatrices(sym=self.symGroup)
         matricesToWrite = symMatrices[:,:3, :3]
-        # print(symMatrices[:,:3, :3])
+        shiftInBiologicalAssembly = (self.smallBox/2)*self.samplingRate
         outputModelFn = self._getTmpPath("tempretureFileBeforeBioAssembly.cif")
         io.set_structure(structure)
         io.save(outputModelFn)
-        # io.save("test")
+        
         mmDict = ah.readLowLevel(outputModelFn)
         mmDict['_pdbx_struct_assembly.id'] = '1'               
         mmDict['_pdbx_struct_assembly.details'] = 'Scipion Defined Assembly'
@@ -361,10 +372,6 @@ class ProtLocalizedStitchModels(EMProtocol):
         mmDict['_pdbx_struct_oper_list.vector[3]'] = ['552.0000000000' for i in range(len(symMatrices))]
 
         self.ouputDict = mmDict
-
-        # print(type(mmDict['_atom_site.id']))
-        
-        # print(mmDict['_atom_site.id'])
 
     def createOutputStep(self):
         if self.outputOnlyMatrices:
