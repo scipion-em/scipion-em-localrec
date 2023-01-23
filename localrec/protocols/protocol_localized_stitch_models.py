@@ -350,15 +350,15 @@ class ProtLocalizedStitchModels(EMProtocol):
         mmDict['_pdbx_struct_oper_list.matrix[1][1]'] = ['%.5f'%i for i in matricesToWrite[:,0, 0]]
         mmDict['_pdbx_struct_oper_list.matrix[1][2]'] = ['%.5f'%i for i in matricesToWrite[:,0, 1]]
         mmDict['_pdbx_struct_oper_list.matrix[1][3]'] = ['%.5f'%i for i in matricesToWrite[:,0, 2]]
-        mmDict['_pdbx_struct_oper_list.vector[1]'] = ['0.0000000000' for i in range(len(symMatrices))]
+        mmDict['_pdbx_struct_oper_list.vector[1]'] = ['552.0000000000' for i in range(len(symMatrices))]
         mmDict['_pdbx_struct_oper_list.matrix[2][1]'] = ['%.5f'%i for i in matricesToWrite[:,1, 0]]
         mmDict['_pdbx_struct_oper_list.matrix[2][2]'] = ['%.5f'%i for i in matricesToWrite[:,1, 1]]
         mmDict['_pdbx_struct_oper_list.matrix[2][3]'] = ['%.5f'%i for i in matricesToWrite[:,1, 2]]
-        mmDict['_pdbx_struct_oper_list.vector[2]'] = ['0.0000000000' for i in range(len(symMatrices))]
+        mmDict['_pdbx_struct_oper_list.vector[2]'] = ['552.0000000000' for i in range(len(symMatrices))]
         mmDict['_pdbx_struct_oper_list.matrix[3][1]'] = ['%.5f'%i for i in matricesToWrite[:,2, 0]]
         mmDict['_pdbx_struct_oper_list.matrix[3][2]'] = ['%.5f'%i for i in matricesToWrite[:,2, 1]]
         mmDict['_pdbx_struct_oper_list.matrix[3][3]'] = ['%.5f'%i for i in matricesToWrite[:,2, 2]]
-        mmDict['_pdbx_struct_oper_list.vector[3]'] = ['0.0000000000' for i in range(len(symMatrices))]
+        mmDict['_pdbx_struct_oper_list.vector[3]'] = ['552.0000000000' for i in range(len(symMatrices))]
 
         self.ouputDict = mmDict
 
