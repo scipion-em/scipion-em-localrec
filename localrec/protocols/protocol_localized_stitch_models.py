@@ -29,7 +29,7 @@
 from turtle import distance
 from pwem.emlib import DT_DOUBLE
 from pyworkflow.protocol.params import (EnumParam, StringParam, BooleanParam,
-                                        NumericRangeParam, IntParam, PathParam, MultiPointerParam)
+                                        NumericRangeParam, IntParam, FloatParan, PathParam, MultiPointerParam)
 
 
 from pwem.convert.atom_struct import AtomicStructHandler
@@ -156,19 +156,19 @@ class ProtLocalizedStitchModels(EMProtocol):
                             'Multiple values must be separated by commas.')
         
         group.addParam('fullBoxSize', IntParam, default=-1,
-                       label='Box size of the full map', important=True,
+                       label='Box size of the full map', 
                        help='example...'
                             'example...'
                             'example...')
         
         group.addParam('smallBoxSize', IntParam, default=-1,
-                         label='Box size of the small map', important=True,
+                         label='Box size of the small map', 
                        help='example...'
                             'example...'
                             'example...')
         
-        group.addParam('calibratedSamplingRate', IntParam, 
-                         label='Calibrated sampling rate', important=True,
+        group.addParam('calibratedSamplingRate', FloatParam, 
+                         label='Calibrated sampling rate', 
                        help='example...'
                             'example...'
                             'example...')
