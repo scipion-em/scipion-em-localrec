@@ -155,19 +155,19 @@ class ProtLocalizedStitchModels(EMProtocol):
                             'is <= 0, the length of the given vector is used. '
                             'Multiple values must be separated by commas.')
         
-        group.addParam('fullBoxSize', IntParam, default=-1,
+        group.addParam('fullBoxSize', IntParam, default=1,
                        label='Box size of the full map', 
                        help='example...'
                             'example...'
                             'example...')
         
-        group.addParam('smallBoxSize', IntParam, default=-1,
+        group.addParam('smallBoxSize', IntParam, default=1,
                          label='Box size of the small map', 
                        help='example...'
                             'example...'
                             'example...')
         
-        group.addParam('calibratedSamplingRate', FloatParam, 
+        group.addParam('calibratedSamplingRate', FloatParam, default=1.0, 
                          label='Calibrated sampling rate', 
                        help='example...'
                             'example...'
@@ -342,7 +342,7 @@ class ProtLocalizedStitchModels(EMProtocol):
 
         symMatrices = getSymmetryMatrices(sym=self.symGroup)
         matricesToWrite = symMatrices[:,:3, :3]
-        shiftInBiologicalAssembly = (self.smallBox/2)*self.samplingRate
+        shiftInBiologicalAssembly = float((self.smallBox/2)*self.samplingRate)
         outputModelFn = self._getTmpPath("tempretureFileBeforeBioAssembly.cif")
         io.set_structure(structure)
         io.save(outputModelFn)
