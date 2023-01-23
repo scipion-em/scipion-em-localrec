@@ -240,11 +240,11 @@ class ProtLocalizedStitchModels(EMProtocol):
             print(file)
             ah.read(file)
             listOfAtomicStructObjects.append(ah.structure.copy())
-        boxSize = 800
-        samplingRate = 1.34
+        boxSize = 222
+        samplingRate = 1.38
         # valueToShift = (boxSize/2)*samplingRate
 
-        valueToShift = (((boxSize/2)/2)/2)*(samplingRate+0.04*3) # 100*1.46 = 146
+        valueToShift = ((boxSize/2)-1)*samplingRate # 222*1.38 = 151.8
         print(valueToShift)
         for struct in listOfAtomicStructObjects:
             rotMatrix = np.identity(3)
@@ -260,12 +260,12 @@ class ProtLocalizedStitchModels(EMProtocol):
 
             # rotation_matrix_transposed = np.transpose(rotMatrix)   
             vectorForShift = np.array([shiftX, shiftY, shiftZ])
-            vectorForShift = np.array([0, 0, 0])
+            # vectorForShift = np.array([0, 0, 0])
             struct.transform(rotMatrix, vectorForShift)
 
-        for struct in listOfAtomicStructObjects:
+        """for struct in listOfAtomicStructObjects:
             rotMatrix = np.identity(3)
-            struct.transform(rotMatrix, np.array([valueToShift, valueToShift, valueToShift]))
+            struct.transform(rotMatrix, np.array([valueToShift, valueToShift, valueToShift]))"""
 
         for i, struct in enumerate(listOfAtomicStructObjects):
             
