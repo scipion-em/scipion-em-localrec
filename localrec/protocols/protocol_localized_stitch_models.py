@@ -167,7 +167,7 @@ class ProtLocalizedStitchModels(EMProtocol):
                             'example...'
                             'example...')
         
-        group.addParam('calibratedSamplingRate', IntParam, default=-1,
+        group.addParam('calibratedSamplingRate', IntParam, 
                          label='Calibrated sampling rate', important=True,
                        help='example...'
                             'example...'
