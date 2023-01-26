@@ -303,10 +303,12 @@ class ProtLocalizedStitchModels(EMProtocol):
         structure = self.outputStructure
         symMatrices = getSymmetryMatrices(sym=self.symGroup)
         structureList = [structure.copy() for i in range(len(symMatrices))]
-
+        shiftInBiologicalAssembly = float((self.bigBox/2)*self.samplingRate)
+        
         for i in range((len(symMatrices))):
             atoms = structureList[i].get_atoms()
             matrix = symMatrices[i]
+            matrix[:,3] = np.array([shiftInBiologicalAssembly, shiftInBiologicalAssembly, shiftInBiologicalAssembly])
             print(matrix)
             for atom in atoms:
                 coord = atom.get_coord()
