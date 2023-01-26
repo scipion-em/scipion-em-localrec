@@ -390,7 +390,6 @@ class ProtLocalizedStitchModels(EMProtocol):
             io.set_structure(model)
             io.save(outputModelFn)
             self._defineOutputs(outputModel = model)
-        raise Exception('exceptionnnn')
         
     def readVector(self, index):
         
