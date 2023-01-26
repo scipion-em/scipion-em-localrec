@@ -307,6 +307,7 @@ class ProtLocalizedStitchModels(EMProtocol):
         for i in range((len(symMatrices))):
             atoms = structureList[i].get_atoms()
             matrix = symMatrices[i]
+            print(matrix)
             for atom in atoms:
                 coord = atom.get_coord()
                 
