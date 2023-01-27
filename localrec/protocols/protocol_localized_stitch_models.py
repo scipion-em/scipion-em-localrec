@@ -346,7 +346,7 @@ class ProtLocalizedStitchModels(EMProtocol):
 
         symMatrices = getSymmetryMatrices(sym=self.symGroup)
         matricesToWrite = symMatrices[:,:3, :3]
-        shiftInBiologicalAssembly = float((self.bigBox)*self.samplingRate)
+        shiftInBiologicalAssembly = float((self.bigBox)*self.samplingRate)*4
         outputModelFn = self._getTmpPath("tempretureFileBeforeBioAssembly.cif")
         io.set_structure(structure)
         io.save(outputModelFn)
