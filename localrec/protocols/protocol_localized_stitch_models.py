@@ -273,11 +273,11 @@ class ProtLocalizedStitchModels(EMProtocol):
 
             vectorForShift = np.array([shiftX, shiftY, shiftZ])
             struct.transform(rotMatrix, vectorForShift)
-
-        """for struct in listOfAtomicStructObjects:
+        shiftInBiologicalAssembly = float((self.bigBox/2)*self.samplingRate)
+        for struct in listOfAtomicStructObjects:
             rotMatrix = np.identity(3)
-            struct.transform(rotMatrix, np.array([valueToShift, valueToShift, valueToShift]))
-
+            struct.transform(rotMatrix, np.array([shiftInBiologicalAssembly, shiftInBiologicalAssembly, shiftInBiologicalAssembly]))
+        """
         for i, struct in enumerate(listOfAtomicStructObjects):
             
             shiftX, shiftY, shiftZ, rotMatrixFromVector = self.readVector(i)
@@ -346,7 +346,7 @@ class ProtLocalizedStitchModels(EMProtocol):
 
         symMatrices = getSymmetryMatrices(sym=self.symGroup)
         matricesToWrite = symMatrices[:,:3, :3]
-        shiftInBiologicalAssembly = float((self.bigBox/2)*self.samplingRate)
+        shiftInBiologicalAssembly = float(0)
         outputModelFn = self._getTmpPath("tempretureFileBeforeBioAssembly.cif")
         io.set_structure(structure)
         io.save(outputModelFn)
