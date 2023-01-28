@@ -124,7 +124,7 @@ class ProtLocalizedStitchModels(EMProtocol):
                        )
         group.addParam('nSymmetry', IntParam, default=1,
                       label='N value',
-                     help='Set the n value if you have set Symmetry as Cn or Dxn ')
+                      help='Set the n value if you have set Symmetry as Cn or Dxn ')
         group.addParam('alignSubParticles', BooleanParam,
                       label="Sub-volumes are aligned?", condition="not usePreRun",
                       default=False,
@@ -218,6 +218,7 @@ class ProtLocalizedStitchModels(EMProtocol):
         self.symGroup = self.symGroup + 1 if self.symGroup > 2 else self.symGroup
         # Sort input file names alphabetically to match them to the input vectors and distances
         self.center = float((self.bigBox/2)*self.samplingRate)
+        self.nValue = self.nSymmetry.get()
         ah = AtomicStructHandler()
         if self.definePdb == 1:
             ids = pdbIds_from_string(self.pdbId.get())
@@ -275,7 +276,7 @@ class ProtLocalizedStitchModels(EMProtocol):
         centerValue = self.center
         for struct in listOfAtomicStructObjects:
             rotMatrix = np.identity(3)
-            struct.transform(rotMatrix, np.array([centerValue, centerValue, centerValue])
+            struct.transform(rotMatrix, np.array([centerValue, centerValue, centerValue]))
         
                              
         masterStructure = PDB.Structure.Structure("master")
@@ -294,7 +295,7 @@ class ProtLocalizedStitchModels(EMProtocol):
     def applySymmetryStep(self):
         
         centerValue = self.center
-        symMatrices = getSymmetryMatrices(sym=self.symGroup, n=self.nSymmetry.get() center=(centerValue,centerValue,centerValue))
+        symMatrices = getSymmetryMatrices(sym=self.symGroup, n=self.nValue, center=(centerValue,centerValue,centerValue))
         structure = self.outputStructure
         structureList = [structure.copy() for i in range(len(symMatrices))]
         
@@ -337,7 +338,7 @@ class ProtLocalizedStitchModels(EMProtocol):
             index+=1
                 
         centerValue = self.center
-        symMatrices = getSymmetryMatrices(sym=self.symGroup, n=self.nSymmetry.get() center=(centerValue,centerValue,centerValue))
+        symMatrices = getSymmetryMatrices(sym=self.symGroup, n=self.nSymmetry.get(), center=(centerValue,centerValue,centerValue))
         
         matricesToWrite = symMatrices
         
