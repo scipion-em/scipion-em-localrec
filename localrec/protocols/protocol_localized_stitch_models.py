@@ -122,6 +122,9 @@ class ProtLocalizedStitchModels(EMProtocol):
                            "format in Xmipp.\n"
                            "If no symmetry is present, use _c1_."
                        )
+        group.addParam('nSymmetry', IntParam, default=1, condition="symmetryName==0 or symmetryName=1",
+                       label='N value', 
+                       help='Set the n value if you have set Symmetry as Cn or Dxn ')
         group.addParam('alignSubParticles', BooleanParam,
                       label="Sub-volumes are aligned?", condition="not usePreRun",
                       default=False,
@@ -214,6 +217,7 @@ class ProtLocalizedStitchModels(EMProtocol):
         # we need to add 1 if choosen symmetry comes after Dyn
         self.symGroup = self.symGroup + 1 if self.symGroup > 2 else self.symGroup
         # Sort input file names alphabetically to match them to the input vectors and distances
+        self.center = float((self.bigBox/2)*self.samplingRate)
         ah = AtomicStructHandler()
         if self.definePdb == 1:
             ids = pdbIds_from_string(self.pdbId.get())
@@ -301,14 +305,14 @@ class ProtLocalizedStitchModels(EMProtocol):
     def applySymmetryStep(self):
         
         structure = self.outputStructure
-        symMatrices = getSymmetryMatrices(sym=self.symGroup)
         structureList = [structure.copy() for i in range(len(symMatrices))]
-        shiftInBiologicalAssembly = float((self.bigBox/2)*self.samplingRate)
-        print(shiftInBiologicalAssembly)
+        centerValue = self.center
+        symMatrices = getSymmetryMatrices(sym=self.symGroup, n=self.nSymmetry center=(centerValue,centerValue,centerValue))
+        
+        
         for i in range((len(symMatrices))):
             atoms = structureList[i].get_atoms()
             matrix = symMatrices[i]
-            matrix[:,3] = np.array([shiftInBiologicalAssembly, shiftInBiologicalAssembly, shiftInBiologicalAssembly, 1])
             print(i)
             print(matrix)
             for atom in atoms:
@@ -343,13 +347,11 @@ class ProtLocalizedStitchModels(EMProtocol):
             chain.id = new_chains_id[index]
             index+=1
                 
-
-        symMatrices = getSymmetryMatrices(sym=self.symGroup, center=(552,552,552))
-        for i in symMatrices:
-          print(i)
-        # matricesToWrite = symMatrices[:,:3, :3]
+        centerValue = self.center
+        symMatrices = getSymmetryMatrices(sym=self.symGroup, n=self.nSymmetry center=(centerValue,centerValue,centerValue))
+        
         matricesToWrite = symMatrices
-        shiftInBiologicalAssembly = float((self.bigBox/2)*self.samplingRate)
+        
         outputModelFn = self._getTmpPath("tempretureFileBeforeBioAssembly.cif")
         io.set_structure(structure)
         io.save(outputModelFn)
