@@ -215,9 +215,11 @@ class ProtLocalizedStitchModels(EMProtocol):
         # As we don't use Dyn symmetry and we get symmetry matrices by their enum correspondings 
         # we need to add 1 if choosen symmetry comes after Dyn
         self.symGroup = self.symGroup + 1 if self.symGroup > 2 else self.symGroup
-        # Sort input file names alphabetically to match them to the input vectors and distances
+        
         self.center = float((self.bigBox/2)*self.samplingRate)
         self.nValue = self.nSymmetry.get()
+        
+        # Sort input file names alphabetically to match them to the input vectors and distances
         ah = AtomicStructHandler()
         if self.definePdb == 1:
             ids = pdbIds_from_string(self.pdbId.get())
@@ -245,41 +247,40 @@ class ProtLocalizedStitchModels(EMProtocol):
         """
         
         listOfAtomicStructObjects = []
-        # vectors = self.subparticle_vector_list
-        # distances = self.distances
         for file in self.inputFiles:
             ah = AtomicStructHandler()
             print(file)
             ah.read(file)
             listOfAtomicStructObjects.append(ah.structure.copy())
+            
+        # First we take the structures to corner of the box so that we are ready to transform them with input vectors
         boxSize = self.smallBox
         samplingRate = self.samplingRate
-
+        # The shift value that we need to take structures to the corner
         valueToShift = ((boxSize/2)-1)*samplingRate 
-        
         for struct in listOfAtomicStructObjects:
             rotMatrix = np.identity(3)
             struct.transform(rotMatrix, np.array([-valueToShift, -valueToShift, -valueToShift]))
-            
+        
+        # Now we apply transformation with the input vectors
         for i, struct in enumerate(listOfAtomicStructObjects):
-            
             shiftX, shiftY, shiftZ, rotMatrixFromVector = self.readVector(i)
             rotMatrix = np.identity(3)
-
+            # We do not perform rotation on input atomic structures unless the user has set doAlign to true.
             if self.doAlign:
                 rotMatrix = rotMatrixFromVector
-
             vectorForShift = np.array([shiftX, shiftY, shiftZ])
             struct.transform(rotMatrix, vectorForShift)
-            
+        
+        # After transformation, In order to put the compact model on the map we need to shift it according to the center of big map
+        # Here the centerValue is: (bigMapSize/2)*samlingRate
         centerValue = self.center
         for struct in listOfAtomicStructObjects:
             rotMatrix = np.identity(3)
             struct.transform(rotMatrix, np.array([centerValue, centerValue, centerValue]))
         
-                             
+        # As the last part of this step, we make a master structure that contains all the input atomic structures after transformation
         masterStructure = PDB.Structure.Structure("master")
-        
         i = 0
         for structure in listOfAtomicStructObjects:
             for model in structure.get_models():
@@ -292,13 +293,18 @@ class ProtLocalizedStitchModels(EMProtocol):
         
 
     def applySymmetryStep(self):
+        """
+            Apply symmetry manually to the tranformed compact structure. In this way protocol produces a large output file.
+        """
         
+        # First we get symmetry matrices according to user's Symmetry input
+        # Here the centerValue is the same as previous step but this time we use it to calculate Symmetry Matrices with their shifting vectors
         centerValue = self.center
         symMatrices = getSymmetryMatrices(sym=self.symGroup, n=self.nValue, center=(centerValue,centerValue,centerValue))
         structure = self.outputStructure
+        # we copy the compact structure we obtained in the previous step as much as the number of symmetry matrices. This causes the large output file. 
         structureList = [structure.copy() for i in range(len(symMatrices))]
-        
-        
+        # Performing the symmetry to the copies of transformed compact structure
         for i in range((len(symMatrices))):
             atoms = structureList[i].get_atoms()
             matrix = symMatrices[i]
@@ -310,7 +316,8 @@ class ProtLocalizedStitchModels(EMProtocol):
                 r = _applyMatrix(matrix, coord)
                 coord = r[:3]
                 atom.set_coord(coord)
-
+        
+        # After performed the symmetry operation, we make a output structure that contains all the compact atomic structures after matrix multiplication.
         outputStructure = PDB.Structure.Structure("output")
         i = 0
         for structure in structureList:
@@ -323,11 +330,15 @@ class ProtLocalizedStitchModels(EMProtocol):
         self.outputStructure = outputStructure
 
     def biologicalAssemblyStep(self):
+        """
+            Generate biological assembly in the output file, so that ChimeraX can extend the compact structure into the entire atomic model.
+        """
+        
+        # First we rename the each chain in the compact structure
         ah = AtomicStructHandler()
         io=MMCIFIO()
         structure = self.outputStructure
         chains = [i.id for i in list(structure.get_chains())]
-
         old_chains = list(structure.get_chains())
         new_chains_id = generate_chain_id(len(list(old_chains)))
         index = 0
@@ -335,16 +346,18 @@ class ProtLocalizedStitchModels(EMProtocol):
             print("new chain:", new_chains_id[index])
             chain.id = new_chains_id[index]
             index+=1
-                
+        
+        #We get the symmetry matrices, but this time we don't do any matrix multiplication. Instead, we write the sym matrices to the output file.
         centerValue = self.center
         symMatrices = getSymmetryMatrices(sym=self.symGroup, n=self.nSymmetry.get(), center=(centerValue,centerValue,centerValue))
         
         matricesToWrite = symMatrices
         
+        # Writing the output file
+        # .cif files have a table-like structure
         outputModelFn = self._getTmpPath("tempretureFileBeforeBioAssembly.cif")
         io.set_structure(structure)
         io.save(outputModelFn)
-        
         mmDict = ah.readLowLevel(outputModelFn)
         mmDict['_pdbx_struct_assembly.id'] = '1'               
         mmDict['_pdbx_struct_assembly.details'] = 'Scipion Defined Assembly'
@@ -352,7 +365,6 @@ class ProtLocalizedStitchModels(EMProtocol):
         mmDict['_pdbx_struct_assembly_gen.assembly_id'] = '1'
         mmDict['_pdbx_struct_assembly_gen.asym_id_list'] = ','.join(chains)
         mmDict['_pdbx_struct_assembly_gen.oper_expression'] = '(1-'+str(len(symMatrices))+')'
-
         mmDict['_pdbx_struct_oper_list.id'] = [str(i+1) for i in range(len(symMatrices))]
         mmDict['_pdbx_struct_oper_list.type'] = ['matrix'+str(i+1) for i in range(len(symMatrices))]
         mmDict['_pdbx_struct_oper_list.name'] = ['?' for i in range(len(symMatrices))]
@@ -372,6 +384,9 @@ class ProtLocalizedStitchModels(EMProtocol):
         self.ouputDict = mmDict
 
     def createOutputStep(self):
+        """
+          Creating the output file/files in the extra directory
+        """"
         if self.outputOnlyMatrices:
             ah = AtomicStructHandler()
             outputModelFn = self._getOutputFileName()
@@ -387,7 +402,9 @@ class ProtLocalizedStitchModels(EMProtocol):
             self._defineOutputs(outputModel = model)
         
     def readVector(self, index):
-        
+        """
+          Read vector function, thanks to this function we generate rotation matrix and shifting vector from the user input vector.
+        """
         length = self.subVolCenterVec[index].get_length()            
         [shiftX, shiftY, shiftZ] = [x * length for x in self.subVolCenterVec[index].vector]
         rotMatrix = self.subVolCenterVec[index].get_matrix()
