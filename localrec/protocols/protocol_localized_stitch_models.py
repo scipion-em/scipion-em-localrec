@@ -47,7 +47,8 @@ from pwem.constants import (SYM_CYCLIC, SYM_DIHEDRAL, SYM_OCTAHEDRAL,
 
 from localrec.constants import CMM
 from localrec.utils import euler2matrix,distances_from_string, generate_chain_id, load_vectors, pdbIds_from_string, vectors_from_cmm, vectors_from_string
-I1 = 1
+
+
 
 class ProtLocalizedStitchModels(EMProtocol):
     """
