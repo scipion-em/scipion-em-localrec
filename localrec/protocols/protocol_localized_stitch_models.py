@@ -292,11 +292,11 @@ class ProtLocalizedStitchModels(EMProtocol):
         
 
     def applySymmetryStep(self):
-                             
+        
+        centerValue = self.center
         symMatrices = getSymmetryMatrices(sym=self.symGroup, n=self.nSymmetry.get() center=(centerValue,centerValue,centerValue))
         structure = self.outputStructure
         structureList = [structure.copy() for i in range(len(symMatrices))]
-        centerValue = self.center
         
         
         for i in range((len(symMatrices))):
