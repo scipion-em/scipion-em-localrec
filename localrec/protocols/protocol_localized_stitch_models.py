@@ -123,8 +123,8 @@ class ProtLocalizedStitchModels(EMProtocol):
                            "If no symmetry is present, use _c1_."
                        )
         group.addParam('nSymmetry', IntParam, default=1,
-                       label='N value',
-                       help='Set the n value if you have set Symmetry as Cn or Dxn ')
+                      label='N value',
+                     help='Set the n value if you have set Symmetry as Cn or Dxn ')
         group.addParam('alignSubParticles', BooleanParam,
                       label="Sub-volumes are aligned?", condition="not usePreRun",
                       default=False,
@@ -226,9 +226,7 @@ class ProtLocalizedStitchModels(EMProtocol):
         else:
             self.inputFiles =  glob(self.pdbFile.get())
         self.inputFiles.sort()
-
-
-        
+ 
         
         vector = ""
         cmmFn = ""
@@ -238,10 +236,6 @@ class ProtLocalizedStitchModels(EMProtocol):
             vector = self.vector.get()
 
         self.subVolCenterVec = load_vectors(cmmFn, vector, self.length.get(), 1)
-
-
-        
-        
 
 
 
@@ -277,18 +271,13 @@ class ProtLocalizedStitchModels(EMProtocol):
 
             vectorForShift = np.array([shiftX, shiftY, shiftZ])
             struct.transform(rotMatrix, vectorForShift)
-        shiftInBiologicalAssembly = float((self.bigBox/2)*self.samplingRate)
+            
+        centerValue = self.center
         for struct in listOfAtomicStructObjects:
             rotMatrix = np.identity(3)
-            struct.transform(rotMatrix, np.array([shiftInBiologicalAssembly, shiftInBiologicalAssembly, shiftInBiologicalAssembly]))
-        """
-        for i, struct in enumerate(listOfAtomicStructObjects):
-            
-            shiftX, shiftY, shiftZ, rotMatrixFromVector = self.readVector(i)
-            rotMatrix = np.identity(3)
-            vectorForShift = np.array([shiftX, shiftY, shiftZ])
-            struct.transform(rotMatrix, vectorForShift)"""
-            
+            struct.transform(rotMatrix, np.array([centerValue, centerValue, centerValue])
+        
+                             
         masterStructure = PDB.Structure.Structure("master")
         
         i = 0
@@ -303,11 +292,11 @@ class ProtLocalizedStitchModels(EMProtocol):
         
 
     def applySymmetryStep(self):
-        
+                             
+        symMatrices = getSymmetryMatrices(sym=self.symGroup, n=self.nSymmetry.get() center=(centerValue,centerValue,centerValue))
         structure = self.outputStructure
         structureList = [structure.copy() for i in range(len(symMatrices))]
         centerValue = self.center
-        symMatrices = getSymmetryMatrices(sym=self.symGroup, n=self.nSymmetry.get() center=(centerValue,centerValue,centerValue))
         
         
         for i in range((len(symMatrices))):
