@@ -307,7 +307,7 @@ class ProtLocalizedStitchModels(EMProtocol):
         structure = self.outputStructure
         structureList = [structure.copy() for i in range(len(symMatrices))]
         centerValue = self.center
-        symMatrices = getSymmetryMatrices(sym=self.symGroup, n=self.nSymmetry center=(centerValue,centerValue,centerValue))
+        symMatrices = getSymmetryMatrices(sym=self.symGroup, n=self.nSymmetry.get() center=(centerValue,centerValue,centerValue))
         
         
         for i in range((len(symMatrices))):
@@ -348,7 +348,7 @@ class ProtLocalizedStitchModels(EMProtocol):
             index+=1
                 
         centerValue = self.center
-        symMatrices = getSymmetryMatrices(sym=self.symGroup, n=self.nSymmetry center=(centerValue,centerValue,centerValue))
+        symMatrices = getSymmetryMatrices(sym=self.symGroup, n=self.nSymmetry.get() center=(centerValue,centerValue,centerValue))
         
         matricesToWrite = symMatrices
         
