@@ -344,7 +344,7 @@ class ProtLocalizedStitchModels(EMProtocol):
             index+=1
                 
 
-        symMatrices = getSymmetryMatrices(sym=self.symGroup)
+        symMatrices = getSymmetryMatrices(sym=self.symGroup, center=(552,552,552))
         for i in symMatrices:
           print(i)
         matricesToWrite = symMatrices[:,:3, :3]
