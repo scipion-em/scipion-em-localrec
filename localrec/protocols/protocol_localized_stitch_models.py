@@ -1,8 +1,7 @@
 # **************************************************************************
 # *
-# * Authors:         Vahid Abrishami (vahid.abrishami@helsinki.fi)
-# *                  Juha Huiskonen (juha.huiskonen@helsinki.fi)
-# *                  Mücahit Kutsal (mucahit.kutsal@helsinki.fi)
+# * Authors:         Mücahit Kutsal (mucahit.kutsal@helsinki.fi)
+# *                  Juha Huiskonen (juha.huiskonen@helsinki.fi) 
 # *
 # * Laboratory of Structural Biology,
 # * Helsinki Institute of Life Science HiLIFE
@@ -122,7 +121,7 @@ class ProtLocalizedStitchModels(EMProtocol):
                            "format in Xmipp.\n"
                            "If no symmetry is present, use _c1_."
                        )
-        group.addParam('nSymmetry', IntParam, default=1,
+        group.addParam('nSymmetry', IntParam, default=1, condition="symmetryName==1 or symmetryName==0",
                       label='N value',
                       help='Set the n value if you have set Symmetry as Cn or Dxn ')
         group.addParam('alignSubParticles', BooleanParam,
