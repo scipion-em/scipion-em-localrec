@@ -122,8 +122,8 @@ class ProtLocalizedStitchModels(EMProtocol):
                            "format in Xmipp.\n"
                            "If no symmetry is present, use _c1_."
                        )
-        group.addParam('nSymmetry', IntParam, default=1, condition="symmetryName==0 or symmetryName==1",
-                       label='N value', 
+        group.addParam('nSymmetry', IntParam, default=1,
+                       label='N value',
                        help='Set the n value if you have set Symmetry as Cn or Dxn ')
         group.addParam('alignSubParticles', BooleanParam,
                       label="Sub-volumes are aligned?", condition="not usePreRun",
