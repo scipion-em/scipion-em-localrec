@@ -387,7 +387,7 @@ class ProtLocalizedStitchModels(EMProtocol):
     def createOutputStep(self):
         """
           Creating the output file/files in the extra directory
-        """"
+        """
         if self.outputOnlyMatrices:
             ah = AtomicStructHandler()
             outputModelFn = self._getOutputFileName()
