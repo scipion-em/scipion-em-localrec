@@ -54,7 +54,6 @@ class ProtLocalizedStitchModels(EMProtocol):
     """
         Generate a full volume from a sub-model applying a
         point group symmetry operation.
-
         An example of usage is to generate the adenovirus capsid
         from its asymmetric unit.
     """
@@ -344,8 +343,11 @@ class ProtLocalizedStitchModels(EMProtocol):
         new_chains_id = generate_chain_id(len(list(old_chains)))
         index = 0
         for chain in old_chains:
-            print("new chain:", new_chains_id[index])
-            chain.id = new_chains_id[index]
+            try:
+                print("new chain:", new_chains_id[index])
+                chain.id = new_chains_id[index]
+            except:
+                pass
             index+=1
         
         #We get the symmetry matrices, but this time we don't do any matrix multiplication. Instead, we write the sym matrices to the output file.
