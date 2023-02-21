@@ -159,21 +159,17 @@ class ProtLocalizedStitchModels(EMProtocol):
         
         group.addParam('fullBoxSize', IntParam, default=1,
                        label='Box size of the full map', 
-                       help='example...'
-                            'example...'
-                            'example...')
+                       help='Please provide the full size of your volume.'
+                            'This is the same as the output size of Localrec Stitch Volumes protocol.')
         
         group.addParam('smallBoxSize', IntParam, default=1,
                          label='Box size of the small map', 
-                       help='example...'
-                            'example...'
-                            'example...')
+                       help='This is the sampling rate of your sub-volumes that you have given as input to the Localrec Stitch Volumes protocol.')
         
         group.addParam('calibratedSamplingRate', StringParam, default=1.0, 
                          label='Calibrated sampling rate', 
-                       help='example...'
-                            'example...'
-                            'example...')
+                       help='This is the calibrated sampling rate if you performed any calibration operation in the postprocessing of your volumes.'
+                            'If you did not perform any calibration, plese provide the original sampling rate here.')
         
         group = form.addGroup('Output')   
         group.addParam('outputOnlyMatrices', BooleanParam,
