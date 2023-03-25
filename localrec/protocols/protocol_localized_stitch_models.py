@@ -338,13 +338,13 @@ class ProtLocalizedStitchModels(EMProtocol):
         old_chains = list(structure.get_chains())
         new_chains_id = generate_chain_id(len(list(old_chains)))
         index = 0
-        for chain in old_chains:
-            try:
-                print("new chain:", new_chains_id[index])
-                chain.id = new_chains_id[index]
-            except:
-                pass
-            index+=1
+        #for chain in old_chains:
+        #    try:
+        #        print("new chain:", new_chains_id[index])
+        #        chain.id = new_chains_id[index]
+        #    except:
+        #        pass
+        #    index+=1
         
         #We get the symmetry matrices, but this time we don't do any matrix multiplication. Instead, we write the sym matrices to the output file.
         centerValue = self.center
