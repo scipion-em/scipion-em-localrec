@@ -2,6 +2,7 @@
 # *
 # * Authors:         Vahid Abrishami (vahid.abrishami@helsinki.fi)
 # *                  Juha Huiskonen (juha.huiskonen@helsinki.fi)
+# *                  Mucahit Kutsal (mucahit.kutsal@helsinki.fi)
 # *
 # * Laboratory of Structural Biology,
 # * Helsinki Institute of Life Science HiLIFE
