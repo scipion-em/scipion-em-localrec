@@ -175,7 +175,7 @@ class ProtLocalizedStitchModels(EMProtocol):
         group.addParam('outputOnlyMatrices', BooleanParam,
                       label="Output symmetry matrices only",
                       default=False,
-                      help='Set to Yes if you wat to get your output file with Biological Assembly.')
+                      help='Set to Yes if you want to get your output file with Biological Assembly.')
                        
         form.addParallelSection(threads=4, mpi=1)
 
