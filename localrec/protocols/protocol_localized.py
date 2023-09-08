@@ -39,6 +39,7 @@ import pwem.emlib.metadata as md
 from localrec.utils import load_vectors, create_subparticles
 from localrec.constants import CMM, HAND
 from pyworkflow.utils import ProgressBar
+from pwem.objects import SetOfCoordinates
 
 
 class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
@@ -49,6 +50,8 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
     single particles.
     """
     _label = 'define subparticles'
+    OUTPUTCOORDINATESNAME = "outputCoordinates"
+    _possibleOutputs = {OUTPUTCOORDINATESNAME: SetOfCoordinates}
 
     def __init__(self, **args):
         ProtParticlePicking.__init__(self, **args)
@@ -222,7 +225,7 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
                     coord._subparticle.copyAttributes(part, '_rlnRandomSubset')
         progress.finish()
 
-        self._defineOutputs(outputCoordinates=outputSet)
+        self._defineOutputs(**{self.OUTPUTCOORDINATESNAME: outputSet})
         self._defineSourceRelation(self.inputParticles, outputSet)
 
     # -------------------------- INFO functions --------------------------------
