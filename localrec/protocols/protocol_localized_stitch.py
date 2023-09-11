@@ -36,6 +36,7 @@ from pyworkflow.protocol.constants import STEPS_PARALLEL
 import pyworkflow.utils.path as putils
 
 from pwem import emlib
+from pwem.objects import Volume, SetOfVolumes
 
 from localrec.constants import CMM, LINEAR, symDict
 from localrec.utils import load_vectors
@@ -58,6 +59,10 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
     def __init__(self, **kwargs):
         ProtPreprocessVolumes.__init__(self, **kwargs)
         self.stepsExecutionMode = STEPS_PARALLEL
+        OUTPUTVOLUMESNAME = "outputVolumes"
+        OUTPUTVOLUMENAME = "outputVolume"
+        _posibleOutputs = {OUTPUTVOLUMESNAME: SetOfVolumes,
+                            OUTPUTVOLUMENAME: Volume}
 
     #--------------------------- DEFINE param functions ------------------------
     def _defineParams(self, form):
@@ -147,7 +152,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         depsSymVolHalf2 = []
         depsSymVol = []
         depsSymMask = []
-
+        
         if self.usePreRun:
             localRecProt = self.preRuns[0].get()
             localRecSymGrp = localRecProt.symGrp.get()
@@ -445,7 +450,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
                 outputVolFn = self._getOutputFileName(halfString)
                 outVol.setFileName(outputVolFn)
                 volumes.append(outVol)
-            self._defineOutputs(outputVolumes=volumes)
+            self._defineOutputs(**{self.OUTPUTVOLUMESNAME: volumes})
             self._defineSourceRelation(vol, volumes)
         else:
             vol = self.inputSubVolumes[0]
@@ -453,7 +458,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
             outputVolFn = self._getOutputFileName()
             outVol.setSamplingRate(self.pxSize)
             outVol.setFileName(outputVolFn)
-            self._defineOutputs(outputVolume=outVol)
+            self._defineOutputs(**{self.OUTPUTVOLUMENAME: outVol})
             self._defineSourceRelation(vol,outVol)
 
     #--------------------------- INFO functions --------------------------------

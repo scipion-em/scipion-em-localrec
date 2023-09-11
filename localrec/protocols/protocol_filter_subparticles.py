@@ -36,6 +36,7 @@ from pwem.objects.data import SetOfParticles
 from localrec.utils import *
 # eventually progressbar will be move to scipion core
 from pyworkflow.utils import ProgressBar
+from pwem.objects import SetOfCoordinates
 
 
 class ProtFilterSubParts(ProtParticles):
@@ -45,6 +46,8 @@ class ProtFilterSubParts(ProtParticles):
     """
     _label = 'filter subparticles'
     _lastUpdateVersion = VERSION_3_0
+    OUTPUTCOORDINATESNAME = "outputCoordinates"
+    _possibleOutputs = {OUTPUTCOORDINATESNAME: SetOfCoordinates}
 
     # -------------------------- DEFINE param functions -----------------------
     def _defineParams(self, form):
@@ -205,7 +208,7 @@ class ProtFilterSubParts(ProtParticles):
         self._genOutputCoordinates(subParticles, coordArr, outputSet,
                                    params["mindist"], params["keepRedundant"],
                                    params["distorigin"])
-        self._defineOutputs(outputCoordinates=outputSet)
+        self._defineOutputs(**{self.OUTPUTCOORDINATESNAME: outputSet})
         self._defineTransformRelation(self.inputSet, self.outputCoordinates)
 
     # -------------------------- INFO functions -------------------------------
