@@ -219,13 +219,13 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
 
         # Test for filter sub-particles which are aligned in the z
         localUniqueAligend = self._runFilterSubParticles(120, [149.0, 64.9, 73.2], localSubparticlesAligned, unique=5)
-        self._runFilterSubParticles(90, [149.0, 64.9, 73.2], localSubparticlesAligned, unique=5, mindist=10)
+        self._runFilterSubParticles(90, [149.0, 64.9, 73.2], localSubparticlesAligned, unique=5, mindist=6)
         self._runFilterSubParticles(50, [106.2, 112.6, -177.6], localSubparticlesAligned, unique=5, side=25)
         self._runFilterSubParticles(21, [47.6, 175.3, 159.1], localSubparticlesAligned, unique=5, top=50)
 
         # Test for filter sub-particles which are not aligned
         localUnique = self._runFilterSubParticles(120, [31.6, 60.155541, -138.80597], localSubparticles, unique=5)
-        self._runFilterSubParticles(90, [31.6, 60.155541, -138.80597], localSubparticles, unique=5, mindist=10)
+        self._runFilterSubParticles(90, [31.6, 60.155541, -138.80597], localSubparticles, unique=5, mindist=6)
         self._runFilterSubParticles(50, [103.2, 66.1, -66.9], localSubparticles, unique=5, side=25)
         self._runFilterSubParticles(21, [175.2, 66.1, -66.9], localSubparticles, unique=5, top=50)
 

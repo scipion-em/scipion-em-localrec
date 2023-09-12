@@ -37,6 +37,7 @@ from os.path import basename
 from localrec.utils import vectors_from_string
 from localrec.constants import CMM
 from localrec.utils import load_vectors
+from pwem.objects import Volume
 
 
 class ProtLocalOrigSampling(EMProtocol):
@@ -46,9 +47,12 @@ class ProtLocalOrigSampling(EMProtocol):
     _label = 'Set origin to subvolume'
     _program = ""
     _lastUpdateVersion = VERSION_3_0
+    OUTPUTVOLUMENAME = "outputVolume"
+    _posibleOutputs = {OUTPUTVOLUMENAME: Volume}
 
     def __init__(self, **kwargs):
         EMProtocol.__init__(self, **kwargs)
+        
 
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
@@ -155,7 +159,7 @@ class ProtLocalOrigSampling(EMProtocol):
         self.outVol.setLocation(imgDst)
 
         # save
-        self._defineOutputs(outputVolume=self.outVol)
+        self._defineOutputs(**{self.OUTPUTVOLUMENAME: self.outVol})
         self._defineSourceRelation(self.inVol, self.outVol)
 
     # --------------------------- INFO functions ------------------------------
