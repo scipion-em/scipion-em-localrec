@@ -28,6 +28,7 @@
 from pyworkflow import VERSION_1_1
 from pyworkflow.protocol.params import PointerParam, FloatParam
 from pwem.protocols import ProtParticles
+from pwem.objects import SetOfParticles
 
 class ProtParticleSubset(ProtParticles):
     """ This protocol make a subset of particles for which there is at least
@@ -35,7 +36,9 @@ class ProtParticleSubset(ProtParticles):
     """
     _label = 'particles subset by subparticles'
     _lastUpdateVersion = VERSION_1_1
-
+    OUTPUTPARTICLESNAME = "outputParticles"
+    _possibleOutputs = {OUTPUTPARTICLESNAME: SetOfParticles}
+    
     # -------------------------- DEFINE param functions -----------------------
     def _defineParams(self, form):
 
@@ -77,7 +80,7 @@ class ProtParticleSubset(ProtParticles):
             if particle._objId in subParticleIds:
                 outputSet.append(particle)
 
-        self._defineOutputs(outputParticles=outputSet)
+        self._defineOutputs(**{self.OUTPUTPARTICLESNAME: outputSet})
         self._defineTransformRelation(inputParticles, outputSet)
 
     # -------------------------- INFO functions -------------------------------

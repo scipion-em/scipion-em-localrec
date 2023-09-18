@@ -25,6 +25,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+
 from pwem.emlib import DT_DOUBLE
 from pyworkflow.protocol.params import (EnumParam, IntParam, StringParam, BooleanParam,
                                         NumericRangeParam, PathParam, Positive, MultiPointerParam)
@@ -33,9 +34,10 @@ from pwem.emlib.image import ImageHandler
 from pwem.protocols import ProtPreprocessVolumes
 from pwem.objects.data import *
 from pyworkflow.protocol.constants import STEPS_PARALLEL
-import pyworkflow.utils.path as putils
+import pyworkflow.utils as pwutils
 
 from pwem import emlib
+from pwem.objects import Volume, SetOfVolumes
 
 from localrec.constants import CMM, LINEAR, symDict
 from localrec.utils import load_vectors
@@ -58,6 +60,10 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
     def __init__(self, **kwargs):
         ProtPreprocessVolumes.__init__(self, **kwargs)
         self.stepsExecutionMode = STEPS_PARALLEL
+        OUTPUTVOLUMESNAME = "outputVolumes"
+        OUTPUTVOLUMENAME = "outputVolume"
+        _posibleOutputs = {OUTPUTVOLUMESNAME: SetOfVolumes,
+                            OUTPUTVOLUMENAME: Volume}
 
     #--------------------------- DEFINE param functions ------------------------
     def _defineParams(self, form):
@@ -147,7 +153,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         depsSymVolHalf2 = []
         depsSymVol = []
         depsSymMask = []
-
+        
         if self.usePreRun:
             localRecProt = self.preRuns[0].get()
             localRecSymGrp = localRecProt.symGrp.get()
@@ -303,7 +309,6 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         sumImg.write(self._getFileName('volume', 'sum', -1, halfString))
 
     def stitchParticles(self, halfString):
-
         # define the required file name to make a proper mask
         binarizedMaskFn = self._getFileName('mask', 'binarized', -1, halfString)
         erodedMaskFn = self._getFileName('mask', 'eroded', -1, halfString)
@@ -363,7 +368,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
             args = "-i %s --mask circular %d --create_mask %s " % (maskFn, -1 * radius, maskFn)
             self.runJob(program,args)
         else:
-            putils.copyFile(maskFn, self._getFileName('mask', index+1))
+            pwutils.copyFile(maskFn, self._getFileName('mask', index+1))
             maskFn = self._getFileName('mask', index+1)
 
         # Read the volume if it is provided
@@ -445,7 +450,7 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
                 outputVolFn = self._getOutputFileName(halfString)
                 outVol.setFileName(outputVolFn)
                 volumes.append(outVol)
-            self._defineOutputs(outputVolumes=volumes)
+            self._defineOutputs(**{self.OUTPUTVOLUMESNAME: volumes})
             self._defineSourceRelation(vol, volumes)
         else:
             vol = self.inputSubVolumes[0]
@@ -453,8 +458,14 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
             outputVolFn = self._getOutputFileName()
             outVol.setSamplingRate(self.pxSize)
             outVol.setFileName(outputVolFn)
-            self._defineOutputs(outputVolume=outVol)
+            self._defineOutputs(**{self.OUTPUTVOLUMENAME: outVol})
             self._defineSourceRelation(vol,outVol)
+
+        # Move some files to extra folder to keep them after tmp cleanup
+        # TODO: test the following line
+        pwutils.moveFile(self._getFileName('volume', 'without_mask', -1, ''),
+                         self._getExtraPath())
+
 
     #--------------------------- INFO functions --------------------------------
     def _validate(self):

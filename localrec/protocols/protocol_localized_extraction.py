@@ -33,12 +33,15 @@ from pyworkflow.protocol.params import IntParam
 
 # eventually progressbar will be move to scipion core
 from pyworkflow.utils import ProgressBar
+from pwem.objects import SetOfParticles
 
 
 class ProtLocalizedExtraction(ProtParticles):
     """ Extract computed sub-particles from a SetOfParticles. """
     _label = 'extract subparticles'
     _lastUpdateVersion = VERSION_1_2
+    OUTPUTPARTICLESNAME = "outputParticles"
+    _possibleOutputs = {OUTPUTPARTICLESNAME: SetOfParticles}
 
     # -------------------------- DEFINE param functions -----------------------
     def _defineParams(self, form):
@@ -146,7 +149,7 @@ class ProtLocalizedExtraction(ProtParticles):
             self.info("WARNING: Discarded %s particles because laid out of the "
                       "particle (for a box size of %d" % (outliers, boxSize))
 
-        self._defineOutputs(outputParticles=outputSet)
+        self._defineOutputs(**{self.OUTPUTPARTICLESNAME: outputSet})
         self._defineSourceRelation(self.inputParticles, outputSet)
 
     # -------------------------- INFO functions -------------------------------
