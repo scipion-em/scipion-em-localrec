@@ -156,12 +156,13 @@ class ProtLocalizedExtraction(ProtParticles):
     def _validate(self):
         errors = []
         inputCoords = self.inputCoordinates.get()
-        firstCoord = inputCoords.getFirstItem()
-
-        if not firstCoord.hasAttribute('_subparticle'):
-            errors.append('The selected input coordinates does not are the '
-                          'output from a localized-subparticles protocol.')
-
+        try:
+            firstCoord = inputCoords.getFirstItem()
+            if not firstCoord.hasAttribute('_subparticle'):
+                errors.append('The selected input coordinates does not are the '
+                              'output from a localized-subparticles protocol.')
+        except:
+            errors.append("input coordinates have not been generated")
         return errors
 
     def _citations(self):
