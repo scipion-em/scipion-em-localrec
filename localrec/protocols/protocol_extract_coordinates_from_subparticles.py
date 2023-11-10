@@ -61,6 +61,7 @@ class ProtExtractCoordSubparticles(ProtParticlePicking, ProtParticles):
     def _defineParams(self, form):
         form.addSection(label='Input')
         form.addParam('inputSubParticles', PointerParam,
+                      pointerCondition='getIsSubparticles',
                       pointerClass='SetOfParticles',
                       important=True,
                       label="Subparticles",
@@ -80,16 +81,22 @@ class ProtExtractCoordSubparticles(ProtParticlePicking, ProtParticles):
 
     # -------------------------- STEPS functions -----------------------------
     def createOutputStep(self):
-
         inputSubParticlesSet = self.inputSubParticles.get()
         inputParticlesSet = self.inputParticles.get()
         outputSet = self._createSetOfCoordinates(inputParticlesSet)
-        #we set the boxsize the coordinates as 1/0 of the boxsize of the subparticles.
-        boxsize = 0.1*inputParticlesSet.getXDim()
+        # we set the boxsize the coordinates as 1/0 of the boxsize of the subparticles.
+        boxsize = 0.1 * inputParticlesSet.getXDim()
         outputSet.setBoxSize(boxsize)
-        idx = 1
+        idx = 1  # counter to make coordinates id unique
+
+        # the problem that we try to solve here is
+        # that subparticle coordinates id  are not unique
+        # if we join all the sets of subparticle particle coordinates
         for part in inputSubParticlesSet:
             coor = part.getCoordinate()
+            # micid is used to relate particle and subparticle coordinates
+            # we just clean the mic name since it is standard practice
+            # in other localrec protocols.
             coor.setMicName(None)
             coor.setObjId(idx)
             outputSet.append(coor)
@@ -110,6 +117,10 @@ class ProtExtractCoordSubparticles(ProtParticlePicking, ProtParticles):
             validateMsgs.append('Particles and subparticles do not have the same sampling rate.'
                                 'The sampling rate of both sets of coordinates is expected to be the same within '
                                 'tolerance %.4f: %.4f != %.4f' % (sRateTol, firstSRate, secondSRate))
+        if not subparticles.getIsSubparticles():
+            validateMsgs.append('Set assigned as subparticles is not a subparticles set. '
+                                'This error message may appear for old versions of localrec prior to 3.1.0. '
+                                'If this is the case please re-extract the subparticles')
 
         return validateMsgs
 

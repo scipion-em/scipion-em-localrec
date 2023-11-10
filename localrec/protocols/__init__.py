@@ -30,5 +30,6 @@ from .protocol_filter_subparticles import ProtFilterSubParts
 from .protocol_localized_stitch import ProtLocalizedStich
 from .protocol_localized_subset import ProtParticleSubset
 from .protocol_extract_coordinates_from_subparticles import ProtExtractCoordSubparticles
+# from .protocol_classify_subparticles_distribution import ProtLocalizedClassifyDistribution
 from .protocol_localized_set_origin import ProtLocalOrigSampling
 
