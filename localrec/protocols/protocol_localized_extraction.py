@@ -148,7 +148,7 @@ class ProtLocalizedExtraction(ProtParticles):
         if outliers:
             self.info("WARNING: Discarded %s particles because laid out of the "
                       "particle (for a box size of %d" % (outliers, boxSize))
-
+        outputSet.setIsSubparticles(True)
         self._defineOutputs(**{self.OUTPUTPARTICLESNAME: outputSet})
         self._defineSourceRelation(self.inputParticles, outputSet)
 

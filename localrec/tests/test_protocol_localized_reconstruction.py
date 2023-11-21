@@ -244,6 +244,16 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
         self.assertIsNotNone(localExtraction.outputParticles,
                              "There was a problem with localized "
                              "extraction protocol")
+        extractCoordSubparticles = self.newProtocol(ProtExtractCoordSubparticles,
+                                                    inputSubParticles=localExtraction.outputParticles,
+                                                    inputParticles=self.protImport.outputParticles)
+        self.launchProtocol(extractCoordSubparticles)
+        coordinates = extractCoordSubparticles.outputCoordinates
+        self.assertIsNotNone(coordinates,
+                             "There was a problem with the extraction of the coordinates from the subparticles")
+        coordinate = coordinates.getFirstItem()
+        self.assertTrue(coordinate.getObjId() == 1)
+        self.assertTrue(coordinate.getMicId() == 1)
 
     def testSetOrigin(self):
         # create set of coordinates and localize protocol
