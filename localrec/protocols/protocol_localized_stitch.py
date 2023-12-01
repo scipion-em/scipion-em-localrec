@@ -2,6 +2,7 @@
 # *
 # * Authors:         Vahid Abrishami (vahid.abrishami@helsinki.fi)
 # *                  Juha Huiskonen (juha.huiskonen@helsinki.fi)
+# *                  Mucahit Kutsal (mucahit.kutsal@helsinki.fi)
 # *
 # * Laboratory of Structural Biology,
 # * Helsinki Institute of Life Science HiLIFE
@@ -28,8 +29,9 @@
 
 from pwem.emlib import DT_DOUBLE
 from pyworkflow.protocol.params import (EnumParam, IntParam, StringParam, BooleanParam,
-                                        NumericRangeParam, PathParam, Positive, MultiPointerParam)
+                                        NumericRangeParam, PathParam, Positive, MultiPointerParam, LEVEL_ADVANCED, FloatParam)
 from pwem.convert.transformations import euler_from_matrix
+from pwem.convert.headers import setMRCSamplingRate
 from pwem.emlib.image import ImageHandler
 from pwem.protocols import ProtPreprocessVolumes
 from pwem.objects.data import *
@@ -40,7 +42,7 @@ from pwem import emlib
 from pwem.objects import Volume, SetOfVolumes
 
 from localrec.constants import CMM, LINEAR, symDict
-from localrec.utils import load_vectors
+from localrec.utils import load_vectors, distances_from_string
 
 
 class ProtLocalizedStich(ProtPreprocessVolumes):
@@ -130,7 +132,8 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
                             'More than one vector can be specified separated by a '
                             'semicolon. For example: \n'
                             '0,0,1            # Defines only one vector.\n'
-                            '0,0,1; 1,0,0;    # Defines two vectors.'
+                            '0,0,1; 1,0,0;    # Defines two vectors.\n'
+                            'IMPORTANT: You must provide vectors as Angstroms not pixels'
                        )
         group.addParam('vectorFile', PathParam, default='',
                        condition="defineVector==0",
@@ -142,6 +145,16 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
                        help='Use to adjust the sub-particle center. If it '
                             'is <= 0, the length of the given vector is used. '
                             'Multiple values must be separated by commas.')
+
+        form.addParam('samplingRate', FloatParam, label='Sampling Rate',
+                      default=0.00, expertLevel=LEVEL_ADVANCED, condition="not useHalMaps",
+                      help='If you have calibrated the map pixel size in postprocessing.\n'
+                           'Give the original pixel size here.')
+        
+        form.addParam('keepTmpFiles', BooleanParam, expertLevel=LEVEL_ADVANCED,
+                      label="Keep intermediate files", default=False, 
+                      help='Set to Yes if you want to keep temporary files in the extra path')
+
 
         form.addParallelSection(threads=4, mpi=1)
 
@@ -251,12 +264,18 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
 
     #--------------------------- STEPS functions -------------------------------
     def convertInputStep(self):
-
+        print("samplingRate: ", self.samplingRate.get())
+        print("keepTmpFiles: ", self.keepTmpFiles.get())
+        # if self.length.get() != "-1":
+        #     self.distances = distances_from_string(self.length.get())
         # Read voxel size
         if self.useHalMaps:
             self.pxSize = self.inputSubVolumesHalf1[0].get().getSamplingRate()
         else:
-            self.pxSize = self.inputSubVolumes[0].get().getSamplingRate()
+            if self.samplingRate.get() > 0.0:
+                self.pxSize = self.samplingRate.get()
+            else:
+                self.pxSize = self.inputSubVolumes[0].get().getSamplingRate()
         interpMethod = self.interpMethod
         self.interpString = 'linear' if interpMethod.get() == LINEAR else 'spline'
         self.interpNum = 1 if interpMethod.get() == LINEAR else 3
@@ -269,6 +288,8 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
                 self.subVolCenterVec += self.createVector(self.preRuns[i].get())
         else:
             self.subVolCenterVec = self.createVector()
+
+
 
     def genAsymUnit(self, halfString):
 
@@ -421,8 +442,8 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
         self.runJob(program,args)
 
     def readVector(self, index):
-
-        length = self.subVolCenterVec[index].get_length()
+        
+        length = self.subVolCenterVec[index].get_length()            
         [shiftX, shiftY, shiftZ] = [x * length for x in self.subVolCenterVec[index].vector]
         rotMatrix = self.subVolCenterVec[index].get_matrix()
         return shiftX, shiftY, shiftZ, rotMatrix
@@ -460,6 +481,16 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
             outVol.setFileName(outputVolFn)
             self._defineOutputs(**{self.OUTPUTVOLUMENAME: outVol})
             self._defineSourceRelation(vol,outVol)
+            setMRCSamplingRate(outputVolFn, self.inputSubVolumes[0].get().getSamplingRate())
+            
+        if self.keepTmpFiles:
+            source = self._getTmpPath()
+            destination = self._getExtraPath()
+            allfiles = os.listdir(source)
+            for f in allfiles:
+                src_path = os.path.join(source, f)
+                dst_path = os.path.join(destination, f)
+                os.rename(src_path, dst_path)
 
         # Move some files to extra folder to keep them after tmp cleanup
         # TODO: test the following line
@@ -517,5 +548,5 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
                                      auxString2, auxString))
     def _getOutputFileName(self, halfString=''):
         auxString = '' if halfString == '' else '_{}'.format(halfString)
-        return self._getExtraPath('output_volume%s.vol'
+        return self._getExtraPath('output_volume%s.mrc'
                                   % auxString)

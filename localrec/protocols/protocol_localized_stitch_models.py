@@ -1,0 +1,459 @@
+# **************************************************************************
+# *
+# * Authors:         Mücahit Kutsal (mucahit.kutsal@helsinki.fi)
+# *                  Juha Huiskonen (juha.huiskonen@helsinki.fi) 
+# *
+# * Laboratory of Structural Biology,
+# * Helsinki Institute of Life Science HiLIFE
+# *
+# * This program is free software; you can redistribute it and/or modify
+# * it under the terms of the GNU General Public License as published by
+# * the Free Software Foundation; either version 2 of the License, or
+# * (at your option) any later version.
+# *
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# *
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+# * 02111-1307  USA
+# *
+# *  All comments concerning this program package may be sent to the
+# *  e-mail address 'scipion@cnb.csic.es'
+# *
+# **************************************************************************
+from turtle import distance
+from pwem.emlib import DT_DOUBLE
+from pyworkflow.protocol.params import (EnumParam, StringParam, BooleanParam,
+                                        NumericRangeParam, IntParam, PathParam, MultiPointerParam)
+
+
+from pwem.convert.atom_struct import AtomicStructHandler
+from pwem.convert.transformations import euler_from_matrix, euler_matrix
+from pwem.protocols import EMProtocol
+from pwem.objects.data import *
+from pyworkflow.protocol.constants import STEPS_PARALLEL
+from Bio import PDB
+from pwem.convert.symmetry import getSymmetryMatrices, _applyMatrix
+from glob import glob
+from Bio.PDB.mmcifio import MMCIFIO
+from pwem.constants import (SYM_CYCLIC, SYM_DIHEDRAL, SYM_OCTAHEDRAL,
+                            SYM_TETRAHEDRAL, SYM_I222, SYM_I222r,
+                            SYM_In25, SYM_In25r, SCIPION_SYM_NAME, SYM_TETRAHEDRAL_Z3,
+                            SYM_I2n3, SYM_I2n3r, SYM_I2n5, SYM_I2n5r, SYM_DIHEDRAL_X, SYM_DIHEDRAL_Y)
+
+from localrec.constants import CMM
+from localrec.utils import euler2matrix,distances_from_string, generate_chain_id, load_vectors, pdbIds_from_string, vectors_from_cmm, vectors_from_string
+
+
+
+class ProtLocalizedStitchModels(EMProtocol):
+    """
+        Generate a full volume from a sub-model applying a
+        point group symmetry operation.
+        An example of usage is to generate the adenovirus capsid
+        from its asymmetric unit.
+    """
+
+    _label = 'stitch models'
+
+    LINEAR = 0
+    BSPLINE = 1
+
+    def __init__(self, **kwargs):
+        EMProtocol.__init__(self, **kwargs)
+        self.stepsExecutionMode = STEPS_PARALLEL
+
+    #--------------------------- DEFINE param functions ------------------------
+    def _defineParams(self, form):
+        form.addSection(label='Input')
+        group = form.addGroup('Input Structure')
+        group.addParam('definePdb', EnumParam, default=CMM,
+                       label='Input Structure Came From?',
+                       choices=['File', 'PDB ID'],
+                       display=EnumParam.DISPLAY_HLIST)
+        group.addParam('pdbId', StringParam, default='',
+                       label='PDB ID', condition="definePdb==1",
+                       help='see https://www.rcsb.org/'
+                       )
+        group.addParam('pdbFile', PathParam, default='',
+                       condition="definePdb==0",
+                       label='PDB File: ',
+                       help="Directory with the files you want to import.\n"
+                            "The path can also contain wildcards to selectfrom several folders.\n" 
+                            "Examples:\n"
+                            "\t~/project/data/day??_files/\n"
+                            "\tEach '?' represents one unknown character\n"
+                            "\t~/project/data/day*_files/\n"
+                            "\t'*' represents any number of unknown characters\n"
+                            "\t~/project/data/day##_files/\n"
+                            "\t'##' represents two digits that will be used as file ID\n"
+                            "NOTE: wildcard characters ('*', '?', '#') cannot appear in the actual path.\)\n"
+                            "See more: https://docs.python.org/library/glob.html\n"
+                        )
+        
+        form.addParam('usePreRun', BooleanParam,
+                      label="Use previous localrec run(s)", default=False)
+
+        form.addParam('preRuns', MultiPointerParam, pointerClass='ProtLocalizedRecons',
+                      label='Localrec previous runs', allowsNull=True,
+                      condition="usePreRun",
+                      help="Previous Localrec runs used to extract the parameters")
+        group = form.addGroup('Symmetry')
+        group.addParam('symmetryName', EnumParam, 
+                      default=0,
+                      choices=[ SCIPION_SYM_NAME[SYM_CYCLIC],           # 'Cn'
+                                SCIPION_SYM_NAME[SYM_DIHEDRAL],         # 'Dn'
+                                SCIPION_SYM_NAME[SYM_TETRAHEDRAL],      # 'T222'
+                                SCIPION_SYM_NAME[SYM_TETRAHEDRAL_Z3],   # 'Tz3'
+                                SCIPION_SYM_NAME[SYM_OCTAHEDRAL],       #  'O'
+                                 SCIPION_SYM_NAME[SYM_I222],            # 'I222'
+                                SCIPION_SYM_NAME[SYM_I222r],            # 'I222r'
+                                SCIPION_SYM_NAME[SYM_In25],             # 'In25'
+                                SCIPION_SYM_NAME[SYM_In25r],            # 'In25r'
+                                ],
+                      label="Symmetry",
+                      help="See https://scipion-em.github.io/docs/docs/developer/symmetries"
+                           "Symmetry for a description of the symmetry groups "
+                           "format in Xmipp.\n"
+                           "If no symmetry is present, use _c1_."
+                       )
+        group.addParam('nSymmetry', IntParam, default=1, condition="symmetryName==1 or symmetryName==0",
+                      label='N value',
+                      help='Set the n value if you have set Symmetry as Cn or Dxn ')
+        group.addParam('alignSubParticles', BooleanParam,
+                      label="Sub-volumes are aligned?", condition="not usePreRun",
+                      default=False,
+                      help='Set to Yes if you aligned the sub-particles with the z-axis '
+                           'earlier. Note that the you can mix sub-particles with and '
+                           'without this additional alignment. ')
+
+        group = form.addGroup('Vectors', condition="not usePreRun")
+        group.addParam('defineVector', EnumParam, default=CMM,
+                       label='Is vector defined by?',
+                       choices=['cmm file', 'string'],
+                       display=EnumParam.DISPLAY_HLIST)
+        group.addParam('vector', NumericRangeParam, default='0,0,1',
+                       label='Location vectors', condition="defineVector==1",
+                       help='Vector defining the location of the '
+                            'sub-particles. The vector is defined by 3 '
+                            'values x,y,z separated by comma. \n'
+                            'More than one vector can be specified separated by a '
+                            'semicolon. For example: \n'
+                            '0,0,1            # Defines only one vector.\n'
+                            '0,0,1; 1,0,0;    # Defines two vectors.'
+                       )
+        group.addParam('vectorFile', PathParam, default='',
+                       condition="defineVector==0",
+                       label='file obtained by Chimera: ',
+                       help='CMM file defining the location(s) of the '
+                            'sub-particle(s). Use instead of a vector. ')
+        group.addParam('length', StringParam, default=-1,
+                       label='Alternative length of the vector (A)',
+                       help='Use to adjust the sub-particle center. If it '
+                            'is <= 0, the length of the given vector is used. '
+                            'Multiple values must be separated by commas.')
+        
+        group.addParam('fullBoxSize', IntParam, default=1,
+                       label='Box size of the full map', 
+                       help='Please provide the full size of your volume. '
+                            'This is the same as the output size of Localrec Stitch Volumes protocol.')
+        
+        group.addParam('smallBoxSize', IntParam, default=1,
+                         label='Box size of the small map', 
+                       help='This is the sampling rate of your sub-volumes that you have given as input to the Localrec Stitch Volumes protocol.')
+        
+        group.addParam('calibratedSamplingRate', StringParam, default=1.0, 
+                         label='Calibrated sampling rate', 
+                       help='This is the calibrated sampling rate if you performed any calibration operation in the postprocessing of your volumes. '
+                            'If you did not perform any calibration, plese provide the original sampling rate here.')
+        
+        group = form.addGroup('Output')   
+        group.addParam('outputOnlyMatrices', BooleanParam,
+                      label="Output symmetry matrices only",
+                      default=False,
+                      help='Set to Yes if you want to get your output file with Biological Assembly.')
+                       
+        form.addParallelSection(threads=4, mpi=1)
+
+    #--------------------------- INSERT steps functions ------------------------
+    def _insertAllSteps(self):
+
+        
+        inputStepId = self._insertFunctionStep('convertInputStep')
+        
+        tfCoordId = self._insertFunctionStep('transformCoordinatesStep',
+                                                    prerequisites=[inputStepId])
+
+        # If user wants to get biological assembly in their outputfile, we continue with biological assembly step
+        if self.outputOnlyMatrices.get():
+            bioAssmblyId = self._insertFunctionStep('biologicalAssemblyStep', prerequisites=[tfCoordId])
+            self._insertFunctionStep('createOutputStep', prerequisites=[bioAssmblyId])
+        else:
+            applySymId = self._insertFunctionStep('applySymmetryStep', prerequisites=[tfCoordId])
+            self._insertFunctionStep('createOutputStep', prerequisites=[applySymId])
+        
+        
+
+    #--------------------------- STEPS functions -------------------------------
+    def convertInputStep(self):
+        """
+         Convert the input to use later on in this protocol. 
+        """
+        self.symGroup = self.symmetryName.get()
+        self.doAlign = self.alignSubParticles
+        self.bigBox = self.fullBoxSize.get()
+        self.smallBox = self.smallBoxSize.get()
+        self.samplingRate = float(self.calibratedSamplingRate.get())
+        # As we don't use Dyn symmetry and we get symmetry matrices by their enum correspondings 
+        # we need to add 1 if choosen symmetry comes after Dyn
+        self.symGroup = self.symGroup + 1 if self.symGroup > 2 else self.symGroup
+        
+        self.center = float((self.bigBox/2)*self.samplingRate)
+        self.nValue = self.nSymmetry.get()
+        
+        # Sort input file names alphabetically to match them to the input vectors and distances
+        ah = AtomicStructHandler()
+        if self.definePdb == 1:
+            ids = pdbIds_from_string(self.pdbId.get())
+            self.inputFiles = [ah.readFromPDBDatabase(id, self._getTmpPath()) for id in ids]
+        
+        else:
+            self.inputFiles =  glob(self.pdbFile.get())
+        self.inputFiles.sort()
+ 
+        
+        vector = ""
+        cmmFn = ""
+        if self.defineVector == CMM:
+            cmmFn = self.vectorFile.get()
+        else:
+            vector = self.vector.get()
+
+        self.subVolCenterVec = load_vectors(cmmFn, vector, self.length.get(), 1)
+
+
+
+    def transformCoordinatesStep(self):
+        """
+            Transform input structures and bind them to a master structure to make them ready for symmetrisation
+        """
+        
+        listOfAtomicStructObjects = []
+        for file in self.inputFiles:
+            ah = AtomicStructHandler()
+            print(file)
+            ah.read(file)
+            listOfAtomicStructObjects.append(ah.structure.copy())
+            
+        # First we take the structures to corner of the box so that we are ready to transform them with input vectors
+        boxSize = self.smallBox
+        samplingRate = self.samplingRate
+        # The shift value that we need to take structures to the corner
+        valueToShift = ((boxSize/2)-1)*samplingRate 
+        for struct in listOfAtomicStructObjects:
+            rotMatrix = np.identity(3)
+            struct.transform(rotMatrix, np.array([-valueToShift, -valueToShift, -valueToShift]))
+        
+        # Now we apply transformation with the input vectors
+        for i, struct in enumerate(listOfAtomicStructObjects):
+            shiftX, shiftY, shiftZ, rotMatrixFromVector = self.readVector(i)
+            rotMatrix = np.identity(3)
+            # We do not perform rotation on input atomic structures unless the user has set doAlign to true.
+            if self.doAlign:
+                rotMatrix = rotMatrixFromVector
+            vectorForShift = np.array([shiftX, shiftY, shiftZ])
+            struct.transform(rotMatrix, vectorForShift)
+        
+        # After transformation, In order to put the compact model on the map we need to shift it according to the center of big map
+        # Here the centerValue is: (bigMapSize/2)*samlingRate
+        centerValue = self.center
+        for struct in listOfAtomicStructObjects:
+            rotMatrix = np.identity(3)
+            struct.transform(rotMatrix, np.array([centerValue, centerValue, centerValue]))
+        
+        # As the last part of this step, we make a master structure that contains all the input atomic structures after transformation
+        masterStructure = PDB.Structure.Structure("master")
+        i = 0
+        for structure in listOfAtomicStructObjects:
+            for model in structure.get_models():
+                new_model=model.copy()
+                new_model.id=i
+                new_model.serial_num=i+1
+                i = i+1
+                masterStructure.add(new_model)
+        self.outputStructure = masterStructure
+        
+
+    def applySymmetryStep(self):
+        """
+            Apply symmetry manually to the tranformed compact structure. In this way protocol produces a large output file.
+        """
+        
+        # First we get symmetry matrices according to user's Symmetry input
+        # Here the centerValue is the same as previous step but this time we use it to calculate Symmetry Matrices with their shifting vectors
+        centerValue = self.center
+        symMatrices = getSymmetryMatrices(sym=self.symGroup, n=self.nValue, center=(centerValue,centerValue,centerValue))
+        structure = self.outputStructure
+        # we copy the compact structure we obtained in the previous step as much as the number of symmetry matrices. This causes the large output file. 
+        structureList = [structure.copy() for i in range(len(symMatrices))]
+        # Performing the symmetry to the copies of transformed compact structure
+        for i in range((len(symMatrices))):
+            atoms = structureList[i].get_atoms()
+            matrix = symMatrices[i]
+            print(i)
+            print(matrix)
+            for atom in atoms:
+                coord = atom.get_coord()
+                
+                r = _applyMatrix(matrix, coord)
+                coord = r[:3]
+                atom.set_coord(coord)
+        
+        # After performed the symmetry operation, we make a output structure that contains all the compact atomic structures after matrix multiplication.
+        outputStructure = PDB.Structure.Structure("output")
+        i = 0
+        for structure in structureList:
+            for model in structure.get_models():
+                new_model=model.copy()
+                new_model.id=i
+                new_model.serial_num=i+1
+                i = i+1
+                outputStructure.add(new_model)
+        self.outputStructure = outputStructure
+
+    def biologicalAssemblyStep(self):
+        """
+            Generate biological assembly in the output file, so that ChimeraX can extend the compact structure into the entire atomic model.
+        """
+        
+        # First we rename the each chain in the compact structure
+        ah = AtomicStructHandler()
+        io=MMCIFIO()
+        structure = self.outputStructure
+        chains = [i.id for i in list(structure.get_chains())]
+        old_chains = list(structure.get_chains())
+        new_chains_id = generate_chain_id(len(list(old_chains)))
+        index = 0
+        for chain in old_chains:
+            try:
+                print("new chain:", new_chains_id[index])
+                chain.id = new_chains_id[index]
+            except:
+                pass
+            index+=1
+        
+        #We get the symmetry matrices, but this time we don't do any matrix multiplication. Instead, we write the sym matrices to the output file.
+        centerValue = self.center
+        symMatrices = getSymmetryMatrices(sym=self.symGroup, n=self.nSymmetry.get(), center=(centerValue,centerValue,centerValue))
+        
+        matricesToWrite = symMatrices
+        
+        # Writing the output file
+        # .cif files have a table-like structure
+        outputModelFn = self._getTmpPath("tempretureFileBeforeBioAssembly.cif")
+        io.set_structure(structure)
+        io.save(outputModelFn)
+        mmDict = ah.readLowLevel(outputModelFn)
+        mmDict['_pdbx_struct_assembly.id'] = '1'               
+        mmDict['_pdbx_struct_assembly.details'] = 'Scipion Defined Assembly'
+        mmDict['_pdbx_struct_assembly.method_details'] = SCIPION_SYM_NAME[self.symGroup]
+        mmDict['_pdbx_struct_assembly_gen.assembly_id'] = '1'
+        mmDict['_pdbx_struct_assembly_gen.asym_id_list'] = ','.join(chains)
+        mmDict['_pdbx_struct_assembly_gen.oper_expression'] = '(1-'+str(len(symMatrices))+')'
+        mmDict['_pdbx_struct_oper_list.id'] = [str(i+1) for i in range(len(symMatrices))]
+        mmDict['_pdbx_struct_oper_list.type'] = ['matrix'+str(i+1) for i in range(len(symMatrices))]
+        mmDict['_pdbx_struct_oper_list.name'] = ['?' for i in range(len(symMatrices))]
+        mmDict['_pdbx_struct_oper_list.matrix[1][1]'] = ['%.5f'%i for i in matricesToWrite[:,0, 0]]
+        mmDict['_pdbx_struct_oper_list.matrix[1][2]'] = ['%.5f'%i for i in matricesToWrite[:,0, 1]]
+        mmDict['_pdbx_struct_oper_list.matrix[1][3]'] = ['%.5f'%i for i in matricesToWrite[:,0, 2]]
+        mmDict['_pdbx_struct_oper_list.vector[1]'] = ['%.5f'%i for i in matricesToWrite[:,0, 3]]
+        mmDict['_pdbx_struct_oper_list.matrix[2][1]'] = ['%.5f'%i for i in matricesToWrite[:,1, 0]]
+        mmDict['_pdbx_struct_oper_list.matrix[2][2]'] = ['%.5f'%i for i in matricesToWrite[:,1, 1]]
+        mmDict['_pdbx_struct_oper_list.matrix[2][3]'] = ['%.5f'%i for i in matricesToWrite[:,1, 2]]
+        mmDict['_pdbx_struct_oper_list.vector[2]'] = ['%.5f'%i for i in matricesToWrite[:,1, 3]]
+        mmDict['_pdbx_struct_oper_list.matrix[3][1]'] = ['%.5f'%i for i in matricesToWrite[:,2, 0]]
+        mmDict['_pdbx_struct_oper_list.matrix[3][2]'] = ['%.5f'%i for i in matricesToWrite[:,2, 1]]
+        mmDict['_pdbx_struct_oper_list.matrix[3][3]'] = ['%.5f'%i for i in matricesToWrite[:,2, 2]]
+        mmDict['_pdbx_struct_oper_list.vector[3]'] = ['%.5f'%i for i in matricesToWrite[:,2, 3]]
+
+        self.ouputDict = mmDict
+
+    def createOutputStep(self):
+        """
+          Creating the output file/files in the extra directory
+        """
+        if self.outputOnlyMatrices:
+            ah = AtomicStructHandler()
+            outputModelFn = self._getOutputFileName()
+            ah._writeLowLevel(outputModelFn, self.ouputDict)
+
+        else:
+            io=MMCIFIO()
+            model = self.outputStructure
+            outputModelFn = self._getOutputFileName()
+
+            io.set_structure(model)
+            io.save(outputModelFn)
+            self._defineOutputs(outputModel = model)
+        
+    def readVector(self, index):
+        """
+          Read vector function, thanks to this function we generate rotation matrix and shifting vector from the user input vector.
+        """
+        length = self.subVolCenterVec[index].get_length()            
+        [shiftX, shiftY, shiftZ] = [x * length for x in self.subVolCenterVec[index].vector]
+        rotMatrix = self.subVolCenterVec[index].get_matrix()
+        return shiftX, shiftY, shiftZ, rotMatrix
+
+
+    #--------------------------- INFO functions --------------------------------
+    def _validate(self):
+        validateMsgs = []
+        fileNum = len(glob(self.pdbFile.get()))
+
+        if self.defineVector == CMM:
+            self.vectorsFile = self.vectorFile.get()
+            vectorNum = len(vectors_from_cmm(self.vectorsFile, 1))
+        else:
+            vectorNum = len(vectors_from_string(self.vector.get()))
+
+        distanceNum = len(distances_from_string(str(self.length.get())))
+        if not (fileNum == vectorNum or vectorNum == 1) and (distanceNum ==0 or distanceNum ==1 or distanceNum == vectorNum):
+            errMsg = "The number of vectors, distances and files you enter must be one or equal to the number of files entered(Number of Distances can be 0).\n Number of vectors: "+ str(vectorNum)+"\nNumber of files: "+ str(fileNum)+"\nNumber of Distances: "+ str(distanceNum)
+            validateMsgs.append(errMsg)
+        return validateMsgs
+
+    def _warnings(self):
+
+        warningsMsgs = []
+
+        return warningsMsgs
+
+    def _citations(self):
+        return ['Ilca2015', 'Abrishami2020']
+
+    def _summary(self):
+    
+        listObj = self.inputAtomicStructs
+        summary = ["Stitch %d sub-volumes to make a full volume of size %d"
+                   % (len(listObj), self.outDim)]
+        return summary
+
+    def _methods(self):
+        messages = []
+        return messages
+
+    #--------------------------- UTILS functions -------------------------------
+    def _getFileName(self, imgType, desc='', index=-1, halfString=''):
+        auxString = '' if halfString == '' else '_{}'.format(halfString)
+        auxString2 = '' if index == -1 else '_{}'.format(index)
+        auxString3 = '' if desc == '' else '_{}'.format(desc)
+        return self._getTmpPath('output_%s%s%s%s.cif'
+                                  % (imgType, auxString3,
+                                     auxString2, auxString))
+    def _getOutputFileName(self):
+        return self._getExtraPath('output_model.cif')
