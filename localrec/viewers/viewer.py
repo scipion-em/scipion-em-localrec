@@ -23,8 +23,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-from localrec.protocols.protocol_localized_set_origin \
-    import ProtLocalOrigSampling
+
 from pyworkflow.viewer import DESKTOP_TKINTER, Viewer
 from pwem.viewers.viewer_chimera import (Chimera)
 from pwem.emlib.image import ImageHandler
@@ -74,4 +73,3 @@ class ProtLocalOrigSamplingViewer(Viewer):
         # run in the background
         Chimera.runProgram(Chimera.getProgram(), fnCmd + "&")
         return []
-

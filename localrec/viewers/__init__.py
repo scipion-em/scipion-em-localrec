@@ -1,1 +1,2 @@
 from .viewer import ProtLocalOrigSamplingViewer
+from .viewer_protocol_subparticles_distribution import ProtLocalizedSubparticleDistributionViewer
