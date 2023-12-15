@@ -91,22 +91,25 @@ class ProtLocalizedSubparticleDistribution(ProtParticlePicking, ProtParticles):
     def groupByCardinalOfClasses(self):
 
         maxNumber = self.maxNumSubpart.get()
-        self.subparticlesclasses = []
-        for i in range(0, maxNumber): self.subparticlesclasses.append([])
-        # for key in self.coordsDict:
-        #    subParts_in_Part = self.coordsDict[key]
-        #    self.subparticlesclasses[len(subParts_in_Part)-1].append(subParts_in_Part)
+        fnHistogram = self._getExtraPath('histogram.txt')
+        f = open(fnHistogram, "a")
+
+        subpartNumber = []
         for key in self.subPartsDict:
-            subParts_in_Part = self.subPartsDict[key]
-            self.subparticlesclasses[len(subParts_in_Part) - 1].append(subParts_in_Part)
+            subpartNumber.append(len(self.subPartsDict[key]))
+
+        import matplotlib.pyplot as plt
+        counts, bins, _ = plt.hist(subpartNumber, bins=maxNumber)
+        #plt.show()
 
         fnHistogram = self._getExtraPath('histogram.txt')
         f = open(fnHistogram, "a")
 
-        for i in range(0, maxNumber):
-            line = ' %i,%i \n' % (i+1, len(self.subparticlesclasses[i]))
+        for i in range(0, len(counts)):
+            line = ' %i,%i \n' % (bins[i], counts[i])
             f.writelines(line)
         f.close()
+
 
     # -------------------------- INFO functions --------------------------------
     def _validate(self):
