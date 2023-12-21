@@ -58,9 +58,9 @@ class ProtLocalizedSubparticleDistribution(ProtParticlePicking, ProtParticles):
     def _defineParams(self, form):
         form.addSection(label='Input')
         form.addParam('inputSet', PointerParam,
-                      pointerClass='SetOfParticles',
+                      pointerClass='SetOfCoordinates',
                       important=True,
-                      label="Subparticles",
+                      label="Subparticles Coordinates",
                       help='Select the input set of coordinates of subparticles to be classified.')
         form.addParam('maxNumSubpart', IntParam,
                       important=True,
@@ -82,31 +82,34 @@ class ProtLocalizedSubparticleDistribution(ProtParticlePicking, ProtParticles):
         # are stored in the same dictionary key
         self.subPartsDict = {}
 
-        for part in inputSubParticles.iterItems():
-            particleKey = str(part.getMicId())
+        for subpart in inputSubParticles.iterItems():
+            particleKey = str(subpart.getMicId())
             if particleKey not in self.subPartsDict:
                 self.subPartsDict[particleKey] = []
-            self.subPartsDict[particleKey].append(part.clone())
+            self.subPartsDict[particleKey].append(subpart.clone())
 
     def groupByCardinalOfClasses(self):
 
         maxNumber = self.maxNumSubpart.get()
-        self.subparticlesclasses = []
-        for i in range(0, maxNumber): self.subparticlesclasses.append([])
-        # for key in self.coordsDict:
-        #    subParts_in_Part = self.coordsDict[key]
-        #    self.subparticlesclasses[len(subParts_in_Part)-1].append(subParts_in_Part)
+        fnHistogram = self._getExtraPath('histogram.txt')
+        f = open(fnHistogram, "a")
+
+        subpartNumber = []
         for key in self.subPartsDict:
-            subParts_in_Part = self.subPartsDict[key]
-            self.subparticlesclasses[len(subParts_in_Part) - 1].append(subParts_in_Part)
+            subpartNumber.append(len(self.subPartsDict[key]))
+
+        import matplotlib.pyplot as plt
+        counts, bins = np.histogram(subpartNumber, bins=maxNumber)
+        #plt.show()
 
         fnHistogram = self._getExtraPath('histogram.txt')
         f = open(fnHistogram, "a")
 
-        for i in range(0, maxNumber):
-            line = ' %i,%i \n' % (i+1, len(self.subparticlesclasses[i]))
+        for i in range(0, len(counts)):
+            line = ' %i,%i \n' % (bins[i], counts[i])
             f.writelines(line)
         f.close()
+
 
     # -------------------------- INFO functions --------------------------------
     def _validate(self):

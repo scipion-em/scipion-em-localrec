@@ -61,7 +61,7 @@ class ProtExtractCoordSubparticles(ProtParticlePicking, ProtParticles):
     def _defineParams(self, form):
         form.addSection(label='Input')
         form.addParam('inputSubParticles', PointerParam,
-                      pointerCondition='getIsSubparticles',
+                      #pointerCondition='getIsSubparticles',
                       pointerClass='SetOfParticles',
                       important=True,
                       label="Subparticles",
@@ -117,10 +117,10 @@ class ProtExtractCoordSubparticles(ProtParticlePicking, ProtParticles):
             validateMsgs.append('Particles and subparticles do not have the same sampling rate.'
                                 'The sampling rate of both sets of coordinates is expected to be the same within '
                                 'tolerance %.4f: %.4f != %.4f' % (sRateTol, firstSRate, secondSRate))
-        if not subparticles.getIsSubparticles():
-            validateMsgs.append('Set assigned as subparticles is not a subparticles set. '
-                                'This error message may appear for old versions of localrec prior to 3.1.0. '
-                                'If this is the case please re-extract the subparticles')
+        #if not subparticles.getIsSubparticles():
+        #    validateMsgs.append('Set assigned as subparticles is not a subparticles set. '
+        #                        'This error message may appear for old versions of localrec prior to 3.1.0. '
+        #                        'If this is the case please re-extract the subparticles')
 
         return validateMsgs
 

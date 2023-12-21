@@ -59,8 +59,8 @@ class ProtLocalizedSubparticleDistributionViewer(ProtocolViewer):
 
         file1.close()
 
-
-        plt.bar(idxList, wList)
+        print(idxList)
+        plt.bar(idxList, wList, align='center')
         plt.title('Number of subparticles distribution')
         plt.xlabel('Number of subparticles')
         plt.ylabel('Number of particles')
