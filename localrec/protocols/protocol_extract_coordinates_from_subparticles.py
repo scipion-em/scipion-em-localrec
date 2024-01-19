@@ -84,7 +84,7 @@ class ProtExtractCoordSubparticles(ProtParticlePicking, ProtParticles):
         inputSubParticlesSet = self.inputSubParticles.get()
         inputParticlesSet = self.inputParticles.get()
         outputSet = self._createSetOfCoordinates(inputParticlesSet)
-        # we set the boxsize the coordinates as 1/0 of the boxsize of the subparticles.
+        # we set the boxsize the coordinates as 1/10 of the boxsize of the subparticles.
         boxsize = 0.1 * inputParticlesSet.getXDim()
         outputSet.setBoxSize(boxsize)
         idx = 1  # counter to make coordinates id unique
