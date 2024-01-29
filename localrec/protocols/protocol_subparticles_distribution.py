@@ -48,7 +48,7 @@ class ProtLocalizedSubparticleDistribution(ProtParticlePicking, ProtParticles):
     subparticles per particle (protein) is variable. This protocol estimates the histogram
     of the number of subparticles per particle.
     """
-    _label = 'subparticles distribution'
+    _label = 'subparticles distribution new'
 
     def __init__(self, **args):
         ProtParticlePicking.__init__(self, **args)
@@ -57,11 +57,18 @@ class ProtLocalizedSubparticleDistribution(ProtParticlePicking, ProtParticles):
     # -------------------------- DEFINE param functions -----------------------
     def _defineParams(self, form):
         form.addSection(label='Input')
-        form.addParam('inputSet', PointerParam,
+        form.addParam('inputCoordinates', PointerParam,
                       pointerClass='SetOfCoordinates',
                       important=True,
                       label="Subparticles Coordinates",
-                      help='Select the input set of coordinates of subparticles to be classified.')
+                      help='Select the input set of coordinates of subparticles.')
+
+        form.addParam('inputParticles', PointerParam,
+                      pointerClass='SetOfParticles',
+                      important=True,
+                      label="Particles",
+                      help='This is the set of particles where the subparticles are')
+
         form.addParam('maxNumSubpart', IntParam,
                       important=True,
                       default=60,
@@ -76,30 +83,40 @@ class ProtLocalizedSubparticleDistribution(ProtParticlePicking, ProtParticles):
 
     # -------------------------- STEPS functions -----------------------------
     def convertInputStep(self):
-        inputSubParticles = self.inputSet.get()
+        inputParts = self.inputParticles.get()
+        inputCoord = self.inputCoordinates.get()
 
-        # The set of coordinates are read and stored as a dictonary. All subparticles with the same micId
+        # The set of coordinates are read and stored as a dictionary. All subparticles with the same micId
         # are stored in the same dictionary key
         self.subPartsDict = {}
-
-        for subpart in inputSubParticles.iterItems():
+        filledParticles = 0
+        for subpart in inputCoord.iterItems():
             particleKey = str(subpart.getMicId())
             if particleKey not in self.subPartsDict:
-                self.subPartsDict[particleKey] = []
-            self.subPartsDict[particleKey].append(subpart.clone())
+                self.subPartsDict[particleKey] = 0
+                filledParticles += 1
+            self.subPartsDict[particleKey] += 1
+
+        numberOfParticles = inputParts.getSize()
+        numberOfEmptyParticles = numberOfParticles - len(self.subPartsDict)
+        for i in range(0, numberOfEmptyParticles):
+            randomKey = 'randomKey%i' % i
+            self.subPartsDict[randomKey] = 0
+
 
     def groupByCardinalOfClasses(self):
 
         maxNumber = self.maxNumSubpart.get()
         fnHistogram = self._getExtraPath('histogram.txt')
         f = open(fnHistogram, "a")
+        print(self.subPartsDict)
 
         subpartNumber = []
         for key in self.subPartsDict:
-            subpartNumber.append(len(self.subPartsDict[key]))
+            subpartNumber.append(self.subPartsDict[key])
 
         import matplotlib.pyplot as plt
-        counts, bins = np.histogram(subpartNumber, bins=maxNumber)
+        counts, bins = np.histogram(subpartNumber, bins=range(0,maxNumber+1))
         #plt.show()
 
         fnHistogram = self._getExtraPath('histogram.txt')

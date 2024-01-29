@@ -26,14 +26,14 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from pyworkflow.viewer import (ProtocolViewer, DESKTOP_TKINTER, WEB_DJANGO)
-from ..protocols.protocol_subparticles_distribution import ProtLocalizedSubparticleDistribution2
+from ..protocols.protocol_subparticles_distribution import ProtLocalizedSubparticleDistribution
 
 
 class ProtLocalizedSubparticleDistributionViewer(ProtocolViewer):
     """ Visualization of the subparticles distribution
     """
     _label = 'viewer subparticle distribution'
-    _targets = [ProtLocalizedSubparticleDistribution2]
+    _targets = [ProtLocalizedSubparticleDistribution]
 
     _environments = [DESKTOP_TKINTER, WEB_DJANGO]
 
@@ -58,8 +58,7 @@ class ProtLocalizedSubparticleDistributionViewer(ProtocolViewer):
             wList.append(int(parsed[1]))
 
         file1.close()
-
-        print(idxList)
+        plt.figure()
         plt.bar(idxList, wList, align='center')
         plt.title('Number of subparticles distribution')
         plt.xlabel('Number of subparticles')
