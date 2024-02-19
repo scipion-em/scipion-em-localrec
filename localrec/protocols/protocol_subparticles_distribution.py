@@ -86,15 +86,23 @@ class ProtLocalizedSubparticleDistribution(ProtParticlePicking, ProtParticles):
         inputParts = self.inputParticles.get()
         inputCoord = self.inputCoordinates.get()
 
+        self.myparticles = {}
         # The set of coordinates are read and stored as a dictionary. All subparticles with the same micId
         # are stored in the same dictionary key
         self.subPartsDict = {}
         filledParticles = 0
         for subpart in inputCoord.iterItems():
-            particleKey = str(subpart.getMicId())
+            micid = subpart.getMicId()
+            particleKey = str(micid)
+            if micid not in self.myparticles:
+                self.myparticles[micid] = 0
+            for p in inputParts.iterItems():
+                if p.getObjId() == micid:
+                    self.myparticles[micid] += 1
             if particleKey not in self.subPartsDict:
                 self.subPartsDict[particleKey] = 0
                 filledParticles += 1
+
             self.subPartsDict[particleKey] += 1
 
         numberOfParticles = inputParts.getSize()
@@ -106,18 +114,15 @@ class ProtLocalizedSubparticleDistribution(ProtParticlePicking, ProtParticles):
 
     def groupByCardinalOfClasses(self):
 
-        maxNumber = self.maxNumSubpart.get()
-        fnHistogram = self._getExtraPath('histogram.txt')
-        f = open(fnHistogram, "a")
-        print(self.subPartsDict)
+        # diccionario con key = particle id y la clase sea el valor
 
+
+        maxNumber = self.maxNumSubpart.get()
         subpartNumber = []
         for key in self.subPartsDict:
             subpartNumber.append(self.subPartsDict[key])
 
-        import matplotlib.pyplot as plt
         counts, bins = np.histogram(subpartNumber, bins=range(0,maxNumber+1))
-        #plt.show()
 
         fnHistogram = self._getExtraPath('histogram.txt')
         f = open(fnHistogram, "a")
@@ -127,6 +132,34 @@ class ProtLocalizedSubparticleDistribution(ProtParticlePicking, ProtParticles):
             f.writelines(line)
         f.close()
 
+        classes2D = self._createSetOfClasses2D(self.inputParticles)
+
+        self._fillClassesFromLevel(classes2D)
+
+        self._defineOutputs(**{'setofclasses': classes2D})
+        self._defineSourceRelation(self.inputParticles, classes2D)
+
+    def _fillClassesFromLevel(self, clsSet):
+        """ Create the SetOfClasses2D from a given iteration. """
+
+        # the particle with orientation parameters (all_parameters)
+        clsSet.classifyItems(updateItemCallback=self._updateParticle)
+
+
+    def _updateParticle(self, item):
+        classId = self.myparticles[item.getObjId()]
+        item.setClassId(classId)
+
+    '''
+    def _updateClass(self, class2D):
+        classId = class2D.getObjId()
+        if classId in self._classesInfo:
+            index, fn, row = self._classesInfo[classId]
+            class2D.setAlignment2D()
+            class2Drep = class2D.getRepresentative()
+            class2Drep.setLocation(index, fn)
+            class2Drep.setSamplingRate(class2D.getSamplingRate())
+    '''
 
     # -------------------------- INFO functions --------------------------------
     def _validate(self):
