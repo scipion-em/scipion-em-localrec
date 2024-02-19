@@ -92,13 +92,15 @@ class ProtLocalizedSubparticleDistribution(ProtParticlePicking, ProtParticles):
         self.subPartsDict = {}
         filledParticles = 0
         for subpart in inputCoord.iterItems():
+            clasid = 0
             micid = subpart.getMicId()
             particleKey = str(micid)
             if micid not in self.myparticles:
                 self.myparticles[micid] = 0
             for p in inputParts.iterItems():
                 if p.getObjId() == micid:
-                    self.myparticles[micid] += 1
+                    clasid += 1
+            self.myparticles[micid] = clasid
             if particleKey not in self.subPartsDict:
                 self.subPartsDict[particleKey] = 0
                 filledParticles += 1
