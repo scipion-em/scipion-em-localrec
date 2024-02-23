@@ -86,21 +86,28 @@ class ProtLocalizedSubparticleDistribution(ProtParticlePicking, ProtParticles):
         inputParts = self.inputParticles.get()
         inputCoord = self.inputCoordinates.get()
 
+        # agg = inputParts.aggregate(["count"], '_micId', '_micId')
+
         self.myparticles = {}
         # The set of coordinates are read and stored as a dictionary. All subparticles with the same micId
         # are stored in the same dictionary key
         self.subPartsDict = {}
         filledParticles = 0
         for subpart in inputCoord.iterItems():
-            clasid = 0
+            #clasid = 0
             micid = subpart.getMicId()
             particleKey = str(micid)
             if micid not in self.myparticles:
                 self.myparticles[micid] = 0
+
+            for agg in inputParts.aggregate(["count"], '_micId', ['_micId']):
+                self.myparticles[micid] = int(agg["count"])
+            '''
             for p in inputParts.iterItems():
                 if p.getObjId() == micid:
                     clasid += 1
-            self.myparticles[micid] = clasid
+            '''
+            #self.myparticles[micid] = clasid
             if particleKey not in self.subPartsDict:
                 self.subPartsDict[particleKey] = 0
                 filledParticles += 1
@@ -115,10 +122,6 @@ class ProtLocalizedSubparticleDistribution(ProtParticlePicking, ProtParticles):
 
 
     def groupByCardinalOfClasses(self):
-
-        # diccionario con key = particle id y la clase sea el valor
-
-
         maxNumber = self.maxNumSubpart.get()
         subpartNumber = []
         for key in self.subPartsDict:
@@ -147,21 +150,10 @@ class ProtLocalizedSubparticleDistribution(ProtParticlePicking, ProtParticles):
         # the particle with orientation parameters (all_parameters)
         clsSet.classifyItems(updateItemCallback=self._updateParticle)
 
-
-    def _updateParticle(self, item):
+    def _updateParticle(self, item, row):
         classId = self.myparticles[item.getObjId()]
         item.setClassId(classId)
 
-    '''
-    def _updateClass(self, class2D):
-        classId = class2D.getObjId()
-        if classId in self._classesInfo:
-            index, fn, row = self._classesInfo[classId]
-            class2D.setAlignment2D()
-            class2Drep = class2D.getRepresentative()
-            class2Drep.setLocation(index, fn)
-            class2Drep.setSamplingRate(class2D.getSamplingRate())
-    '''
 
     # -------------------------- INFO functions --------------------------------
     def _validate(self):
