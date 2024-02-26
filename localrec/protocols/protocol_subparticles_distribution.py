@@ -92,27 +92,31 @@ class ProtLocalizedSubparticleDistribution(ProtParticlePicking, ProtParticles):
         # The set of coordinates are read and stored as a dictionary. All subparticles with the same micId
         # are stored in the same dictionary key
         self.subPartsDict = {}
-        filledParticles = 0
-        for subpart in inputCoord.iterItems():
+        #filledParticles = 0
+
+        self.mysubDict = {}
+        for c in inputCoord.iterItems():
             #clasid = 0
-            micid = subpart.getMicId()
+            micid = c.getMicId()
             particleKey = str(micid)
+            if particleKey not in self.subPartsDict:
+                self.mysubDict[particleKey] = 0
+            self.mysubDict[particleKey] += 1
+
+            if particleKey not in self.subPartsDict:
+                self.subPartsDict[particleKey] = 0
+                #filledParticles += 1
+
+            for p in inputParts.iterItems():
+                objId = p.getObjId()
+                if objId == micid:
+                    self.subPartsDict[particleKey] += 1
+                    break
             if micid not in self.myparticles:
                 self.myparticles[micid] = 0
 
-            for agg in inputParts.aggregate(["count"], '_micId', ['_micId']):
-                self.myparticles[micid] = int(agg["count"])
-            '''
-            for p in inputParts.iterItems():
-                if p.getObjId() == micid:
-                    clasid += 1
-            '''
-            #self.myparticles[micid] = clasid
-            if particleKey not in self.subPartsDict:
-                self.subPartsDict[particleKey] = 0
-                filledParticles += 1
-
-            self.subPartsDict[particleKey] += 1
+        for key in self.myparticles:
+            self.myparticles[key] = self.subPartsDict[particleKey]
 
         numberOfParticles = inputParts.getSize()
         numberOfEmptyParticles = numberOfParticles - len(self.subPartsDict)
@@ -126,8 +130,7 @@ class ProtLocalizedSubparticleDistribution(ProtParticlePicking, ProtParticles):
         subpartNumber = []
         for key in self.subPartsDict:
             subpartNumber.append(self.subPartsDict[key])
-
-        counts, bins = np.histogram(subpartNumber, bins=range(0,maxNumber+1))
+        counts, bins = np.histogram(subpartNumber, bins=range(0,maxNumber+2))
 
         fnHistogram = self._getExtraPath('histogram.txt')
         f = open(fnHistogram, "a")
@@ -151,7 +154,7 @@ class ProtLocalizedSubparticleDistribution(ProtParticlePicking, ProtParticles):
         clsSet.classifyItems(updateItemCallback=self._updateParticle)
 
     def _updateParticle(self, item, row):
-        classId = self.myparticles[item.getObjId()]
+        classId = self.mysubDict[str(item.getObjId())]
         item.setClassId(classId)
 
 
