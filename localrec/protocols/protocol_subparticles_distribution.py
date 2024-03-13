@@ -87,7 +87,7 @@ class ProtLocalizedSubparticleDistribution(ProtParticlePicking, ProtParticles):
         inputCoord = self.inputCoordinates.get()
 
         # agg = inputParts.aggregate(["count"], '_micId', '_micId')
-
+        '''
         self.myparticles = {}
         # The set of coordinates are read and stored as a dictionary. All subparticles with the same micId
         # are stored in the same dictionary key
@@ -99,7 +99,7 @@ class ProtLocalizedSubparticleDistribution(ProtParticlePicking, ProtParticles):
             #clasid = 0
             micid = c.getMicId()
             particleKey = str(micid)
-            if particleKey not in self.subPartsDict:
+            if particleKey not in self.mysubDict:
                 self.mysubDict[particleKey] = 0
             self.mysubDict[particleKey] += 1
 
@@ -124,7 +124,35 @@ class ProtLocalizedSubparticleDistribution(ProtParticlePicking, ProtParticles):
             randomKey = 'randomKey%i' % i
             self.subPartsDict[randomKey] = 0
 
+        '''
 
+        #Initializing the subparticles dictionary
+        self.subParticleInParticleDict = {}
+
+        for p in inputParts.iterItems():
+            objId = p.getObjId()
+            if objId not in self.subParticleInParticleDict:
+                self.subParticleInParticleDict[objId] = 0
+
+        # We fill the subParticleDict
+        for c in inputCoord.iterItems():
+            # Selecting the particleId This is the micId
+            micid = c.getMicId()
+            self.subParticleInParticleDict[micid] += 1
+
+#        self.particlesPerClass = {}
+#        for key in self.subParticleInParticleDict:
+#            self.subParticleInParticleDict[key].
+        '''
+        keylist = []
+        subpartNumber = []
+        for key in self.subParticleInParticleDict:
+            subpartNumber.append(self.subParticleInParticleDict[key])
+            keylist.append(key)
+        '''
+
+
+    '''
     def groupByCardinalOfClasses(self):
         maxNumber = self.maxNumSubpart.get()
         subpartNumber = []
@@ -146,15 +174,44 @@ class ProtLocalizedSubparticleDistribution(ProtParticlePicking, ProtParticles):
 
         self._defineOutputs(**{'setofclasses': classes2D})
         self._defineSourceRelation(self.inputParticles, classes2D)
+    '''
+    def groupByCardinalOfClasses(self):
+
+        maxNumber = self.maxNumSubpart.get()
+        subpartNumber = []
+        subpartNumber = []
+        for key in self.subParticleInParticleDict:
+            subpartNumber.append(self.subParticleInParticleDict[key])
+        counts, bins = np.histogram(subpartNumber, bins=range(0,maxNumber+2))
+
+        fnHistogram = self._getExtraPath('histogram.txt')
+        f = open(fnHistogram, "a")
+
+        for i in range(0, len(counts)):
+            line = ' %i,%i \n' % (bins[i], counts[i])
+            f.writelines(line)
+        f.close()
+
+
+        classes2D = self._createSetOfClasses2D(self.inputParticles)
+
+        self._fillClassesFromLevel(classes2D)
+
+        self._defineOutputs(**{'setofclasses': classes2D})
+        self._defineSourceRelation(self.inputParticles, classes2D)
 
     def _fillClassesFromLevel(self, clsSet):
         """ Create the SetOfClasses2D from a given iteration. """
 
         # the particle with orientation parameters (all_parameters)
         clsSet.classifyItems(updateItemCallback=self._updateParticle)
-
+    '''
     def _updateParticle(self, item, row):
         classId = self.mysubDict[str(item.getObjId())]
+        item.setClassId(classId)
+    '''
+    def _updateParticle(self, item, row):
+        classId = self.subParticleInParticleDict[item.getObjId()]
         item.setClassId(classId)
 
 
