@@ -311,7 +311,7 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
 
     subparticles = []
     subparticles_total += 1
-    symmetry_matrix_ids = range(1, len(symmetry_matrices) + 1)
+    symmetry_matrix_ids = list(range(1, len(symmetry_matrices) + 1))
 
     if randomize:
         # randomize the order of symmetry matrices, prevents preferred views
