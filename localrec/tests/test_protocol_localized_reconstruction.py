@@ -237,7 +237,8 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
         self.assertEqual(checkSize, prot.outputCoordinates.getSize())
 
         coord = prot.outputCoordinates[10]
-        cShifts, cAngles = geometryFromMatrix(inv((coord._subparticle.getTransform().getMatrix())))
+        cShifts, cAngles = geometryFromMatrix(
+            inv((coord._subparticle.getTransform().getMatrix())))
         cAngles = [math.degrees(cAngles[j]) for j in range(len(cAngles))]
 
         self.assertAlmostEqual(first=cAngles[0],
@@ -282,7 +283,8 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
         # 1000 self.assertEqual(checkSize, prot.outputCoordinates.getSize())
         coord = prot.outputCoordinates.getFirstItem()
 
-        cShifts, cAngles = geometryFromMatrix(inv((coord._subparticle.getTransform().getMatrix())))
+        cShifts, cAngles = geometryFromMatrix(
+            inv((coord._subparticle.getTransform().getMatrix())))
         cAngles = [math.degrees(cAngles[j]) for j in range(len(cAngles))]
         self.assertAlmostEqual(first=cAngles[0],
                                second=angles[0], delta=1000,
@@ -355,7 +357,8 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
         # Test for filter sub-particles which are aligned in the z
         localUniqueAligend = self._runFilterSubParticles(
             120, [149.0, 64.9, 73.2],
-            localSubparticlesAligned, unique=5, label='filter aligned unique=5')
+            localSubparticlesAligned, unique=5,
+            label='filter aligned unique=5')
         self._runFilterSubParticles(
             90, [149.0, 64.9, 73.2],
             localSubparticlesAligned, unique=5, mindist=6,
@@ -459,20 +462,8 @@ END
         f.write(PDBString.encode('utf8'))
         f.close()
         protImportPDB = self._importAtomStruct(f.name)
-        # # volume
-        # featDict = self.generate_cyclic(order=8, offset=0.)
-        # filename = self.createFeatFile(
-        #     featDict, dim=3, bgDensity=0., scale=60.)
-        # volume = self._createMask(filename)
-        # self.chimeraOperate(volume.outputMask, protImportPDB.outputPdb,
-        #                     objLabel='Chimera show pdb in volume')
-
-        # call protocol
-        # WARNING: the 3D map and the pdb are not related
-        # Therefore they will not fit
-        print("connect to process, file=sys.stderr)")
+        # time used to connect to debugger to process
         # time.sleep(30)
-        print("time done, file=sys.stderr)")
         protSetOrig = self.newProtocol(ProtLocalOrigSampling,
                                        inVolume=relionRecons.outputVolume,
                                        inputProtocol=localSubparticles,
@@ -532,7 +523,6 @@ END
         return protImportVol, protImportPart
 
     def generate_ico(self, sym):
-        print("SYM=", sym)
         icosahedron = Icosahedron(orientation=sym)  # 'i222r'
         featList = []
         #  sphere in virus center, helps centering
@@ -553,7 +543,7 @@ END
                 dot_product = np.dot(_5fold, _5fold_copy)
                 norm_5fold = np.linalg.norm(_5fold)
                 norm_5fold_copy = np.linalg.norm(_5fold_copy)
-                
+
                 cos_angle = dot_product / (norm_5fold * norm_5fold_copy)
                 if cos_angle > 1.0:  # avoid runding errors
                     cos_angle = 1.0
