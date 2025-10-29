@@ -45,34 +45,45 @@ from pyworkflow import SCIPION_DEBUG_NOCLEAN
 
 class Vector3:
     def __init__(self):
-        self.vector = np.empty((3,), dtype=float)
+        # use generalized 4x4 matrices for rotation
+        # instead of 3x3
+        self.vector = np.empty((4,), dtype=float)
         self.length = 0
         self.matrix = np.identity(4, dtype=float)
 
     def set_vector(self, v):
-        self.vector = np.array(v)
+        # self.vector = np.array(v, dtype=float)
+        self.vector[:len(v)] = np.array(v, dtype=float)
+        # if len(v) == 3 add and extra coordinate
+        if len(v) == 3:
+            self.vector[-1] = 1.0
 
     def get_length(self):
         return self.length
 
     def get_matrix(self):
+        """ Return only the 3x3 rotation part of the matrix. """
         return self.matrix[0:3, 0:3]
+
+    def get_matrix4(self):
+        return self.matrix
 
     def set_length(self, d):
         self.length = float(d)
 
     def compute_length(self):
-        self.set_length(vector_norm(self.vector))
+        self.set_length(vector_norm(self.vector[0:3]))
 
     def compute_unit_vector(self):
-        self.set_vector(unit_vector(self.vector))
+        self.set_vector(unit_vector(self.vector[0:3]))
 
     def compute_matrix(self):
         """ Compute rotation matrix to align Z axis to this vector. """
 
         if abs(self.vector[0]) < 0.00001 and abs(self.vector[1]) < 0.00001:
-            rot = math.radians(0.00)
-            tilt = math.radians(0.00)
+            # ROB no need to convert  0 to radians
+            rot = 0  # math.radians(0.00)
+            tilt = 0  # math.radians(0.00)
         else:
             rot = math.atan2(self.vector[1], self.vector[0])
             tilt = math.acos(self.vector[2])
@@ -81,7 +92,7 @@ class Vector3:
         self.matrix = euler_matrix(-rot, -tilt, -psi, 'szyz')
 
     def print_vector(self):
-        print("[%.3f,%.3f,%.3f]" % (self.vector[0], self.vector[1], self.vector[2]))
+        print(f"[{self.vector[0]:.3f},{self.vector[1]:.3f},{self.vector[2]:.3f}]")
 
 
 def geometryFromMatrix(matrix):
@@ -120,6 +131,7 @@ def load_vectors(cmm_file, vectors_str, distances_str, angpix):
     if cmm_file:
         subparticle_vector_list = vectors_from_cmm(cmm_file, angpix)
     else:
+        print("Loading vectors from string...", vectors_str)
         subparticle_vector_list = vectors_from_string(vectors_str)
 
     if float(distances_str) > 0.0:
@@ -186,12 +198,10 @@ def vectors_from_string(input_str):
     x1,y1,z1; x2,y2,z2 ... etc
     """
     vectors = []
-
     for vectorStr in input_str.split(';'):
         v = Vector3()
         v.set_vector([float(x) for x in vectorStr.split(',')])
         vectors.append(v)
-
     return vectors
 
 
@@ -271,6 +281,7 @@ def filter_mindist(subparticles, subpart, mindist, keepRedundant):
 
     return True
 
+
 def filter_distorigin(subparticles, subpart, distorigin):
     "return True is particle must be kept"
     # original particle dimensions
@@ -285,6 +296,7 @@ def filter_distorigin(subparticles, subpart, distorigin):
     # distance to center
     distance_sqr = (x - xDim/2.) ** 2 + (y - yDim/2.) ** 2
     return distance_sqr > (distorigin ** 2)
+
 
 def filter_side(subpart, side):
     return (abs(abs(subpart._angles[1]) - math.radians(90))) < math.radians(side)
@@ -318,38 +330,52 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
         random.shuffle(symmetry_matrix_ids)
 
     for subparticle_vector in subparticle_vector_list:
-        matrix_from_subparticle_vector = subparticle_vector.get_matrix()
-
+        matrix_from_subparticle_vector = subparticle_vector.get_matrix4()
         for symmetry_matrix_id in symmetry_matrix_ids:
             # symmetry_matrix_id can be later written out to find out
             # which symmetry matrix created this subparticle
-            symmetry_matrix = np.array(symmetry_matrices[symmetry_matrix_id - 1][0:3, 0:3])
+            # symmetry_matrix = np.array(symmetry_matrices[symmetry_matrix_id - 1][0:3, 0:3])
+            # ROB
+            symmetry_matrix = np.array(
+                symmetry_matrices[symmetry_matrix_id - 1]
+                )
 
             subpart = particle.clone()
-            m = np.matmul(matrix_particle[0:3, 0:3], (np.matmul(symmetry_matrix.transpose(),
-                                                                matrix_from_subparticle_vector.transpose())))
+
+            m = np.matmul(
+                matrix_particle,
+                (np.matmul(np.linalg.inv(symmetry_matrix),
+                           np.linalg.inv(matrix_from_subparticle_vector)))
+                )
+
             angles_org = -1.0 * np.ones(3) * euler_from_matrix(m, 'szyz')
             if align_subparticles:
                 angles = -1.0 * np.ones(3) * euler_from_matrix(m, 'szyz')
             else:
-                m2 = np.matmul(matrix_particle[0:3, 0:3], symmetry_matrix.transpose())
+                # m2 = np.matmul(matrix_particle[0:3, 0:3], symmetry_matrix.transpose())
+                # m2 = np.matmul(matrix_particle, symmetry_matrix.transpose())
+                m2 = np.matmul(matrix_particle, np.linalg.inv(symmetry_matrix))
                 angles = -1.0 * np.ones(3) * euler_from_matrix(m2, 'szyz')
+                print("m2", m2)
 
             # subparticle origin
             d = subparticle_vector.get_length()
-            x = -m[0, 2] * d + shifts[0]
-            y = -m[1, 2] * d + shifts[1]
-            z = -m[2, 2] * d
+            x = -m[0, 2] * d + shifts[0] - m[0, 3]
+            y = -m[1, 2] * d + shifts[1] - m[1, 3]
+            z = -m[2, 2] * d - m[2, 3]  # m[2,3]=0 is not traslational symmetry
 
             # save the subparticle coordinates (integer part) relative to the
-            # user given image size and as a small shift in the origin (decimal part)
+            # user given image size and as a small shift in the origin
+            # (decimal part)
             x_d, x_i = math.modf(x)
             y_d, y_i = math.modf(y)
 
             alignment = em.objects.data.Transform()
             alignmentOrg = em.objects.data.Transform()
-            M = matrixFromGeometry(np.array([x_d, y_d, 0]), angles, True)
-            MOrg = matrixFromGeometry(np.array([x_d, y_d, 0]), angles_org, True)
+            M = matrixFromGeometry(
+                np.array([x_d, y_d, 0]), angles, True)
+            MOrg = matrixFromGeometry(
+                np.array([x_d, y_d, 0]), angles_org, True)
             alignment.setMatrix(M)
             alignmentOrg.setMatrix(MOrg)
             subpart._transorg = alignmentOrg.clone()
