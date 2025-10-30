@@ -622,7 +622,7 @@ END
                 featList.append(feat.copy())
         return featList
 
-    def generate_helical(self, sym, order, riseValue, twist,
+    def generate_helical(self, sym, order, rise, twist,
                          nelements, Radius, radius):
         """ Generate helical feature file
         4 parameters:
@@ -641,14 +641,14 @@ END
                 theta = math.radians(element * twist)
                 x = math.cos(theta + 2 * math.pi * strand/order) * Radius
                 y = math.sin(theta + 2 * math.pi * strand/order) * Radius
-                z = element * riseValue
+                z = element * rise
                 feat['center'] = f"{x:.3f} {y:.3f} {z:.3f}"
                 feat['specific'] = f'{radius:.3f}'
                 featList.append(feat.copy())
         return featList
 
     def generate(self, sym='I2n5', label=None,
-                 offset=0., riseValue=0, twist=0, extraSym='c1'):
+                 offset=0., rise=0, twist=0, extraSym='c1'):
 
         global _cache
         key_sym = sym+extraSym
@@ -681,7 +681,7 @@ END
             featDict = self.generate_helical(
                 sym=extraSym[0],
                 order=int(extraSym[1:]),
-                riseValue=riseValue,
+                rise=rise,
                 twist=twist,
                 nelements=40,
                 Radius=100,
@@ -738,7 +738,7 @@ END
     def testExtractCoordinatesHelicalC1(self):
         # Radius = 100
         # radius = 5
-        riseValue = 5  # raise is a reserver word in python
+        rise = 5  # raise is a reserver word in python
         twist = 18
 
         # H1
@@ -746,10 +746,10 @@ END
         # generate projections
         protImportVol, protImport = self.generate(
             SCIPION_SYM_NAME[SYM_HELICAL], "helical-C1", offset=0.,
-            riseValue=riseValue, twist=twist)
+            rise=rise, twist=twist)
         # execute define subparticles
         localSubparticles = self._runSubparticles(
-            3588,  # 1 + 92 * dim // (riseValue*2)
+            3588,  # 1 + 92 * dim // (rise*2)
             [0, 0, 0],
             defVector=1,
             vector='1.000, 0.000, 0.000',
@@ -759,7 +759,7 @@ END
             symmetryOrder=symOrder,
             label='define helical subparticles C1',
             percentage=50,
-            riseValue=riseValue,
+            rise=rise,
             twist=twist,
             inputParticles=protImport.outputParticles)
         # extract subparticles
@@ -777,7 +777,7 @@ END
     def testExtractCoordinatesHelicalC4(self):
         # Radius = 100
         # radius = 5
-        riseValue = 5  # raise is a reserver word in python
+        rise = 5  # raise is a reserver word in python
         twist = 18
 
         # H4
@@ -785,10 +785,10 @@ END
         # generate projections
         protImportVol, protImport = self.generate(
             SCIPION_SYM_NAME[SYM_HELICAL], "helical-C4", offset=0.,
-            riseValue=riseValue, twist=twist, extraSym='C4')
+            rise=rise, twist=twist, extraSym='C4')
         # execute define subparticles
         localSubparticles = self._runSubparticles(
-            14352,  # symOrder * (1 + 92 * dim // (riseValue*2))
+            14352,  # symOrder * (1 + 92 * dim // (rise*2))
             [0, 0, 0],
             defVector=1,
             vector='1.000, 0.000, 0.000',
@@ -799,7 +799,7 @@ END
             extraSym=ProtLocalizedRecons.map_sym[SYM_CYCLIC],
             label='define helical subparticles C4',
             percentage=50,
-            riseValue=riseValue,
+            rise=rise,
             twist=twist,
             inputParticles=protImport.outputParticles
             )

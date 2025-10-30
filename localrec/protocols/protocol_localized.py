@@ -115,10 +115,10 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
                   "format in Xmipp.\n"
                   "If no symmetry is present, use _c1_."
         )
-        group.addParam('riseValue', FloatParam, default=0.0,
+        group.addParam('rise', FloatParam, default=0.0,
                        condition='symGrp==%d' % self.map_sym[SYM_HELICAL],
-                       label='Rise (A)',
-                       help='The rise is the linear distance along the helix'
+                       label='Raise (A)',
+                       help='The raise is the linear distance along the helix'
                             ' axis between consecutive repeating units.')
         group.addParam('twist', FloatParam, default=0.0,
                        condition='symGrp==%d' % self.map_sym[SYM_HELICAL],
@@ -214,15 +214,15 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
         sym = self.sym_map.get(sym, sym)  # Keeps original value if not found
 
         if sym == SYM_HELICAL:
-            riseValue = self.riseValue.get()
+            rise = self.rise.get()
             twist = self.twist.get()
             percentage = self.percentage.get() / 100.0
             dim = params["dim"]
-            n = int((dim * percentage) / riseValue / 2)  # number of subparticles/2
+            n = int((dim * percentage) / rise / 2)  # number of subparticles/2
             # ROB DEBUG
             symMatrices = getSymmetryMatrices(sym=sym,
                                               n=n,
-                                              riseValue=riseValue,
+                                              rise=rise,
                                               angle=twist
                                               )
             extraSym = self.symGrpExtra.get()
