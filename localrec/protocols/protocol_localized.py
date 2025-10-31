@@ -215,6 +215,7 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
 
         if sym == SYM_HELICAL:
             rise = self.rise.get()
+            rise = rise / params["pxSize"]  # in pixels
             twist = self.twist.get()
             percentage = self.percentage.get() / 100.0
             dim = params["dim"]
