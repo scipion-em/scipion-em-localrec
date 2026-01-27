@@ -30,6 +30,7 @@ wrapping Localized recontruction of subunits.
 """
 import os
 import pwem
+from pyworkflow import SPA
 from pyworkflow.utils import Environ
 from localrec.constants import *
 from localrec.convert import *
@@ -43,6 +44,7 @@ _references = ['Ilca2015', 'Abrishami2020']
 class Plugin(pwem.Plugin):
     _homeVar = LOCALREC_HOME
     _pathVars = [LOCALREC_HOME]
+    _processingField = [SPA]
 
     @classmethod
     def _defineVariables(cls):
