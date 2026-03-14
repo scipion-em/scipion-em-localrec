@@ -123,6 +123,7 @@ class ProtLocalizedExtraction(ProtParticles):
             # If particle is not in inputParticles, subparticles will not be
             # generated. Now, subtract from a subset of original particles is
             # supported.
+            i += 1
             if partId not in partIdExcluded:
                 xpos = coord.getX()
                 ypos = coord.getY()
@@ -136,7 +137,7 @@ class ProtLocalizedExtraction(ProtParticles):
                 # Crop the sub-particle data from the whole particle image
                 center[:, :] = data[ypos - b2:ypos + b2, xpos - b2:xpos + b2]
                 outputImg.setData(center)
-                i += 1
+                # i += 1
                 outputImg.write((i, outputStack))
                 subpart = coord._subparticle
                 subpart.setLocation(
