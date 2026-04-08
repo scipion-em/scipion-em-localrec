@@ -276,7 +276,7 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
         for i, part in enumerate(inputSet):
             if i % step == 0:
                 progress.update(i+1)
-
+            print(f"======================{i}====================")
             subparticles = create_subparticles(part, symMatrices,
                                                subpartVectorList,
                                                params["dim"],

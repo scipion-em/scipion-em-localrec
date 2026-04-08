@@ -320,7 +320,7 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
     # Euler angles that take particle to the orientation of the model
     matrix_particle = inv(particle.getTransform().getMatrix())
     shifts, angles = geometryFromMatrix(matrix_particle)
-
+    print(">>>>>>>>>>>>>>>> shifts, angles", shifts, angles)
     subparticles = []
     subparticles_total += 1
     symmetry_matrix_ids = list(range(1, len(symmetry_matrices) + 1))
@@ -347,7 +347,7 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
                 (np.matmul(np.linalg.inv(symmetry_matrix),
                            np.linalg.inv(matrix_from_subparticle_vector)))
                 )
-
+            print("m", m)
             angles_org = -1.0 * np.ones(3) * euler_from_matrix(m, 'szyz')
             if align_subparticles:
                 angles = -1.0 * np.ones(3) * euler_from_matrix(m, 'szyz')
@@ -363,13 +363,13 @@ def create_subparticles(particle, symmetry_matrices, subparticle_vector_list,
             x = -m[0, 2] * d + shifts[0] - m[0, 3]
             y = -m[1, 2] * d + shifts[1] - m[1, 3]
             z = -m[2, 2] * d - m[2, 3]  # m[2,3]=0 is not traslational symmetry
-
+            print("d, x, y, z", d, x, y, z)
             # save the subparticle coordinates (integer part) relative to the
             # user given image size and as a small shift in the origin
             # (decimal part)
             x_d, x_i = math.modf(x)
             y_d, y_i = math.modf(y)
-
+            print("x_d y_d, x_i, y_i", x_d, y_d, x_i, y_i)
             alignment = em.objects.data.Transform()
             alignmentOrg = em.objects.data.Transform()
             M = matrixFromGeometry(
