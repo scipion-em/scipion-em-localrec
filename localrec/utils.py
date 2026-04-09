@@ -272,6 +272,7 @@ def filter_mindist(subparticles, subpart, mindist, keepRedundant):
 
     return True
 
+
 def filter_distorigin(subparticles, subpart, distorigin):
     "return True is particle must be kept"
     # original particle dimensions
@@ -286,6 +287,7 @@ def filter_distorigin(subparticles, subpart, distorigin):
     # distance to center
     distance_sqr = (x - xDim/2.) ** 2 + (y - yDim/2.) ** 2
     return distance_sqr > (distorigin ** 2)
+
 
 def filter_side(subpart, side):
     return (abs(abs(subpart._angles[1]) - math.radians(90))) < math.radians(side)
