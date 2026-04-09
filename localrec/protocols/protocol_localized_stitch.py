@@ -101,6 +101,8 @@ class ProtLocalizedStich(ProtPreprocessVolumes):
                       label='Localrec previous runs', allowsNull=True,
                       condition="usePreRun",
                       help="Previous Localrec runs used to extract the parameters")
+        # ROB symmetryGroup should be defined as in ProtLocalizedReconstruction
+        # but it is not clear if only icosahedral symmetry is supported.
         form.addParam('symmetryGroup', StringParam, default='I1',
                       label="Symmetry", condition="not usePreRun",
                       help='There are multiple possibilities for '

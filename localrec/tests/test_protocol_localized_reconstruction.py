@@ -28,7 +28,10 @@
 from pwem.protocols import ProtImportParticles, ProtImportVolumes
 from pyworkflow.tests import *
 from localrec.utils import *
-from localrec.protocols import *
+from localrec.protocols import (ProtLocalizedRecons, ProtFilterSubParts,
+                                ProtLocalizedExtraction, ProtLocalOrigSampling,
+                                ProtLocalizedStich,
+                                ProtExtractCoordSubparticles)
 from pwem.constants import (SYM_CYCLIC, SYM_DIHEDRAL, SYM_OCTAHEDRAL,
                             SYM_TETRAHEDRAL, SYM_I222, SYM_I222r,
                             SYM_In25, SYM_In25r, SCIPION_SYM_NAME,
@@ -37,6 +40,9 @@ from tempfile import NamedTemporaryFile
 from xmipp3.protocols import XmippProtCreateMask3D
 import pwem.protocols as emprot
 import numpy as np
+import math
+from localrec.constants import (symDictScipion,
+                                symDictScipionFromKey, symDictFromKey)
 
 # Some utility functions to import micrographs that are used
 # in several tests.
@@ -95,7 +101,7 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
 
         prot = self.newProtocol(ProtLocalizedRecons,
                                 objLabel=label,
-                                symGrp=SYM_I222, #  symDict['I3'],
+                                symGrp=symDictFromKey['I3'],  # SYM_In25
                                 defineVector=defVector,
                                 **kwargs)
         prot.inputParticles.set(self.protImport.outputParticles)
@@ -114,7 +120,8 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
 
         coord = prot.outputCoordinates[10]
         cShifts, cAngles = geometryFromMatrix(inv((coord._subparticle.getTransform().getMatrix())))
-        cAngles = [math.degrees(cAngles[j]) for j in range(len(cAngles))]
+        # cAngles = [math.degrees(cAngles[j]) for j in range(len(cAngles))]
+        cAngles = [math.degrees(angle) for angle in cAngles]
 
         self.assertAlmostEqual(first=cAngles[0],
                                second=angles[0], delta=1000,
@@ -156,6 +163,7 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
                              "subparticles protocol")
         ###1000 self.assertEqual(checkSize, prot.outputCoordinates.getSize())
         coord = prot.outputCoordinates.getFirstItem()
+        # print("coord", coord, dir(coord))
 
         cShifts, cAngles = geometryFromMatrix(inv((coord._subparticle.getTransform().getMatrix())))
         cAngles = [math.degrees(cAngles[j]) for j in range(len(cAngles))]
@@ -219,13 +227,13 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
 
         # Test for filter sub-particles which are aligned in the z
         localUniqueAligend = self._runFilterSubParticles(120, [149.0, 64.9, 73.2], localSubparticlesAligned, unique=5)
-        self._runFilterSubParticles(90, [149.0, 64.9, 73.2], localSubparticlesAligned, unique=5, mindist=6)
+        self._runFilterSubParticles(90, [149.0, 64.9, 73.2], localSubparticlesAligned, unique=5, mindist=3)
         self._runFilterSubParticles(50, [106.2, 112.6, -177.6], localSubparticlesAligned, unique=5, side=25)
         self._runFilterSubParticles(21, [47.6, 175.3, 159.1], localSubparticlesAligned, unique=5, top=50)
 
         # Test for filter sub-particles which are not aligned
         localUnique = self._runFilterSubParticles(120, [31.6, 60.155541, -138.80597], localSubparticles, unique=5)
-        self._runFilterSubParticles(90, [31.6, 60.155541, -138.80597], localSubparticles, unique=5, mindist=6)
+        self._runFilterSubParticles(90, [31.6, 60.155541, -138.80597], localSubparticles, unique=5, mindist=3)
         self._runFilterSubParticles(50, [103.2, 66.1, -66.9], localSubparticles, unique=5, side=25)
         self._runFilterSubParticles(21, [175.2, 66.1, -66.9], localSubparticles, unique=5, top=50)
 
@@ -254,6 +262,72 @@ class TestLocalizedRecons(TestLocalizedReconsBase):
         coordinate = coordinates.getFirstItem()
         self.assertTrue(coordinate.getObjId() == 1)
         self.assertTrue(coordinate.getMicId() == 1)
+        sym_group, operator_id = self._extract_provenance(coordinate)
+        self.assertIsNotNone(sym_group)
+        self.assertIsNotNone(operator_id)
+
+        for i, coord in enumerate(coordinates.iterItems()):
+            sampled_sym_group, sampled_operator_id = self._extract_provenance(coord)
+            self.assertIsNotNone(sampled_sym_group)
+            self.assertIsNotNone(sampled_operator_id)
+            if i >= 20:
+                break
+
+    def _extract_provenance(self, coord):
+        return get_subparticle_provenance(coord._subparticle)
+
+    def testSubparticleProvenanceFields(self):
+        prot = self._runSubparticles(600, [-1.2, 111.6, -177.4],
+                                     alignSubParticles=False)
+        first_coord = prot.outputCoordinates.getFirstItem()
+        sym_group, operator_id = self._extract_provenance(first_coord)
+
+        self.assertIsNotNone(sym_group)
+        self.assertIsNotNone(operator_id)
+        self.assertEqual(SYM_In25, sym_group)
+
+    def testSubparticleProvenanceSubsetOperatorIds(self):
+        prot = self.newProtocol(ProtLocalizedRecons,
+                                objLabel='subset symmetry ids',
+                                symGrp=symDictFromKey['I3'],  # SYM_In25
+                                symmetryMatrixIds='1,3,5',
+                                defineVector=0,
+                                alignSubParticles=False)
+        prot.inputParticles.set(self.protImport.outputParticles)
+        prot.vectorFile.set(self.chimeraFile)
+        self.launchProtocol(prot)
+
+        operator_ids = set()
+        sample_sequence = []
+        for i, coord in enumerate(prot.outputCoordinates.iterItems()):
+            _, operator_id = self._extract_provenance(coord)
+            operator_ids.add(int(operator_id))
+            if i < 30:
+                sample_sequence.append(int(operator_id))
+            if len(operator_ids) == 3 and i > 200:
+                break
+
+        self.assertSetEqual({1, 3, 5}, operator_ids)
+
+        prot_second = self.newProtocol(ProtLocalizedRecons,
+                                       objLabel='subset symmetry ids second run',
+                                       symGrp=symDictFromKey['I3'],  # SYM_In25
+                                       symmetryMatrixIds='1,3,5',
+                                       defineVector=0,
+                                       alignSubParticles=False)
+        prot_second.inputParticles.set(self.protImport.outputParticles)
+        prot_second.vectorFile.set(self.chimeraFile)
+        self.launchProtocol(prot_second)
+
+        sample_sequence_second = []
+        for i, coord in enumerate(prot_second.outputCoordinates.iterItems()):
+            _, operator_id = self._extract_provenance(coord)
+            if i < 30:
+                sample_sequence_second.append(int(operator_id))
+            else:
+                break
+
+        self.assertListEqual(sample_sequence, sample_sequence_second)
 
     def testSetOrigin(self):
         # create set of coordinates and localize protocol

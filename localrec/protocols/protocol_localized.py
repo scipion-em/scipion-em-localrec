@@ -37,7 +37,8 @@ from pwem.protocols import ProtParticles, ProtParticlePicking
 import pwem.emlib.metadata as md
 
 from localrec.utils import load_vectors, create_subparticles
-from localrec.constants import CMM, HAND
+from localrec.constants import (CMM, HAND, symDictScipion,
+                                symDictScipionFromKey, symDictFromKey)
 from pyworkflow.utils import ProgressBar
 from pwem.objects import SetOfCoordinates
 
@@ -52,6 +53,8 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
     _label = 'define subparticles'
     OUTPUTCOORDINATESNAME = "outputCoordinates"
     _possibleOutputs = {OUTPUTCOORDINATESNAME: SetOfCoordinates}
+    sym_choices = [f"{k}, {SCIPION_SYM_NAME[v]}" 
+                   for k, v in symDictScipionFromKey.items()]
 
     def __init__(self, **args):
         ProtParticlePicking.__init__(self, **args)
@@ -71,43 +74,49 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
 
         group = form.addGroup('Symmetry')
         group.addParam('symGrp', EnumParam,
-                      choices=["Cn" + " (" + SCIPION_SYM_NAME[SYM_CYCLIC] + ")",
-                               "Dn" + " (" + SCIPION_SYM_NAME[SYM_DIHEDRAL] + ")",
-                               "T" + " (" + SCIPION_SYM_NAME[SYM_TETRAHEDRAL] + ")",
-                               "O" + " (" + SCIPION_SYM_NAME[SYM_OCTAHEDRAL] + ")",
-                               "I1" + " (" + SCIPION_SYM_NAME[SYM_I222] + ")",
-                               "I2" + " (" + SCIPION_SYM_NAME[SYM_I222r] + ")",
-                               "I3" + " (" + SCIPION_SYM_NAME[SYM_In25] + ")",
-                               "I4" + " (" + SCIPION_SYM_NAME[SYM_In25r] + ")",
-                               "I5" + " (" + SCIPION_SYM_NAME[SYM_I2n3] + ")",
-                               "I6" + " (" + SCIPION_SYM_NAME[SYM_I2n3r] + ")",
-                               "I7" + " (" + SCIPION_SYM_NAME[SYM_I2n5] + ")",
-                               "I8" + " (" + SCIPION_SYM_NAME[SYM_I2n5r] + ")"],
-                      default=0,
-                      label="Symmetry",
-                      help="See https://scipion-em.github.io/docs/docs/developer/symmetries"
-                           "Symmetry for a description of the symmetry groups "
-                           "format in Xmipp.\n"
-                           "If no symmetry is present, use _c1_."
-                       )
+                       choices=self.sym_choices,
+                       #   choices=["Cn" + " (" + SCIPION_SYM_NAME[SYM_CYCLIC] + ")",
+                       #    "Dn" + " (" + SCIPION_SYM_NAME[SYM_DIHEDRAL] + ")",
+                       #    "T" + " (" + SCIPION_SYM_NAME[SYM_TETRAHEDRAL] + ")",
+                       #    "O" + " (" + SCIPION_SYM_NAME[SYM_OCTAHEDRAL] + ")",
+                       #    "I1" + " (" + SCIPION_SYM_NAME[SYM_I222] + ")",
+                       #    "I2" + " (" + SCIPION_SYM_NAME[SYM_I222r] + ")",
+                       #    "I3" + " (" + SCIPION_SYM_NAME[SYM_In25] + ")",
+                       #    "I4" + " (" + SCIPION_SYM_NAME[SYM_In25r] + ")",
+                       #    "I5" + " (" + SCIPION_SYM_NAME[SYM_I2n3] + ")",
+                       #    "I6" + " (" + SCIPION_SYM_NAME[SYM_I2n3r] + ")",
+                       #    "I7" + " (" + SCIPION_SYM_NAME[SYM_I2n5] + ")",
+                       #    "I8" + " (" + SCIPION_SYM_NAME[SYM_I2n5r] + ")"],
+                       default=0,
+                       label="Symmetry",
+                       help="See https://scipion-em.github.io/docs/docs/developer/symmetries"
+                            "Symmetry for a description of the symmetry groups "
+                            "format in Xmipp.\n"
+                            "If no symmetry is present, use _c1_.")
+
         group.addParam('symmetryOrder', IntParam, default=1,
-                      condition='symGrp<=%d' % SYM_DIHEDRAL,
-                      label='Symmetry Order',
-                      help='Order of cyclic symmetry.')
+                       condition='symGrp<=%d' % symDictFromKey['D'],
+                       label='Symmetry Order',
+                       help='Order of cyclic symmetry.')
+
+        group.addParam('symmetryMatrixIds', StringParam, default='',
+                       label='Symmetry matrix IDs',
+                       help='Optional comma-separated list of symmetry matrix '
+                            'IDs to use (for example: 1,3,5). IDs are '
+                            '1-based and must be between 1 and N, where N is '
+                            'the total number of matrices for the selected '
+                            'symmetry. If empty, all matrices are used.')
+
         group.addParam('randomize', BooleanParam, default=False,
                        label='Randomize the order of the symmetry matrices?',
                        help='Useful for preventing preferred orientations.')
-# ROB this parameter is never used
-#        group.addParam('relaxSym', BooleanParam, default=False,
-#                       expertLevel=LEVEL_ADVANCED,
-#                       label='Relax symmetry?',
-#                       help='Create one random subparticle for each particle ')
 
         group = form.addGroup('Vectors')
         group.addParam('defineVector', EnumParam, default=CMM,
                        label='Is vector defined by?',
                        choices=['cmm file', 'string'],
                        display=EnumParam.DISPLAY_HLIST)
+
         group.addParam('vector', NumericRangeParam, default='0,0,1',
                        label='Location vectors (px)', condition="defineVector==1",
                        help='Vector defining the location of the '
@@ -118,6 +127,7 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
                             '0,0,1            # Defines only one vector.\n'
                             '0,0,1; 1,0,0;    # Defines two vectors.'
                        )
+
         group.addParam('vectorFile', PathParam, default='',
                        condition="defineVector==0",
                        label='file obtained by Chimera: ',
@@ -131,13 +141,13 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
 
         group = form.addGroup('Sub-particles')
         group.addParam('alignSubParticles', BooleanParam, default=False,
-                      label='Align the subparticles?',
-                      help='Align sub-particles to the standard orientation. ')
+                       label='Align the subparticles?',
+                       help='Align sub-particles to the standard orientation. ')
         group.addParam('handness', BooleanParam, default=False,
-                      label='Consider alternative handedness?',
-                      help='If set to yes, the alternative hand is assumed'
-                           ' to be correct and defocus gradient correction'
-                           ' will be applied in the opposite direction . ')
+                       label='Consider alternative handedness?',
+                       help='If set to yes, the alternative hand is assumed'
+                            ' to be correct and defocus gradient correction'
+                            ' will be applied in the opposite direction . ')
 
         form.addParallelSection(threads=0, mpi=0)
 
@@ -158,22 +168,35 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
                   }
         # convert symmetry to scipion
         sym = self.symGrp.get()
+        # symGrpParam = sym
+        sym = symDictScipion[sym]  # now sym follows scipion convention
         # symDict = {0: 'C', 1: 'D', 2: 'T', 3: 'O',
         # 4: 'I1', 5: 'I2', 6: 'I3', 7: 'I4'}
-        if sym == 0: sym = SYM_CYCLIC
-        elif sym == 1: sym = SYM_DIHEDRAL
-        elif sym == 2: sym = SYM_TETRAHEDRAL
-        elif sym == 3: sym = SYM_OCTAHEDRAL
-        elif sym == 4: sym = SYM_I222
-        elif sym == 5: sym = SYM_I222r
-        elif sym == 6: sym = SYM_In25
-        elif sym == 7: sym = SYM_In25r
-        elif sym == 8: sym = SYM_I2n3
-        elif sym == 9: sym = SYM_I2n3r
-        elif sym == 10: sym = SYM_I2n5
-        elif sym == 11: sym = SYM_I2n5r
-        symMatrices = getSymmetryMatrices(sym=sym,
-                                          n=self.symmetryOrder.get())
+        # if sym == 0: sym = SYM_CYCLIC
+        # elif sym == 1: sym = SYM_DIHEDRAL
+        # elif sym == 2: sym = SYM_TETRAHEDRAL
+        # elif sym == 3: sym = SYM_OCTAHEDRAL
+        # elif sym == 4: sym = SYM_I222
+        # elif sym == 5: sym = SYM_I222r
+        # elif sym == 6: sym = SYM_In25
+        # elif sym == 7: sym = SYM_In25r
+        # elif sym == 8: sym = SYM_I2n3
+        # elif sym == 9: sym = SYM_I2n3r
+        # elif sym == 10: sym = SYM_I2n5
+        # elif sym == 11: sym = SYM_I2n5r
+        allSymMatrices = getSymmetryMatrices(sym=sym,  
+                                             n=self.symmetryOrder.get())
+        # NOTE: selectedSymmetryMatrixIds are always 1-based IDs that refer to
+        # the full symmetry set (allSymMatrices), never to a filtered position.
+        selectedSymmetryMatrixIds = self._parseSymmetryMatrixIds(
+            self.symmetryMatrixIds.get(), len(allSymMatrices))
+        if selectedSymmetryMatrixIds:
+            symMatrices = [allSymMatrices[matrixId - 1]
+                           for matrixId in selectedSymmetryMatrixIds]
+            operatorIds = selectedSymmetryMatrixIds
+        else:
+            symMatrices = allSymMatrices
+            operatorIds = list(range(1, len(symMatrices) + 1))
 ###ROB                                          n = self.symmetryOrder.get())
 #        for mat in symMatrices:
 #            print (mat)
@@ -216,7 +239,9 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
                                                self.randomize, 0,
                                                self.alignSubParticles,
                                                self.handness,
-                                               params["pxSize"])
+                                               params["pxSize"],
+                                               symmetry_operator_ids=operatorIds,
+                                               symmetry_group=sym)
 
             for subpart in subparticles:
                 coord = subpart.getCoordinate()
@@ -230,7 +255,42 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
 
     # -------------------------- INFO functions --------------------------------
     def _validate(self):
-        pass
+        validateMsgs = []
+        sym = self.symGrp.get()
+        sym = symDictScipion[sym]
+        # if sym == 0:
+            # sym = SYM_CYCLIC
+        # elif sym == 1:
+            # sym = SYM_DIHEDRAL
+        # elif sym == 2:
+            # sym = SYM_TETRAHEDRAL
+        # elif sym == 3:
+            # sym = SYM_OCTAHEDRAL
+        # elif sym == 4:
+            # sym = SYM_I222
+        # elif sym == 5:
+            # sym = SYM_I222r
+        # elif sym == 6:
+            # sym = SYM_In25
+        # elif sym == 7:
+            # sym = SYM_In25r
+        # elif sym == 8:
+            # sym = SYM_I2n3
+        # elif sym == 9:
+            # sym = SYM_I2n3r
+        # elif sym == 10:
+            # sym = SYM_I2n5
+        # elif sym == 11:
+            # sym = SYM_I2n5r
+        symMatrices = getSymmetryMatrices(sym=sym, n=self.symmetryOrder.get())
+
+        try:
+            self._parseSymmetryMatrixIds(self.symmetryMatrixIds.get(),
+                                         len(symMatrices))
+        except ValueError as e:
+            validateMsgs.append(str(e))
+
+        return validateMsgs
 
     def _citations(self):
         return ['Ilca2015', 'Abrishami2020']
@@ -246,3 +306,32 @@ class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
     def _getOutpuVecMetadata(self):
         return self._getExtraPath('output_vectors.xmd')
 
+    @staticmethod
+    def _parseSymmetryMatrixIds(matrixIdsText, nSymmetryMatrices):
+        matrixIdsText = matrixIdsText.strip()
+        if not matrixIdsText:
+            return []
+
+        parsedIds = []
+        for token in matrixIdsText.split(','):
+            token = token.strip()
+            if not token:
+                raise ValueError('Symmetry matrix IDs contain empty values. '
+                                 'Please provide a comma-separated list of '
+                                 'integers.')
+            if not token.isdigit():
+                raise ValueError('Symmetry matrix IDs must be integers. '
+                                 'Invalid value: %s' % token)
+
+            matrixId = int(token)
+            if matrixId < 1 or matrixId > nSymmetryMatrices:
+                raise ValueError('Symmetry matrix IDs must be between 1 and '
+                                 '%d. Invalid value: %d'
+                                 % (nSymmetryMatrices, matrixId))
+            if matrixId in parsedIds:
+                raise ValueError('Symmetry matrix IDs contain duplicates. '
+                                 'Repeated value: %d' % matrixId)
+
+            parsedIds.append(matrixId)
+
+        return parsedIds

@@ -34,6 +34,7 @@ from pyworkflow.protocol.params import IntParam
 # eventually progressbar will be move to scipion core
 from pyworkflow.utils import ProgressBar
 from pwem.objects import SetOfParticles
+from localrec.utils import has_subparticle_provenance
 
 
 class ProtLocalizedExtraction(ProtParticles):
@@ -92,6 +93,7 @@ class ProtLocalizedExtraction(ProtParticles):
         outliers = 0
         partIdExcluded = []
         lastPartId = None
+        missingProvenanceWarned = False
 
         progress = ProgressBar(len(inputCoords), fmt=ProgressBar.NOBAR)
         progress.start()
@@ -139,6 +141,13 @@ class ProtLocalizedExtraction(ProtParticles):
                 i += 1
                 outputImg.write((i, outputStack))
                 subpart = coord._subparticle
+                if (not missingProvenanceWarned and
+                        not has_subparticle_provenance(subpart)):
+                    self.warning("Subparticle provenance fields "
+                                 "(_symmetryGroup/_symmetryOperatorId) are "
+                                 "missing for some items. Continuing without "
+                                 "failing.")
+                    missingProvenanceWarned = True
                 subpart.setLocation(
                     (i, outputStack))  # Change path to new stack
                 subpart.setObjId(i)  # Ids will be always the same no mater the number of outliers 

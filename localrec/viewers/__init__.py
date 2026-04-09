@@ -1,1 +1,2 @@
 from .viewer import ProtLocalOrigSamplingViewer
+from .viewer_subparticle_statistics import ProtSubparticleStatisticsViewer
