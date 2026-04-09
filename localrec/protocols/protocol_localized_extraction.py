@@ -125,6 +125,7 @@ class ProtLocalizedExtraction(ProtParticles):
             # If particle is not in inputParticles, subparticles will not be
             # generated. Now, subtract from a subset of original particles is
             # supported.
+            i += 1
             if partId not in partIdExcluded:
                 xpos = coord.getX()
                 ypos = coord.getY()
@@ -138,7 +139,7 @@ class ProtLocalizedExtraction(ProtParticles):
                 # Crop the sub-particle data from the whole particle image
                 center[:, :] = data[ypos - b2:ypos + b2, xpos - b2:xpos + b2]
                 outputImg.setData(center)
-                i += 1
+                # i += 1
                 outputImg.write((i, outputStack))
                 subpart = coord._subparticle
                 if (not missingProvenanceWarned and
@@ -165,12 +166,13 @@ class ProtLocalizedExtraction(ProtParticles):
     def _validate(self):
         errors = []
         inputCoords = self.inputCoordinates.get()
-        firstCoord = inputCoords.getFirstItem()
-
-        if not firstCoord.hasAttribute('_subparticle'):
-            errors.append('The selected input coordinates does not are the '
-                          'output from a localized-subparticles protocol.')
-
+        try:
+            firstCoord = inputCoords.getFirstItem()
+            if not firstCoord.hasAttribute('_subparticle'):
+                errors.append('The selected input coordinates does not are the '
+                              'output from a localized-subparticles protocol.')
+        except:
+            errors.append("input coordinates have not been generated")
         return errors
 
     def _citations(self):
