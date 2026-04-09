@@ -120,6 +120,7 @@ class ProtFilterSubParts(ProtParticles):
         lastPartId = None
         particlesList = []
         isSubPart = False;
+        missingProvenanceWarned = False
         firstParticle = inputSet.getFirstItem()
         if firstParticle.hasAttribute('_transorg'):
             isSubPart = True;
@@ -144,6 +145,13 @@ class ProtFilterSubParts(ProtParticles):
                 particlesList = []
 
             subpart = particle.clone()
+            if (isSubPart and not missingProvenanceWarned and
+                    not has_subparticle_provenance(subpart)):
+                self.warning("Subparticle provenance fields "
+                             "(_symmetryGroup/_symmetryOperatorId) are "
+                             "missing for some items. Continuing without "
+                             "failing.")
+                missingProvenanceWarned = True
             if (isSubPart):
                 _, cAngles = geometryFromMatrix(inv(particle._transorg.getMatrix()))
             else:
@@ -171,6 +179,7 @@ class ProtFilterSubParts(ProtParticles):
         subParticles = []
         coordArr = []
         subParticleId = 0
+        missingProvenanceWarned = False
 
         progress = ProgressBar(len(inputSet), fmt=ProgressBar.NOBAR)
         print("Processing coordinates:")
@@ -195,6 +204,13 @@ class ProtFilterSubParts(ProtParticles):
                 lastPartId = partId
 
             subParticle = coord._subparticle
+            if (not missingProvenanceWarned and
+                    not has_subparticle_provenance(subParticle)):
+                self.warning("Subparticle provenance fields "
+                             "(_symmetryGroup/_symmetryOperatorId) are "
+                             "missing for some items. Continuing without "
+                             "failing.")
+                missingProvenanceWarned = True
             subpart = subParticle.clone()
             _, cAngles = geometryFromMatrix(inv(subParticle._transorg.getMatrix()))
             subpart._angles = cAngles

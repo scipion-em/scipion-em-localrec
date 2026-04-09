@@ -1,2 +1,4 @@
-3.0.5
-    fix bug when option "randomize symmetry matrices..." is selected
+- 3.2.0
+   - add protocol extractCoordinatesFromSubparticles: allows to visualize the subparticle coordinates over each particle
+
+
