@@ -28,17 +28,17 @@
 from pyworkflow.protocol.params import (PointerParam, BooleanParam, StringParam,
                                         EnumParam, NumericRangeParam, IntParam,
                                         PathParam)
-from pwem.constants import (SYM_CYCLIC, SYM_DIHEDRAL, SYM_OCTAHEDRAL,
-                            SYM_TETRAHEDRAL, SYM_I222, SYM_I222r,
-                            SYM_In25, SYM_In25r, SCIPION_SYM_NAME,
-                            SYM_I2n3, SYM_I2n3r, SYM_I2n5, SYM_I2n5r)
-from pwem.convert.symmetry import getSymmetryMatrices
+# from pwem.constants import (SYM_CYCLIC, SYM_DIHEDRAL, SYM_OCTAHEDRAL,
+                            # SYM_TETRAHEDRAL, SYM_I222, SYM_I222r,
+                            # SYM_In25, SYM_In25r, SCIPION_SYM_NAME,
+                            # SYM_I2n3, SYM_I2n3r, SYM_I2n5, SYM_I2n5r)
+# from pwem.convert.symmetry import getSymmetryMatrices
 from pwem.protocols import ProtParticles, ProtParticlePicking
-import pwem.emlib.metadata as md
+# import pwem.emlib.metadata as md
 
-from localrec.utils import load_vectors, create_subparticles
-from localrec.constants import CMM, HAND
-from pyworkflow.utils import ProgressBar
+# from localrec.utils import load_vectors, create_subparticles
+# from localrec.constants import CMM, HAND
+# from pyworkflow.utils import ProgressBar
 from pwem.objects import SetOfCoordinates
 
 
