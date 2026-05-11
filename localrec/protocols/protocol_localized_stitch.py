@@ -45,12 +45,127 @@ from localrec.utils import load_vectors
 
 class ProtLocalizedStich(ProtPreprocessVolumes):
     """
-        Generate a full volume from a sub-volume applying a
-        point group symmetry operation.
+    Generates a complete 3D volume from one or more localized sub-volumes by
+    applying symmetry operations and spatial reintegration of the sub-particles
+    into a common reference frame.
 
-        An example of usage is to generate the adenovirus capsid
-        from its asymmetric unit.
-        """
+    AI Generated:
+
+    Stitch Subvolumes (ProtLocalizedStich) — User Manual
+
+        Overview
+
+        The ProtLocalizedStich protocol reconstructs a full 3D map from
+        localized sub-volumes previously extracted from a larger particle.
+        Each sub-volume is positioned back into its original spatial context,
+        combined with the corresponding symmetry-related copies, and merged
+        into a single symmetrized volume.
+
+        This protocol is especially useful in localized reconstruction
+        workflows where individual regions of a large macromolecular assembly
+        have been refined independently and later need to be assembled into a
+        biologically interpretable full map.
+
+        Inputs and Workflow
+
+        The protocol accepts one or multiple sub-volumes as input. It can
+        operate either on a single set of sub-volumes or on two independent
+        half-map sets. When half-maps are provided, both halves are processed
+        independently and returned as separate reconstructed outputs.
+
+        Optional masks can be supplied for each sub-volume. If no mask is
+        provided, the protocol automatically generates a spherical mask to
+        isolate the relevant signal before processing.
+
+        Symmetry and Localized Reconstruction Information
+
+        Symmetry can be defined directly by the user or inherited from one or
+        more previous localized reconstruction runs. When previous runs are
+        used, the protocol extracts the original symmetry definition, symmetry
+        order, sub-particle alignment information, and localization vectors.
+
+        This preserves consistency with earlier localized reconstruction steps
+        and reduces the risk of mismatched geometric parameters.
+
+        Sub-volume Positioning
+
+        Each sub-volume is windowed to the requested final output size and
+        shifted according to the localization vectors that define the original
+        sub-particle positions.
+
+        If the sub-particles were previously aligned to a standard orientation,
+        the protocol can reverse this transformation so the sub-volumes are
+        correctly reinserted into the global map.
+
+        Localization vectors may be defined either manually as coordinate
+        triplets or by loading a Chimera CMM file.
+
+        Combination of Sub-volumes
+
+        After all sub-volumes are positioned, the protocol sums them to create
+        an asymmetric unit. The same operation is applied to the corresponding
+        masks so normalization can later compensate for regions where multiple
+        sub-volumes overlap.
+
+        The asymmetric unit is then symmetrized according to the selected
+        point-group symmetry, producing a full symmetrized volume and a
+        corresponding symmetrized normalization mask.
+
+        Final Stitching and Normalization
+
+        The protocol divides the symmetrized volume by the symmetrized mask in
+        order to normalize overlapping regions and prevent intensity bias.
+
+        A final smooth soft-edged mask is then generated through binarization,
+        erosion, and Gaussian filtering. This mask is applied to the normalized
+        volume to reduce edge artifacts and produce a cleaner final map.
+
+        Interpolation and Accuracy
+
+        During shifting and symmetry application, the protocol supports linear
+        or B-spline interpolation.
+
+        Linear interpolation is faster and suitable for routine processing.
+        B-spline interpolation is slower but generally provides smoother
+        results and better preservation of structural continuity when
+        sub-volumes undergo repeated transformations.
+
+        Output
+
+        If a single reconstruction is performed, the protocol produces one
+        stitched output volume.
+
+        If half-maps are used, the protocol produces a set of two output
+        volumes corresponding to half-map 1 and half-map 2.
+
+        In both cases, the output preserves the sampling rate of the input
+        sub-volumes and is suitable for downstream visualization, masking,
+        FSC analysis, or further refinement.
+
+        Validation and Practical Considerations
+
+        The protocol checks that all input sub-volumes share the same sampling
+        rate. When half-maps are used, both half-map lists must contain the
+        same number of sub-volumes.
+
+        If previous localized reconstruction runs are supplied, their number
+        must match the number of input sub-volumes.
+
+        For best biological results, the sub-volumes should correspond to
+        correctly localized regions, their masks should cover the signal
+        consistently, and the selected symmetry should match the biological
+        assembly being reconstructed.
+
+        Final Perspective
+
+        ProtLocalizedStich is the reconstruction stage that transforms locally
+        refined sub-particle information into a coherent global structure.
+
+        In localized cryo-EM workflows, it provides the bridge between local
+        refinement and full-particle biological interpretation by restoring
+        symmetry, compensating for overlap, and assembling the complete map
+        into a unified structural representation.
+    """
 
     _label = 'stitch subvolumes'
 

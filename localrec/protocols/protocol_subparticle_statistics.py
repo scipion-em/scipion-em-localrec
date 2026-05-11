@@ -20,19 +20,129 @@ from localrec.utils import get_subparticle_provenance
 
 
 class ProtSubparticleStatistics(ProtParticles):
-    """Compute class-occupancy statistics for subparticles.
+    """
+    Computes class-occupancy statistics for subparticles by measuring how many
+    subparticles from each original particle are assigned to selected
+    classification classes.
 
-    1D mode (group 1 only):
-        - X axis categories: number of subparticles assigned to class ID(s)
-          per original particle (0..N).
-        - Y axis: number of original particles in each category.
+    AI Generated:
 
-    2D mode (group 1 + group 2):
-        - X axis categories: number of subparticles assigned to class ID(s)
-          in group 1 per original particle.
-        - Y axis categories: number of subparticles assigned to class ID(s)
-          in group 2 per original particle.
-        - Frequency: number of original particles with each (X, Y) pair.
+    Subparticle Statistics (ProtSubparticleStatistics) — User Manual
+        Overview
+
+        This protocol analyzes classification outputs in which each class
+        contains subparticles rather than full particles. Its purpose is to
+        quantify how subparticle assignments distribute back onto the original
+        parent particles.
+
+        In localized reconstruction workflows, several subparticles may come
+        from the same parent particle. This protocol groups those assignments
+        and summarizes how often selected class memberships occur per original
+        particle. The resulting statistics help evaluate structural occupancy,
+        symmetry-related heterogeneity, or preferential classification patterns.
+
+        Inputs and General Workflow
+
+        The protocol requires a classification output, either 2D or 3D, where
+        classes contain subparticles. The user specifies one or more class IDs
+        that define the target population.
+
+        During execution, the protocol inspects every classified subparticle,
+        traces it back to its parent particle, and counts how many selected
+        assignments belong to that parent. The final statistics therefore
+        describe particle-level occupancy rather than subparticle-level counts.
+
+        One-Dimensional Occupancy Mode
+
+        When only one class group is provided, the protocol computes a 1D
+        occupancy histogram.
+
+        In this mode:
+            - The X axis represents the number of selected subparticles found
+              in each parent particle.
+            - The Y axis represents how many parent particles fall into each
+              occupancy category.
+
+        This mode is useful when evaluating whether a structural feature
+        appears rarely, uniformly, or preferentially across particles.
+
+        Two-Dimensional Occupancy Mode
+
+        When a second class group is provided, the protocol computes a 2D
+        occupancy histogram.
+
+        In this mode:
+            - The X axis corresponds to counts for class group 1.
+            - The Y axis corresponds to counts for class group 2.
+            - Each point represents how many original particles show that
+              combination of occupancies.
+
+        This mode is particularly useful when studying correlations between
+        two structural states, two competing conformations, or two distinct
+        localized features.
+
+        Provenance Tracking
+
+        The protocol also inspects subparticle provenance metadata related to
+        symmetry operators and subparticle origin.
+
+        If provenance information is available, the protocol reports how many
+        assignments preserve that metadata. If some assignments lack provenance,
+        execution continues but a warning is issued.
+
+        This makes the protocol robust when combining subparticles generated
+        from different processing histories.
+
+        Histogram Limits and Overflow Handling
+
+        The maximum histogram range can be set manually.
+
+        If no value is provided, the protocol automatically infers the
+        histogram limits from the observed classification data.
+
+        If a manual limit is smaller than the observed maximum occupancy, the
+        protocol automatically expands the limit to preserve all observed
+        counts.
+
+        Particles exceeding the selected limit are reported as overflow so
+        that rare but extreme occupancies remain visible.
+
+        Outputs
+
+        The protocol exports the statistics in two formats:
+
+            - JSON output containing structured histogram data.
+            - CSV output suitable for spreadsheet analysis, plotting, or
+              downstream statistical processing.
+
+        In 1D mode, the exported data contains occupancy bins and particle
+        counts.
+
+        In 2D mode, the exported data contains occupancy coordinate pairs and
+        their frequencies.
+
+        Biological Interpretation
+
+        These statistics are especially useful in localized reconstruction
+        studies where biological interpretation depends not only on which
+        classes exist, but also on how frequently subparticles from the same
+        particle occupy those classes.
+
+        Typical applications include:
+            - measuring occupancy of flexible domains,
+            - detecting asymmetric binding patterns,
+            - comparing competing conformational states,
+            - identifying particle-to-particle heterogeneity.
+
+        Final Perspective
+
+        Rather than analyzing subparticles independently, this protocol
+        restores the biological context of the original particles.
+
+        It provides a compact quantitative view of how classification results
+        distribute across parent particles, making it valuable for occupancy
+        analysis, heterogeneity interpretation, and downstream biological
+        inference in localized cryo-EM workflows.
     """
 
     _label = 'subparticle statistics'

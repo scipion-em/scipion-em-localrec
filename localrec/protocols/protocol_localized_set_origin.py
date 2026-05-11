@@ -41,9 +41,66 @@ from pwem.objects import Volume
 
 
 class ProtLocalOrigSampling(EMProtocol):
-    """ Set the origin and sampling values assigned to a 3D map
-        so that the subvolume fits the original, larger volume
     """
+    Assigns a corrected origin and optionally a new sampling rate to a
+    reconstructed subvolume so that it is positioned consistently within
+    the coordinate system of the original larger volume.
+
+    This protocol is intended for localized reconstruction workflows in
+    which a subvolume has been reconstructed from extracted subparticles.
+    Because localized reconstructions are generated around a shifted
+    subparticle center rather than the center of the original particle,
+    the resulting map must be repositioned in the global reference frame
+    of the parent volume before biological interpretation, fitting, or
+    visualization.
+
+    The protocol requires an input volume together with a
+    ProtLocalizedRecons protocol that defines the subparticle vectors
+    used during subparticle generation. These vectors determine where
+    the localized reconstruction lies relative to the original particle.
+    The first available vector is used as the reference position for
+    computing the new origin.
+
+    During execution, the input volume metadata is first copied into a
+    new output volume object. The sampling rate is then assigned. By
+    default, the protocol preserves the original sampling of the input
+    volume, but the user may optionally define a new sampling rate.
+    This new value is stored in the output volume object only and is
+    not written into the map file header.
+
+    To compute the new origin, the protocol reads the subparticle
+    vector either from a Chimera CMM file or from manually defined
+    vector coordinates. The vector length may optionally be adjusted.
+    After conversion into pixel units using the sampling rate of the
+    original particle images, the vector defines the displacement of
+    the localized reconstruction relative to the parent particle
+    center.
+
+    The protocol then combines this subparticle displacement with the
+    origin shifts already present in the input volume. These shifts are
+    converted into pixel coordinates, added to the subparticle vector,
+    and finally converted back into physical units using the output
+    sampling rate. The resulting transformation is assigned as the new
+    origin of the output map.
+
+    The map file itself is not recomputed. Instead, the original volume
+    file is either copied or linked into the protocol working
+    directory, depending on the selected option. The output volume then
+    points to this copied or linked file while carrying the corrected
+    origin and sampling metadata.
+
+    An optional atomic structure may also be associated with the
+    protocol so that the corrected subvolume can be visualized together
+    with structural models in downstream analysis.
+
+    The output is therefore a volume whose voxel data remain unchanged,
+    but whose metadata correctly place the localized reconstruction in
+    the spatial context of the original full particle. This is
+    particularly useful for interpretation of localized densities,
+    fitting atomic models, and comparing subvolumes against the parent
+    reconstruction.
+    """
+
     _label = 'Set origin to subvolume'
     _program = ""
     _lastUpdateVersion = VERSION_3_0

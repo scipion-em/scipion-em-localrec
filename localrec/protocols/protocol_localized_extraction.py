@@ -38,7 +38,64 @@ from localrec.utils import has_subparticle_provenance
 
 
 class ProtLocalizedExtraction(ProtParticles):
-    """ Extract computed sub-particles from a SetOfParticles. """
+    """
+    Extracts computed subparticles from a set of input particles using
+    previously generated localized subparticle coordinates. The protocol
+    crops small image regions from parent particle images and stores
+    them as an independent set of subparticles suitable for downstream
+    localized refinement, classification, or reconstruction.
+
+    This protocol takes as input a particle set with projection
+    alignment information together with a set of coordinates generated
+    by a localized-subparticles protocol. Each coordinate represents
+    the center of one subparticle within the parent particle image.
+    Using the user-defined extraction box size, the protocol crops a
+    square image centered at each coordinate and writes the extracted
+    image into a new particle stack.
+
+    During execution, coordinates are processed ordered by their parent
+    particle identifier. For efficiency, each parent particle image is
+    loaded only once, and all subparticles associated with that parent
+    are extracted before moving to the next particle. The original
+    particle identifier is recovered from the coordinate metadata,
+    allowing the protocol to map each subparticle back to its source
+    particle.
+
+    Before extraction, the protocol verifies that the requested
+    subparticle box lies completely inside the boundaries of the parent
+    particle image. Coordinates falling outside valid image limits are
+    discarded as outliers. This prevents incomplete image cropping and
+    ensures that all extracted subparticles have consistent dimensions.
+
+    If a coordinate refers to a parent particle that is missing from
+    the input particle set, extraction for all associated subparticles
+    is skipped. This makes the protocol compatible with subsets of
+    original particles, where not all parent particles may be present.
+
+    For every successfully extracted region, the cropped image is
+    written into a new output stack. The associated subparticle object
+    stored in the coordinate provenance is updated so that its image
+    location points to the new stack. New object identifiers are also
+    assigned sequentially, ensuring a consistent output numbering even
+    when some candidate subparticles are discarded as outliers.
+
+    Subparticle provenance metadata is preserved during extraction. If
+    provenance fields related to symmetry operators are missing, the
+    protocol continues execution while issuing a warning rather than
+    failing. This allows compatibility with older subparticle datasets
+    that may lack some metadata fields.
+
+    The output is a new SetOfParticles containing the extracted
+    subparticle images. The output set is explicitly marked as a
+    subparticles set, which allows downstream localized reconstruction
+    protocols to recognize it correctly.
+
+    Validation checks that the input coordinates originate from a
+    localized-subparticles workflow by confirming the presence of the
+    internal _subparticle attribute. Without this provenance
+    information, extraction cannot be performed reliably.
+    """
+
     _label = 'extract subparticles'
     _lastUpdateVersion = VERSION_1_2
     OUTPUTPARTICLESNAME = "outputParticles"
