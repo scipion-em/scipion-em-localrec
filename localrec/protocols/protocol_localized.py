@@ -44,12 +44,81 @@ from pwem.objects import SetOfCoordinates
 
 
 class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
-    """ This class contains a re-implementation to a method for the
-    localized three-dimensional reconstruction of such subunits.
-    After determining the particle orientations, local areas
-    corresponding to the subunits can be extracted and treated as
-    single particles.
     """
+    Defines subparticles for localized three-dimensional reconstruction
+    starting from aligned input particles. After particle orientations
+    are known, local regions corresponding to structural subunits can
+    be extracted and represented as independent subparticles for
+    downstream focused reconstruction or localized analysis.
+
+    This protocol generates subparticle coordinates by combining the
+    orientation of each input particle with a user-defined set of
+    vectors and symmetry operators. Each input particle is expanded
+    according to the selected symmetry group, and each symmetry-related
+    position is used to project one or more local vectors that define
+    the spatial location of the desired subunits. The resulting
+    subparticles preserve the geometric relation to the parent particle,
+    allowing localized refinement or classification of flexible or
+    repeated regions within larger assemblies.
+
+    The protocol requires as input a set of particles with projection
+    alignment information. These alignment parameters are essential
+    because the subparticle positions are computed in the particle
+    reference frame. Without valid orientation information, the
+    subparticle coordinates cannot be calculated reliably.
+
+    Symmetry definition is a central part of the workflow. The user
+    selects the symmetry group and, when required, its symmetry order.
+    Internally, the protocol generates the full set of symmetry
+    matrices associated with that symmetry. Optionally, the user may
+    restrict the computation to a specific subset of symmetry operators
+    by providing a comma-separated list of symmetry matrix IDs. These
+    IDs are always interpreted relative to the complete symmetry set,
+    not relative to any filtered subset. This allows selective
+    extraction of only biologically relevant symmetry-related subunits.
+
+    The location of subparticles is defined through vectors. These
+    vectors may be provided directly as coordinate triplets or loaded
+    from Chimera CMM marker files. Multiple vectors can be specified,
+    which allows extraction of several different subunit positions from
+    each particle. An optional alternative vector length can be used to
+    shift the subparticle center radially without changing the original
+    direction. Vector lengths are interpreted in angstroms and
+    converted internally according to the particle sampling rate.
+
+    During execution, the protocol first computes the symmetry matrices
+    and loads the subparticle vectors. The vectors are saved into an
+    auxiliary metadata file for provenance and reproducibility. Then,
+    for each input particle, symmetry expansion is applied and the
+    corresponding subparticles are generated. Each generated subparticle
+    contributes one coordinate to the output set. If the original
+    particle contains subset assignment information such as
+    _rlnRandomSubset, this information is propagated to the subparticle
+    to preserve downstream processing consistency.
+
+    The protocol also provides optional control over the orientation of
+    the extracted subparticles. The user may request alignment of
+    subparticles to a standard orientation, which can simplify later
+    focused refinement or comparison. An alternative handedness mode is
+    also available, allowing inversion of the handedness convention
+    when necessary for correct defocus-gradient handling.
+
+    Output consists of a set of coordinates associated with the
+    original input particles. Each coordinate corresponds to one
+    extracted subparticle position and contains the associated
+    subparticle object as provenance information. These coordinates can
+    then be used by downstream protocols for subparticle extraction,
+    classification, or localized reconstruction.
+
+    Validation ensures that symmetry matrix IDs are well formed,
+    contain only valid integer values, contain no duplicates, and fall
+    within the range allowed by the selected symmetry definition. This
+    prevents ambiguous or inconsistent symmetry operator selection.
+
+    See https://scipion-em.github.io/docs/docs/developer/symmetries
+    for a description of the symmetry groups format in Xmipp.
+    """
+
     _label = 'define subparticles'
     OUTPUTCOORDINATESNAME = "outputCoordinates"
     _possibleOutputs = {OUTPUTCOORDINATESNAME: SetOfCoordinates}

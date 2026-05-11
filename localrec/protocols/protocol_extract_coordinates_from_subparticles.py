@@ -43,9 +43,160 @@ from pwem.objects import SetOfCoordinates
 
 
 class ProtExtractCoordSubparticles(ProtParticlePicking, ProtParticles):
-    """ This protocol extract a set of coordinates from a set of subparticles.
-    The output set of coordinates can be represented on the particles. Note
-    that the output coordinates are the position of the subparticles.
+    """
+    Extracts coordinates corresponding to subparticles from an input set of
+    subparticles and maps them back onto a parent particle set, where the
+    parent particles are treated as micrograph-like references.
+
+    AI Generated:
+
+    Extract Subparticles Coordinates (ProtExtractCoordSubparticles) — User Manual
+        Overview
+
+        This protocol generates a set of coordinates representing the spatial
+        positions of subparticles relative to a parent particle set. It is
+        especially useful in workflows where subparticles have been extracted
+        from larger particles and one wants to recover their original spatial
+        positions for visualization, analysis, or downstream local
+        reconstruction tasks.
+
+        In practical cryo-EM analysis, subparticles are often created by
+        cropping localized regions from larger particles. These cropped images
+        preserve structural detail but lose the direct visual context of their
+        original parent particle. This protocol restores that spatial link by
+        converting subparticle metadata into coordinate objects.
+
+        Inputs and General Workflow
+
+        The protocol requires two input datasets.
+
+        The first input is a set of subparticles. These are particles that
+        must explicitly be marked as subparticles in their metadata. Each
+        subparticle contains coordinate information describing its position
+        within the original parent particle.
+
+        The second input is a set of particles. This set acts as the spatial
+        reference system and is treated internally in a way similar to a set
+        of micrographs. The extracted coordinates will be defined relative to
+        these particles.
+
+        During execution, the protocol iterates over all subparticles,
+        retrieves the coordinate associated with each one, clones it, and
+        appends it to a new output coordinate set.
+
+        Coordinate Extraction Logic
+
+        A practical issue addressed by this protocol is that coordinate
+        identifiers in independent subparticle sets may not be globally
+        unique. When multiple subparticle groups are merged, duplicate
+        coordinate identifiers can appear.
+
+        To avoid this ambiguity, the protocol assigns a new unique identifier
+        to every extracted coordinate. This guarantees that each coordinate in
+        the output set is uniquely traceable.
+
+        In addition, the micrograph name field is cleared. This is intentional
+        and follows the conventions used by other local reconstruction
+        protocols, where the parent particle—not an external micrograph—is the
+        relevant spatial reference.
+
+        The protocol also stores a clone of the originating subparticle inside
+        each coordinate object. This preserves the direct association between
+        the coordinate and the original subparticle image.
+
+        Box Size Handling
+
+        The output coordinate set receives a box size derived from the parent
+        particle dimensions.
+
+        Specifically, the box size is set to one tenth of the X dimension of
+        the parent particles. This is not intended to redefine the physical
+        size of the subparticle itself, but rather to provide a small and
+        practical coordinate marker size for display and visualization.
+
+        Biological Interpretation
+
+        From a biological perspective, this protocol does not modify particle
+        images, orientations, or alignment parameters.
+
+        Its sole purpose is spatial bookkeeping.
+
+        This becomes particularly useful in local reconstruction workflows
+        where one wants to inspect where subparticles originate within larger
+        macromolecular assemblies. Typical applications include:
+
+        - mapping local domains within large complexes,
+        - visualizing symmetry-related subparticle distributions,
+        - validating subparticle extraction strategies,
+        - relating local refinements back to the parent particle geometry.
+
+        Validation and Consistency Checks
+
+        Before execution, the protocol performs two important checks.
+
+        Sampling Rate Consistency
+
+        The parent particle set and the subparticle set must share the same
+        sampling rate. Because coordinates are interpreted geometrically,
+        mismatched sampling rates would make the extracted positions
+        biologically incorrect.
+
+        The protocol compares both sampling rates using a small tolerance.
+        If they differ beyond that threshold, execution is blocked.
+
+        Subparticle Metadata Verification
+
+        The input subparticle set must explicitly carry the metadata flag that
+        identifies it as a true subparticle set.
+
+        Older datasets generated by very old versions of local reconstruction
+        software may lack this flag. In those cases, the protocol reports the
+        issue and recommends re-extracting the subparticles.
+
+        Outputs and Their Interpretation
+
+        The protocol produces a single output:
+
+        outputCoordinates
+
+        This output is a set of coordinates corresponding to the spatial
+        locations of all input subparticles.
+
+        Each coordinate:
+
+        - refers to the parent particle reference system,
+        - has a unique identifier,
+        - preserves a link to the original subparticle.
+
+        These coordinates can be displayed over the parent particles to
+        visually inspect where each subparticle was extracted.
+
+        Practical Recommendations
+
+        In biological workflows, this protocol is most useful after
+        subparticle extraction and before downstream interpretation.
+
+        It is particularly valuable when:
+
+        - validating whether subparticle extraction targeted the intended
+          structural region,
+        - inspecting symmetry expansion strategies,
+        - checking spatial coverage of local refinement regions.
+
+        For reliable results, always ensure that the parent particles and
+        subparticles originate from the same preprocessing pipeline and share
+        identical sampling rates.
+
+        Final Perspective
+
+        For most cryo-EM users, this protocol is a coordinate recovery tool
+        rather than an image-processing operation.
+
+        Its importance lies in reconnecting local structural information to
+        the global geometry of the original particles. This makes it a useful
+        interpretative step in subparticle-based analysis, especially when
+        studying large assemblies, local flexibility, or region-specific
+        reconstructions.
     """
     _label = 'extract subparticles coordinates'
     OUTPUTCOORDINATESNAME = "outputCoordinates"
