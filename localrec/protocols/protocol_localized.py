@@ -44,11 +44,164 @@ from pwem.objects import SetOfCoordinates
 
 
 class ProtLocalizedRecons(ProtParticlePicking, ProtParticles):
-    """ This class contains a re-implementation to a method for the
-    localized three-dimensional reconstruction of such subunits.
-    After determining the particle orientations, local areas
-    corresponding to the subunits can be extracted and treated as
-    single particles.
+    """
+    Defines localized subparticles from previously aligned particles in
+    order to enable focused reconstruction of specific structural regions
+    within a larger macromolecular assembly.
+
+    AI Generated:
+
+    Define Subparticles (ProtLocalizedRecons) - User Manual
+        Overview
+
+        The Define Subparticles protocol generates localized subparticles
+        from a set of particles with known projection orientations. Its
+        main purpose is to isolate biologically relevant regions of a
+        macromolecular complex so they can be analyzed independently from
+        the full particle. This strategy is especially important in cryo-EM
+        studies involving large symmetric assemblies, flexible domains,
+        membrane complexes, or structures containing repeated subunits.
+
+        In many biological systems, local regions may exhibit structural
+        variability or conformational heterogeneity that becomes blurred
+        during conventional whole-particle refinement. By extracting
+        localized regions and treating them as independent particles,
+        researchers can improve the interpretability and resolution of
+        flexible or partially occupied components.
+
+        Inputs and Biological Context
+
+        The protocol requires a set of particles that already contain
+        projection alignment information. These orientations define the
+        spatial relationship between each experimental image and the
+        reconstructed structure, allowing the protocol to determine where
+        the desired subunits are located within every particle.
+
+        From a biological perspective, this workflow is commonly applied
+        to viral capsids, ribonucleoprotein assemblies, membrane protein
+        complexes, and highly symmetric particles where repeated domains
+        or subunits can be analyzed separately. It is particularly useful
+        when the region of interest represents only a fraction of the
+        total particle volume.
+
+        Symmetry Definition
+
+        Symmetry plays a central role in localized reconstruction because
+        it determines how equivalent subunits are distributed throughout
+        the structure. The protocol supports cyclic, dihedral,
+        tetrahedral, octahedral, and multiple icosahedral symmetry
+        conventions commonly used in cryo-EM processing.
+
+        Correct symmetry selection is biologically essential. Using the
+        proper symmetry ensures that all equivalent subunits are sampled
+        consistently and that localized regions are extracted in the
+        correct spatial orientations. Incorrect symmetry assignment may
+        generate biologically meaningless subparticles or introduce
+        orientation inconsistencies.
+
+        The protocol also allows the selection of specific symmetry
+        operators instead of using the complete symmetry set. This can be
+        valuable when the biological question focuses on only a subset of
+        equivalent positions or when users wish to reduce redundancy in
+        downstream analyses.
+
+        Definition of Localization Vectors
+
+        Subparticle positions are defined through vectors describing the
+        location of the region of interest relative to the particle
+        center. These vectors may be provided manually or imported from
+        external visualization tools such as Chimera marker files.
+
+        In practical cryo-EM workflows, the vectors usually correspond to
+        biologically meaningful structural features such as protruding
+        domains, symmetry-related subunits, membrane anchors, flexible
+        arms, or ligand-binding regions. Accurate vector placement is one
+        of the most important factors for successful localized
+        reconstruction.
+
+        The protocol also allows adjustment of vector length. This is
+        particularly useful when refining the exact center of the
+        subparticle or compensating for uncertainties in the initial
+        structural interpretation. Small changes in vector placement can
+        substantially affect the quality of the extracted signal.
+
+        Subparticle Alignment and Orientation
+
+        An optional alignment mode can orient subparticles into a common
+        reference frame. This facilitates downstream classification,
+        averaging, and local refinement by reducing orientation
+        variability between equivalent subunits.
+
+        From a biological standpoint, aligned subparticles are often
+        easier to interpret visually and can improve the detection of
+        subtle conformational changes. However, users should remember
+        that aggressive alignment strategies may also reduce observable
+        structural diversity if the target region is highly flexible.
+
+        The protocol additionally supports alternative handedness
+        interpretation. This option is mainly relevant in workflows where
+        handedness ambiguity exists or when defocus-gradient behavior
+        requires inversion relative to the original orientation
+        convention.
+
+        Randomization of Symmetry Operators
+
+        The protocol can randomize the order of symmetry operators during
+        subparticle generation. This feature is particularly important in
+        cases where preferred orientations or uneven sampling may bias
+        downstream classification and refinement.
+
+        In biological datasets with strong orientation preferences,
+        randomization can improve angular diversity and reduce systematic
+        overrepresentation of particular views. This often leads to more
+        balanced local reconstructions and improved interpretability of
+        flexible regions.
+
+        Outputs and Their Interpretation
+
+        The protocol produces a set of coordinates representing the
+        localized subparticles derived from the original particle set.
+        Each coordinate preserves the relationship to its parent particle
+        and contains the information necessary for subsequent extraction
+        and local reconstruction workflows.
+
+        Biologically, these outputs define a new experimental dataset
+        focused specifically on the selected structural regions. The
+        resulting subparticles can then be subjected to classification,
+        refinement, variability analysis, or focused reconstruction using
+        standard cryo-EM processing tools.
+
+        Practical Recommendations
+
+        In most biological applications, it is advisable to begin with
+        carefully validated particle orientations and an accurately
+        interpreted structural model before defining localization
+        vectors. Errors in orientation assignment or vector placement are
+        among the most common causes of poor localized reconstruction
+        results.
+
+        For symmetric assemblies, users should verify that the selected
+        symmetry convention matches the biological architecture of the
+        specimen. When uncertainty exists, exploratory tests with limited
+        symmetry operators can help evaluate the consistency of the
+        extracted subparticles.
+
+        Vector placement should generally target structurally stable and
+        biologically meaningful regions. Extremely flexible domains may
+        still benefit from localized reconstruction, but additional
+        classification steps are often required to separate distinct
+        conformational states.
+
+        Final Perspective
+
+        Localized reconstruction is one of the most powerful approaches
+        for studying structural heterogeneity in large cryo-EM complexes.
+        By isolating individual subunits or regions from a larger
+        particle, the protocol enables focused structural analysis that
+        would otherwise be obscured by symmetry averaging or conformational
+        variability. Careful definition of symmetry, vector placement,
+        and subparticle orientation is essential for obtaining reliable
+        and biologically meaningful results.
     """
     _label = 'define subparticles'
     OUTPUTCOORDINATESNAME = "outputCoordinates"

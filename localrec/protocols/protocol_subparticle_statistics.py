@@ -20,19 +20,173 @@ from localrec.utils import get_subparticle_provenance
 
 
 class ProtSubparticleStatistics(ProtParticles):
-    """Compute class-occupancy statistics for subparticles.
+    """
+    Computes occupancy statistics for localized subparticles classified
+    into one or more structural groups. The protocol measures how many
+    subparticles associated with each original particle belong to selected
+    classes and summarizes the distribution in one-dimensional or
+    two-dimensional histograms.
 
-    1D mode (group 1 only):
-        - X axis categories: number of subparticles assigned to class ID(s)
-          per original particle (0..N).
-        - Y axis: number of original particles in each category.
+    AI Generated:
 
-    2D mode (group 1 + group 2):
-        - X axis categories: number of subparticles assigned to class ID(s)
-          in group 1 per original particle.
-        - Y axis categories: number of subparticles assigned to class ID(s)
-          in group 2 per original particle.
-        - Frequency: number of original particles with each (X, Y) pair.
+    Subparticle Statistics (ProtSubparticleStatistics) — User Manual
+        Overview
+
+        The Subparticle Statistics protocol analyzes the distribution of
+        classified subparticles across their original parent particles.
+        Its primary purpose is to quantify occupancy patterns within
+        localized reconstruction workflows, allowing researchers to
+        evaluate how frequently specific structural features appear in
+        different regions of a particle population.
+
+        In localized cryo-EM analysis, a single particle can generate
+        multiple subparticles corresponding to symmetry-related or
+        biologically relevant regions. After classification, users often
+        need to determine whether a given structural state appears
+        consistently across all subparticles, only partially, or not at
+        all. This protocol provides a direct way to measure those patterns
+        quantitatively.
+
+        Biological Motivation
+
+        Occupancy analysis is particularly valuable when studying flexible
+        assemblies, partial ligand binding, asymmetric maturation states,
+        or heterogeneous viral capsids. Instead of examining only the
+        global particle classification, the protocol evaluates how many
+        localized regions within each original particle belong to a
+        selected class or set of classes.
+
+        From a biological perspective, this allows users to distinguish
+        between particles showing complete occupancy, partial occupancy,
+        or absence of a structural feature. Such measurements can help
+        identify cooperative behavior, structural asymmetry, or population
+        heterogeneity that may not be visible in conventional global
+        reconstructions.
+
+        One-Dimensional Occupancy Analysis
+
+        In the standard one-dimensional mode, the protocol computes the
+        number of subparticles assigned to selected class identifiers for
+        every original particle. The resulting histogram describes how
+        many particles contain zero, one, two, or more matching
+        subparticles.
+
+        This mode is useful when evaluating the prevalence of a single
+        conformational state or biochemical condition. For example, users
+        studying partial ligand occupancy may determine whether binding
+        occurs uniformly across all symmetry-related sites or only in a
+        subset of them.
+
+        The resulting distribution can reveal whether occupancy follows a
+        narrow and homogeneous pattern or instead spans a broad range of
+        partially occupied states. In many biological systems, broad
+        distributions indicate structural variability or incomplete
+        biochemical transitions.
+
+        Two-Dimensional Occupancy Analysis
+
+        When two independent class groups are provided, the protocol
+        generates a two-dimensional occupancy histogram. In this mode,
+        each original particle is represented according to the number of
+        subparticles belonging to the first class group and the number
+        belonging to the second class group.
+
+        This analysis becomes particularly informative when comparing two
+        competing structural states, two ligand-binding conditions, or
+        mutually exclusive conformations. The resulting occupancy map can
+        reveal whether the two states coexist within the same particles,
+        occur independently, or exhibit anticorrelated behavior.
+
+        For biological interpretation, clustered distributions along the
+        diagonal often indicate correlated occupancy, whereas asymmetric
+        or separated distributions may suggest functional specialization
+        or structural competition between states.
+
+        Selection of Class Groups
+
+        Users may define single class identifiers or combine multiple
+        classes into broader biological groups. This flexibility is useful
+        when several classification outputs correspond to closely related
+        conformations that should be interpreted together.
+
+        Careful class selection is important for meaningful results.
+        Combining unrelated classes may artificially broaden occupancy
+        distributions and obscure biologically relevant trends. In
+        practice, users should first validate the structural similarity
+        of the chosen classes before grouping them in the analysis.
+
+        Provenance and Localized Reconstruction Context
+
+        The protocol is designed for datasets generated through localized
+        subparticle workflows in which each subparticle retains a
+        connection to its original parent particle and associated symmetry
+        information. Maintaining this provenance is essential for accurate
+        occupancy analysis because the interpretation depends on correctly
+        grouping subparticles back into their original particles.
+
+        In workflows involving symmetry expansion or localized
+        reconstruction, provenance tracking ensures that occupancy values
+        correspond to real biological particles rather than independent
+        image fragments.
+
+        Histogram Limits and Interpretation
+
+        The protocol can automatically determine occupancy limits from the
+        observed dataset or use user-defined limits when standardized
+        comparisons are required across multiple experiments.
+
+        Automatic limits are generally recommended during exploratory
+        analysis because they adapt naturally to the observed occupancy
+        range. Fixed limits become useful when comparing several datasets
+        side by side, such as different biochemical conditions,
+        experimental replicates, or time points.
+
+        Extremely broad occupancy distributions should be interpreted
+        carefully because they may reflect classification uncertainty,
+        variable particle quality, or biological heterogeneity.
+
+        Output Files and Downstream Analysis
+
+        The protocol exports histogram information in structured JSON and
+        CSV formats suitable for visualization, statistical analysis, and
+        external processing. These outputs can be integrated into custom
+        plotting pipelines, machine-learning workflows, or quantitative
+        biological analyses.
+
+        The JSON representation preserves structured occupancy
+        relationships and metadata, whereas the CSV format facilitates
+        spreadsheet analysis and integration with external statistical
+        software.
+
+        Practical Recommendations
+
+        For most biological studies, it is advisable to begin with a
+        simple one-dimensional occupancy analysis focused on a single
+        structural state. Once the distribution is understood, a
+        two-dimensional comparison can provide deeper insight into
+        relationships between alternative conformations or competing
+        occupancy states.
+
+        Users should verify that classification results are biologically
+        meaningful before interpreting occupancy statistics. Poorly
+        resolved classes or unstable classifications can generate
+        misleading occupancy patterns that do not reflect true molecular
+        behavior.
+
+        In systems with strong symmetry, occupancy distributions should
+        also be interpreted in the context of expected biological
+        stoichiometry. Deviations from symmetry-related expectations may
+        reveal biologically important asymmetry or functional specialization.
+
+        Final Perspective
+
+        Occupancy statistics provide a quantitative bridge between local
+        structural classification and global biological interpretation.
+        Rather than treating subparticles as isolated observations, the
+        protocol reconstructs the relationship between localized states
+        and their parent particles, enabling a deeper understanding of
+        structural heterogeneity, symmetry breaking, and functional
+        variability in cryo-EM datasets.
     """
 
     _label = 'subparticle statistics'
