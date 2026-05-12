@@ -38,7 +38,139 @@ from localrec.utils import has_subparticle_provenance
 
 
 class ProtLocalizedExtraction(ProtParticles):
-    """ Extract computed sub-particles from a SetOfParticles. """
+    """
+    Extracts localized subparticles from a larger particle dataset using
+    previously computed subparticle coordinates and orientation
+    information.
+
+    AI Generated:
+
+    Extract Subparticles (ProtLocalizedExtraction) - User Manual
+        Overview
+
+        The Extract Subparticles protocol generates individual localized
+        particle images from a larger set of aligned particles. Its main
+        purpose is to isolate biologically relevant regions from complex
+        macromolecular assemblies so they can be processed independently
+        in downstream cryo-EM workflows.
+
+        In many structural biology projects, the full particle contains
+        flexible domains, repeated subunits, or localized structural
+        features that are difficult to resolve through conventional
+        whole-particle refinement. By extracting smaller focused regions,
+        researchers can improve local alignment accuracy, enhance
+        structural interpretability, and study conformational variability
+        with greater precision.
+
+        Inputs and Biological Context
+
+        The protocol requires a set of particles with known projection
+        orientations together with a set of coordinates defining the
+        locations of the desired subparticles. These coordinates are
+        typically generated through localized reconstruction workflows
+        that identify specific structural regions inside larger
+        assemblies.
+
+        From a biological perspective, this approach is especially useful
+        for viruses, ribosomes, membrane complexes, symmetric particles,
+        and assemblies containing flexible or partially occupied domains.
+        Local extraction allows researchers to focus computational effort
+        on the region of biological interest rather than on the entire
+        particle.
+
+        Subparticle Box Size
+
+        One of the most important parameters in localized extraction is
+        the subparticle box size. This parameter defines the spatial
+        region surrounding the selected feature that will be included in
+        the extracted image.
+
+        A box size that is too small may truncate important structural
+        information or remove neighboring density required for accurate
+        alignment and refinement. Conversely, an excessively large box
+        may introduce unnecessary noise, increase computational cost, and
+        reduce the benefit of focused analysis.
+
+        In practical cryo-EM workflows, the optimal box size usually
+        includes the target domain together with a modest surrounding
+        margin. The selected dimensions should reflect both the size of
+        the biological feature and the expected flexibility of the
+        surrounding regions.
+
+        Coordinate Consistency and Data Integrity
+
+        The protocol assumes that the provided coordinates correspond
+        correctly to the original particle images and their associated
+        orientations. Maintaining this relationship is biologically
+        important because the extracted subparticles inherit their
+        contextual orientation and structural meaning from the parent
+        particles.
+
+        During extraction, regions that would extend beyond the image
+        boundaries are excluded to avoid generating incomplete or
+        misleading subparticle images. This is particularly relevant when
+        localization vectors approach the edges of the particle box or
+        when the selected subunits exhibit large positional variability.
+
+        In many biological datasets, a small fraction of subparticles may
+        be discarded for this reason. Such exclusions are generally
+        expected and usually do not compromise the overall quality of the
+        localized reconstruction workflow.
+
+        Preservation of Subparticle Identity
+
+        The extracted outputs preserve the identity and provenance of the
+        original localized regions. This continuity is essential for
+        downstream analyses such as focused classification, local
+        refinement, variability analysis, or symmetry-related studies.
+
+        From a biological standpoint, preserving the relationship between
+        parent particles and extracted subparticles allows researchers to
+        trace structural variability back to the original assembly and to
+        compare equivalent regions across different conformational states
+        or experimental conditions.
+
+        Outputs and Their Interpretation
+
+        The protocol produces a new set of particle images containing the
+        extracted subparticles. These outputs can be processed using
+        standard cryo-EM refinement and classification methods as if they
+        were conventional particle datasets.
+
+        Biologically, the extracted dataset represents a focused view of
+        specific structural regions within the larger complex. This often
+        enables improved local resolution, clearer interpretation of
+        flexible domains, and more accurate characterization of local
+        conformational changes.
+
+        Practical Recommendations
+
+        In most applications, users should verify the quality of the
+        input particle alignments before performing localized extraction.
+        Errors in orientation assignment or coordinate placement can
+        propagate directly into the extracted dataset and negatively
+        affect downstream reconstruction quality.
+
+        Careful selection of the subparticle box size is also critical.
+        Pilot extractions followed by visual inspection are often useful
+        for determining whether the selected dimensions appropriately
+        capture the biological feature of interest.
+
+        When working with highly flexible regions, additional
+        classification after extraction is frequently necessary to
+        separate distinct conformational states and maximize structural
+        interpretability.
+
+        Final Perspective
+
+        Localized extraction is a key step in focused cryo-EM analysis
+        workflows because it transforms structural regions embedded
+        within large assemblies into independent particle datasets.
+        By enabling targeted refinement of specific domains or subunits,
+        the protocol supports detailed biological interpretation of
+        structural heterogeneity that would otherwise remain obscured in
+        conventional whole-particle reconstructions.
+    """
     _label = 'extract subparticles'
     _lastUpdateVersion = VERSION_1_2
     OUTPUTPARTICLESNAME = "outputParticles"

@@ -40,9 +40,155 @@ from pwem.objects import SetOfCoordinates
 
 
 class ProtFilterSubParts(ProtParticles):
-    """ This protocol mainly filters output particles from two protocols:
-    extend symmetry and localized subparticles. It can filter the particles
-    (sub-particles) according to spatial distance, view, and angular distance.
+    """
+    Filters sub-particles or sub-particle coordinates according to spatial,
+    angular, and geometrical criteria in order to retain biologically meaningful
+    localized regions while removing redundant or overlapping information.
+
+    AI Generated:
+
+    Filter Subparticles (ProtFilterSubParts) - User Manual
+        Overview
+
+        The Filter Subparticles protocol is designed to refine and curate sets
+        of localized sub-particles generated from symmetry expansion or
+        localized reconstruction workflows. Its main purpose is to remove
+        redundant, overlapping, or biologically irrelevant sub-particles before
+        downstream processing steps such as classification, refinement, focused
+        reconstruction, or structural interpretation.
+
+        In cryo-EM workflows involving symmetry expansion or localized
+        reconstruction, a single particle may generate many related
+        sub-particles corresponding to different orientations or symmetry
+        operators. While this greatly increases the amount of available data,
+        it can also introduce strong redundancy and geometrical overlap. This
+        protocol helps reduce those effects by selecting only the most relevant
+        sub-particles according to angular orientation, proximity, and spatial
+        distribution.
+
+        Inputs and Biological Context
+
+        The protocol accepts either a set of particles or a set of coordinates
+        associated with localized sub-particles. These inputs are typically
+        produced after workflows that isolate flexible domains, asymmetric
+        regions, membrane components, or localized structural features from
+        larger complexes.
+
+        From a biological perspective, filtering becomes especially important
+        when studying assemblies with high symmetry or repeated structural
+        motifs. Without careful filtering, downstream analyses may become
+        biased by duplicated information originating from equivalent symmetry
+        positions rather than independent observations.
+
+        The protocol preserves the relationship between the filtered
+        sub-particles and their original parent particles, allowing users to
+        continue processing while maintaining biologically interpretable
+        provenance.
+
+        Angular Redundancy and Unique Sub-particles
+
+        One of the most important filtering strategies provided by the protocol
+        is the removal of angularly redundant sub-particles. In symmetry-based
+        workflows, several sub-particles may correspond to nearly identical
+        orientations and therefore contribute little additional information.
+
+        The angular uniqueness criterion allows the user to retain only one
+        representative sub-particle within a specified angular distance. This
+        is particularly useful near symmetry axes, where multiple equivalent
+        orientations may otherwise dominate the dataset.
+
+        Biologically, this filtering helps prevent overrepresentation of
+        structurally repeated views and improves the statistical balance of
+        downstream analyses. It is especially valuable when studying flexible
+        domains or subtle conformational differences that could otherwise be
+        masked by symmetry-related redundancy.
+
+        Spatial Distance Filtering
+
+        The protocol can also remove sub-particles that are spatially too close
+        to each other within the image plane. This option is intended to reduce
+        overlap between neighboring extracted regions that may not represent
+        independent signal contributions.
+
+        In practical cryo-EM processing, overlapping sub-particles can produce
+        correlations that artificially inflate classification confidence or
+        refinement stability. By enforcing a minimum spatial separation, the
+        protocol promotes a more independent and biologically meaningful
+        dataset.
+
+        Users may optionally preserve overlapping particles associated with
+        symmetry-related positions when symmetry-breaking analyses are desired.
+        This can be useful when investigating asymmetric features embedded in
+        otherwise symmetric assemblies.
+
+        Distance from the Particle Origin
+
+        The protocol also allows filtering according to the distance between a
+        sub-particle and the origin of the parent particle. This criterion is
+        useful when excluding regions too close to the center of the complex or
+        when focusing specifically on peripheral domains.
+
+        In biological applications, this option is often employed to isolate
+        membrane-associated regions, distal flexible domains, or external
+        structural elements while excluding central density that may not be
+        relevant for the intended analysis.
+
+        Orientation-Based Filtering
+
+        Orientation filtering enables selection of sub-particles corresponding
+        preferentially to side views or top views. This capability becomes
+        particularly important when studying directional flexibility,
+        anisotropic sampling, or preferred orientation effects.
+
+        Side-view filtering is often useful for elongated or membrane protein
+        complexes where lateral projections provide the most informative
+        structural features. Top-view filtering, in contrast, may help isolate
+        projections that better reveal rotational symmetry or central channel
+        architecture.
+
+        From a biological standpoint, orientation selection can substantially
+        improve focused classification and targeted refinement by emphasizing
+        the most informative viewing directions.
+
+        Outputs and Their Interpretation
+
+        Depending on the input type, the protocol produces either a filtered
+        set of particles or a filtered set of coordinates. The resulting
+        dataset preserves the geometrical and biological relationships required
+        for subsequent localized reconstruction workflows.
+
+        The filtered outputs are intended to represent a cleaner and less
+        redundant subset of the original localized regions. In practice, this
+        often leads to improved refinement stability, more interpretable
+        classifications, and reduced bias introduced by excessive symmetry
+        duplication.
+
+        Practical Recommendations
+
+        In most biological workflows, it is advisable to begin with moderate
+        filtering thresholds and visually inspect the resulting particle
+        distribution before applying stricter criteria. Excessively aggressive
+        filtering may remove meaningful conformational variability, whereas
+        insufficient filtering may leave strong redundancy in the dataset.
+
+        Angular uniqueness filtering is typically one of the most effective
+        starting points for symmetry-expanded datasets. Minimum distance
+        filtering becomes particularly important when extracted regions are
+        densely packed or partially overlapping.
+
+        Orientation filtering should be applied carefully and only when there
+        is a clear biological or methodological reason to prioritize specific
+        projection directions. Over-filtering orientations may unintentionally
+        reduce angular coverage and compromise reconstruction quality.
+
+        Final Perspective
+
+        For many cryo-EM studies involving localized reconstruction, symmetry
+        expansion, or focused analysis of flexible domains, sub-particle
+        filtering is an essential preparation step rather than a simple cleanup
+        operation. Careful control of redundancy, overlap, and geometrical
+        distribution can strongly influence the interpretability and biological
+        reliability of downstream structural analyses.
     """
     _label = 'filter subparticles'
     _lastUpdateVersion = VERSION_3_0
